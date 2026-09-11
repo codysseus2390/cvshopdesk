@@ -85,38 +85,23 @@ export const getDashboard = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
 
     const all = (rows ?? []) as (MetricRow & { created_at: string; source: string })[];
-    const todayRow = all.find((r) => r.business_date === today && r.scope === "daily") ?? null;
-    const daysElapsed = Number(today.slice(8, 10));
-    const mtd = monthToDate(all, monthPrefix, daysElapsed);
+    // Nothing dated after the shop's current business day counts toward current results.
+    const current = all.filter((r) => r.business_date <= today);
+    const todayRow =
+      current.find((r) => r.business_date === today && r.scope === "daily") ?? null;
+    const mtd = monthToDate(current, monthPrefix, today);
 
-    const monthly: { month: string; totals: Totals }[] = [];
+    const monthly: { month: string; totals: PeriodTotals }[] = [];
     for (const y of [String(Number(year) - 1), year]) {
       for (let m = 1; m <= 12; m++) {
         const key = `${y}-${String(m).padStart(2, "0")}`;
-        const inMonth = all.filter((r) => r.business_date.startsWith(key));
-        if (!inMonth.length) continue;
-        const cumulative = inMonth
-          .filter((r) => r.scope === "mtd")
-          .sort((a, b) => (a.business_date < b.business_date ? 1 : -1))[0];
-        const totals = cumulative
-          ? {
-              gross_profit: cumulative.gross_profit,
-              tires_sold: cumulative.tires_sold,
-              car_count: cumulative.car_count,
-              gp_per_car:
-                cumulative.gross_profit !== null && cumulative.car_count && cumulative.car_count > 0
-                  ? cumulative.gross_profit / cumulative.car_count
-                  : null,
-              covered_days: 1,
-              missing_days: 0,
-            }
-          : sumDaily(inMonth, new Date(Number(y), m, 0).getDate());
-        monthly.push({ month: key, totals });
+        if (!current.some((r) => r.business_date.startsWith(key))) continue;
+        monthly.push({ month: key, totals: monthToDate(current, key, today) });
       }
     }
 
-    const ytdRows = all.filter((r) => r.business_date.startsWith(year));
-    const ytd = sumDaily(ytdRows, daysElapsed);
+    const ytd = yearToDate(current, year, today);
+    const ytdLastYear = yearToDate(current, String(Number(year) - 1), today);
 
     const lastUpdate = all.reduce<string | null>(
       (acc, r) => (acc === null || r.created_at > acc ? r.created_at : acc),
@@ -129,11 +114,13 @@ export const getDashboard = createServerFn({ method: "GET" })
       todayRow,
       mtd,
       ytd,
+      ytdLastYear,
       monthly,
       lastUpdate,
-      recent: all.slice(-14).reverse(),
+      recent: current.slice(-14).reverse(),
     };
   });
+
 
 export const listMetricHistory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
