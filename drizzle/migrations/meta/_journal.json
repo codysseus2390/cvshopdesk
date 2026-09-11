@@ -43,6 +43,13 @@
       "when": 1789164968806,
       "tag": "0005_fix_bootstrap_shop_conflict_target",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789165382109,
+      "tag": "0006_atomic_import_record_acceptance",
+      "breakpoints": true
     }
   ]
 }
