@@ -26,14 +26,10 @@ export const Route = createFileRoute("/_authenticated/account")({
   component: () => (
     <AccessGate>
       <AccountPage />
-    </AccountPage_wrapper_end>
+    </AccessGate>
   ),
 });
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function AccountPage_wrapper_end() {
-  return null;
-}
 
 function AccountPage() {
   const context = useShopContext();
