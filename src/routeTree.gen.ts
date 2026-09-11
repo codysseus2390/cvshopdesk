@@ -12,12 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedBoardRouteImport } from './routes/_authenticated/board'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
 import { Route as AuthenticatedEntryRouteImport } from './routes/_authenticated/entry'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedHubRouteImport } from './routes/_authenticated/hub'
 import { Route as AuthenticatedImportsRouteImport } from './routes/_authenticated/imports'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedTvRouteImport } from './routes/_authenticated/tv'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -32,6 +35,11 @@ const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedBoardRoute = AuthenticatedBoardRouteImport.update({
+  id: '/board',
+  path: '/board',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
   id: '/customers',
@@ -63,71 +71,99 @@ const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
   path: '/inventory',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTvRoute = AuthenticatedTvRouteImport.update({
+  id: '/tv',
+  path: '/tv',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/board': typeof AuthenticatedBoardRoute
   '/customers': typeof AuthenticatedCustomersRoute
   '/entry': typeof AuthenticatedEntryRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/hub': typeof AuthenticatedHubRoute
   '/imports': typeof AuthenticatedImportsRoute
   '/inventory': typeof AuthenticatedInventoryRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/tv': typeof AuthenticatedTvRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/board': typeof AuthenticatedBoardRoute
   '/customers': typeof AuthenticatedCustomersRoute
   '/entry': typeof AuthenticatedEntryRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/hub': typeof AuthenticatedHubRoute
   '/imports': typeof AuthenticatedImportsRoute
   '/inventory': typeof AuthenticatedInventoryRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/tv': typeof AuthenticatedTvRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/board': typeof AuthenticatedBoardRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
   '/_authenticated/entry': typeof AuthenticatedEntryRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/hub': typeof AuthenticatedHubRoute
   '/_authenticated/imports': typeof AuthenticatedImportsRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/tv': typeof AuthenticatedTvRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
+    | '/board'
     | '/customers'
     | '/entry'
     | '/history'
     | '/hub'
     | '/imports'
     | '/inventory'
+    | '/settings'
+    | '/tv'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/board'
     | '/customers'
     | '/entry'
     | '/history'
     | '/hub'
     | '/imports'
     | '/inventory'
+    | '/settings'
+    | '/tv'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/board'
     | '/_authenticated/customers'
     | '/_authenticated/entry'
     | '/_authenticated/history'
     | '/_authenticated/hub'
     | '/_authenticated/imports'
     | '/_authenticated/inventory'
+    | '/_authenticated/settings'
+    | '/_authenticated/tv'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +194,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/board': {
+      id: '/_authenticated/board'
+      path: '/board'
+      fullPath: '/board'
+      preLoaderRoute: typeof AuthenticatedBoardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/customers': {
       id: '/_authenticated/customers'
@@ -201,25 +244,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tv': {
+      id: '/_authenticated/tv'
+      path: '/tv'
+      fullPath: '/tv'
+      preLoaderRoute: typeof AuthenticatedTvRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBoardRoute: typeof AuthenticatedBoardRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
   AuthenticatedEntryRoute: typeof AuthenticatedEntryRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedHubRoute: typeof AuthenticatedHubRoute
   AuthenticatedImportsRoute: typeof AuthenticatedImportsRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedTvRoute: typeof AuthenticatedTvRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBoardRoute: AuthenticatedBoardRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
   AuthenticatedEntryRoute: AuthenticatedEntryRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedHubRoute: AuthenticatedHubRoute,
   AuthenticatedImportsRoute: AuthenticatedImportsRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedTvRoute: AuthenticatedTvRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
