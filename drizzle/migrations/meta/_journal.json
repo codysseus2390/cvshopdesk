@@ -29,6 +29,13 @@
       "when": 1789164515685,
       "tag": "0003_harden_owner_and_member_role_checks",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789164942530,
+      "tag": "0004_atomic_shop_bootstrap",
+      "breakpoints": true
     }
   ]
 }

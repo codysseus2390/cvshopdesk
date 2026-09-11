@@ -592,6 +592,10 @@ export type Database = {
         Args: { p_import_id: string; p_note?: string; p_rows: Json }
         Returns: number
       }
+      bootstrap_shop: {
+        Args: { p_name: string; p_timezone?: string }
+        Returns: string
+      }
       has_shop_access: {
         Args: { _shop_id: string; _user_id?: string }
         Returns: boolean
