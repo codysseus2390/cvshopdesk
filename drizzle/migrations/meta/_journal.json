@@ -50,6 +50,13 @@
       "when": 1789165382109,
       "tag": "0006_atomic_import_record_acceptance",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789165884729,
+      "tag": "0007_restrict_accept_import_records_execute",
+      "breakpoints": true
     }
   ]
 }
