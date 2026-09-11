@@ -255,7 +255,7 @@ export function monthToDate(rows: MetricRow[], monthPrefix: string, today: strin
   if (snapshot) {
     const behind = daysBetween(snapshot.business_date, boundary);
     return {
-      ...fromSnapshot(snapshot, elapsed, behind),
+      ...fromSnapshot(snapshot, behind),
       basis: "cumulative-snapshot",
       as_of: snapshot.business_date,
       stale: behind > 0,
@@ -293,7 +293,7 @@ export function yearToDate(rows: MetricRow[], year: string, today: string): Peri
   if (snapshot) {
     const behind = daysBetween(snapshot.business_date, boundary);
     return {
-      ...fromSnapshot(snapshot, elapsed, behind),
+      ...fromSnapshot(snapshot, behind),
       basis: "cumulative-snapshot",
       as_of: snapshot.business_date,
       stale: behind > 0,
