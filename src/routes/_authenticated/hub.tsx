@@ -51,6 +51,8 @@ export function useDashboard() {
 
 function Dashboard() {
   const { data, isLoading, error } = useDashboard();
+  const { data: shopContext } = useShopContext();
+  const pending = shopContext?.pendingCount ?? 0;
 
   const today = data?.todayRow;
   const todayGp = today?.gross_profit ?? null;
