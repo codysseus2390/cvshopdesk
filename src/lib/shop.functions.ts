@@ -133,15 +133,20 @@ export const decideMember = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    // RLS restricts this update to the shop owner.
+    // RLS restricts this update to the shop owner. The role is always written
+    // explicitly so approving a request can never carry over an escalated role
+    // that was submitted with it; the owner row itself is never touched here.
     const { error } = await context.supabase
       .from("shop_members")
       .update({
         status: data.status,
-        ...(data.role ? { role: data.role } : {}),
+        role: data.role ?? "staff",
         decided_at: new Date().toISOString(),
         decided_by: context.userId,
       })
+      .eq("id", data.memberId)
+      .neq("role", "owner");
+
       .eq("id", data.memberId);
     if (error) throw new Error(error.message);
     return { ok: true };
