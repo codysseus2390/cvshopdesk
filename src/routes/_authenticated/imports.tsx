@@ -41,6 +41,8 @@ export const Route = createFileRoute("/_authenticated/imports")({
 });
 
 type ScopeValue = "daily" | "mtd" | "ytd" | "invoice" | "inventory" | "jobs" | "other";
+type RecordKind = "inventory" | "jobs" | "appointments" | "customers";
+
 
 interface ExtractedRow {
   business_date: string;
@@ -77,13 +79,19 @@ function ImportsPage() {
   const [scope, setScope] = useState<ScopeValue>("daily");
   const [periodStart, setPeriodStart] = useState(shopToday());
   const [periodEnd, setPeriodEnd] = useState(shopToday());
+  const [capturedAt, setCapturedAt] = useState("");
+
   const [busy, setBusy] = useState<string | null>(null);
   const [status, setStatus] = useState<{ kind: "ok" | "warn" | "error"; text: string } | null>(null);
 
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [rows, setRows] = useState<ExtractedRow[]>([]);
   const [items, setItems] = useState<Record<string, string | number | null>[]>([]);
+  const [recordKind, setRecordKind] = useState<RecordKind>("inventory");
   const [unreadable, setUnreadable] = useState<string[]>([]);
+
+  const itemColumns = Array.from(new Set(items.flatMap((item) => Object.keys(item)))).slice(0, 12);
+
 
   async function upload() {
     if (!file || !shopId) return;
@@ -108,8 +116,10 @@ function ImportsPage() {
           report_scope: scope,
           period_start: periodStart || null,
           period_end: periodEnd || null,
+          captured_at: capturedAt ? new Date(capturedAt).toISOString() : null,
         },
       });
+
 
       if (result.duplicate) {
         await supabase.storage.from("shop-uploads").remove([path]);
@@ -164,7 +174,12 @@ function ImportsPage() {
       })),
     );
     setItems((extraction?.["items"] as Record<string, string | number | null>[] | undefined) ?? []);
+    const suggested = String(extraction?.["record_kind"] ?? "");
+    if (["inventory", "jobs", "appointments", "customers"].includes(suggested)) {
+      setRecordKind(suggested as RecordKind);
+    }
     setUnreadable((extraction?.["unreadable"] as string[] | undefined) ?? []);
+
   }
 
   async function confirmMetrics() {
@@ -194,7 +209,7 @@ function ImportsPage() {
     }
   }
 
-  async function confirmRecords(kind: "inventory" | "jobs" | "appointments" | "customers") {
+  async function confirmRecords(kind: RecordKind) {
     if (!reviewId || !items.length) return;
     setBusy(reviewId);
     setStatus(null);
@@ -202,7 +217,12 @@ function ImportsPage() {
       const result = await acceptRecords({
         data: { importId: reviewId, kind, snapshot_date: periodEnd || shopToday(), items },
       });
-      setStatus({ kind: "ok", text: `${result.saved} record(s) saved as an imported snapshot.` });
+      setStatus({
+        kind: "ok",
+        text: `${result.saved} record(s) saved as an imported snapshot${
+          result.needsReview > 0 ? ` · ${result.needsReview} row(s) marked for a check` : ""
+        }.`,
+      });
       setReviewId(null);
       await queryClient.invalidateQueries();
     } catch (err) {
@@ -211,6 +231,7 @@ function ImportsPage() {
       setBusy(null);
     }
   }
+
 
   return (
     <AppShell
@@ -260,7 +281,20 @@ function ImportsPage() {
                   <Input id="pe" type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
                 </div>
               </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="cap">Time the report was taken (leave blank if you do not know)</Label>
+                <Input
+                  id="cap"
+                  type="datetime-local"
+                  value={capturedAt}
+                  onChange={(e) => setCapturedAt(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Left blank, this stays unknown — it is never guessed from the dates above.
+                </p>
+              </div>
             </div>
+
             <Button onClick={upload} disabled={!file || !shopId || busy === "upload"}>
               {busy === "upload" ? "Uploading…" : "Upload file"}
             </Button>
@@ -355,30 +389,71 @@ function ImportsPage() {
               )}
 
               {items.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold">{items.length} record row(s) read from this file</p>
-                  <pre className="max-h-48 overflow-auto rounded-md bg-muted p-3 text-xs">
-                    {JSON.stringify(items.slice(0, 20), null, 2)}
-                  </pre>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" onClick={() => confirmRecords("inventory")}>
-                      Save as inventory snapshot
-                    </Button>
-                    <Button variant="outline" onClick={() => confirmRecords("customers")}>
-                      Save as customers &amp; vehicles
-                    </Button>
-                    <Button variant="outline" onClick={() => confirmRecords("jobs")}>
-                      Save as existing job records
-                    </Button>
-                    <Button variant="outline" onClick={() => confirmRecords("appointments")}>
-                      Save as existing appointment records
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold">
+                    {items.length} detail row(s) read from this file — edit anything that is wrong before saving
+                  </p>
+                  <div className="flex flex-wrap items-end gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="rk">These rows are</Label>
+                      <select
+                        id="rk"
+                        className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                        value={recordKind}
+                        onChange={(e) => setRecordKind(e.target.value as RecordKind)}
+                      >
+                        <option value="inventory">Inventory items</option>
+                        <option value="jobs">Existing job records</option>
+                        <option value="appointments">Existing appointment records</option>
+                        <option value="customers">Customers &amp; vehicles</option>
+                      </select>
+                    </div>
+                    <Button onClick={() => confirmRecords(recordKind)} disabled={busy === reviewId}>
+                      {busy === reviewId ? "Saving…" : "Save these existing records"}
                     </Button>
                   </div>
+                  <div className="max-h-96 overflow-auto rounded-md border border-border">
+                    <table className="w-full text-xs">
+                      <thead className="bg-muted">
+                        <tr>
+                          {itemColumns.map((col) => (
+                            <th key={col} className="p-2 text-left font-semibold">
+                              {col}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {items.map((item, i) => (
+                          <tr key={i} className="border-t border-border">
+                            {itemColumns.map((col) => (
+                              <td key={col} className="p-1">
+                                <Input
+                                  className="h-8 min-w-24 text-xs"
+                                  value={item[col] === null || item[col] === undefined ? "" : String(item[col])}
+                                  onChange={(e) =>
+                                    setItems(
+                                      items.map((row, j) =>
+                                        i === j ? { ...row, [col]: e.target.value === "" ? null : e.target.value } : row,
+                                      ),
+                                    )
+                                  }
+                                />
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    These save existing TireShop records into this app only. Nothing is booked or created in TireShop.
+                    Blanks and values like N/A stay empty — they are never saved as zero. Rows without a TireShop record
+                    number are kept against this upload and marked for a check. These save existing TireShop records into
+                    this app only. Nothing is booked or created in TireShop.
                   </p>
                 </div>
               )}
+
               <Button variant="ghost" onClick={() => setReviewId(null)}>
                 Close review
               </Button>
@@ -398,8 +473,12 @@ function ImportsPage() {
                 <div>
                   <p className="font-semibold">{imp.file_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {imp.report_scope} · covers {imp.period_start ?? "?"} → {imp.period_end ?? "?"} · uploaded{" "}
+                    {imp.report_scope} · covers {imp.period_start ?? "?"} → {imp.period_end ?? "?"} · captured{" "}
+                    {imp.captured_at ? new Date(imp.captured_at).toLocaleString() : "time not recorded"} · uploaded{" "}
                     {new Date(imp.uploaded_at).toLocaleString()} · {imp.status}
+                    {imp.status === "accepted" && imp.reviewed_at
+                      ? ` on ${new Date(imp.reviewed_at).toLocaleString()} — locked`
+                      : ""}
                     {imp.error_message ? ` · ${imp.error_message}` : ""}
                   </p>
                 </div>
@@ -407,10 +486,12 @@ function ImportsPage() {
                   <Button size="sm" variant="outline" onClick={() => void openFile(imp.id)}>
                     View file
                   </Button>
-                  <Button size="sm" onClick={() => runExtract(imp.id)} disabled={busy === imp.id}>
-                    {busy === imp.id ? "Reading…" : "Read with AI"}
-                  </Button>
-                  {imp.extraction && (
+                  {imp.status !== "accepted" && (
+                    <Button size="sm" onClick={() => runExtract(imp.id)} disabled={busy === imp.id}>
+                      {busy === imp.id ? "Reading…" : "Read with AI"}
+                    </Button>
+                  )}
+                  {imp.extraction && imp.status !== "accepted" && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -424,12 +505,22 @@ function ImportsPage() {
                       size="sm"
                       variant="ghost"
                       onClick={async () => {
-                        await reject({ data: { importId: imp.id, reason: "Rejected by staff" } });
+                        setStatus(null);
+                        try {
+                          await reject({ data: { importId: imp.id, reason: "Rejected by staff" } });
+                          setStatus({ kind: "warn", text: `${imp.file_name} was marked as rejected.` });
+                        } catch (err) {
+                          setStatus({
+                            kind: "error",
+                            text: err instanceof Error ? err.message : "The file was not rejected.",
+                          });
+                        }
                         await queryClient.invalidateQueries({ queryKey: ["imports"] });
                       }}
                     >
                       Reject
                     </Button>
+
                   )}
                 </div>
               </div>

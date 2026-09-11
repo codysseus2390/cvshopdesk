@@ -57,9 +57,12 @@ export type Database = {
           email: string | null
           external_id: string | null
           first_seen_at: string
+          flags: Json
           id: string
+          identity_key: string | null
           import_id: string | null
           name: string
+          needs_review: boolean
           phone: string | null
           shop_id: string
         }
@@ -67,9 +70,12 @@ export type Database = {
           email?: string | null
           external_id?: string | null
           first_seen_at?: string
+          flags?: Json
           id?: string
+          identity_key?: string | null
           import_id?: string | null
           name: string
+          needs_review?: boolean
           phone?: string | null
           shop_id: string
         }
@@ -77,9 +83,12 @@ export type Database = {
           email?: string | null
           external_id?: string | null
           first_seen_at?: string
+          flags?: Json
           id?: string
+          identity_key?: string | null
           import_id?: string | null
           name?: string
+          needs_review?: boolean
           phone?: string | null
           shop_id?: string
         }
@@ -181,8 +190,11 @@ export type Database = {
           created_at: string
           description: string
           external_id: string | null
+          flags: Json
           id: string
+          identity_key: string | null
           import_id: string | null
+          needs_review: boolean
           price: number | null
           quantity: number | null
           shop_id: string
@@ -195,8 +207,11 @@ export type Database = {
           created_at?: string
           description: string
           external_id?: string | null
+          flags?: Json
           id?: string
+          identity_key?: string | null
           import_id?: string | null
+          needs_review?: boolean
           price?: number | null
           quantity?: number | null
           shop_id: string
@@ -209,8 +224,11 @@ export type Database = {
           created_at?: string
           description?: string
           external_id?: string | null
+          flags?: Json
           id?: string
+          identity_key?: string | null
           import_id?: string | null
+          needs_review?: boolean
           price?: number | null
           quantity?: number | null
           shop_id?: string
@@ -387,7 +405,9 @@ export type Database = {
           customer_name: string | null
           disposition: string | null
           external_id: string | null
+          flags: Json
           id: string
+          identity_key: string | null
           import_id: string | null
           is_current: boolean
           job_status: string | null
@@ -395,10 +415,13 @@ export type Database = {
           local_status: string | null
           local_updated_at: string | null
           local_updated_by: string | null
+          needs_review: boolean
           record_kind: string
           requested_service: string | null
           shop_id: string
           snapshot_at: string
+          superseded_at: string | null
+          superseded_by: string | null
           technician: string | null
           vehicle_label: string | null
         }
@@ -408,7 +431,9 @@ export type Database = {
           customer_name?: string | null
           disposition?: string | null
           external_id?: string | null
+          flags?: Json
           id?: string
+          identity_key?: string | null
           import_id?: string | null
           is_current?: boolean
           job_status?: string | null
@@ -416,10 +441,13 @@ export type Database = {
           local_status?: string | null
           local_updated_at?: string | null
           local_updated_by?: string | null
+          needs_review?: boolean
           record_kind?: string
           requested_service?: string | null
           shop_id: string
           snapshot_at?: string
+          superseded_at?: string | null
+          superseded_by?: string | null
           technician?: string | null
           vehicle_label?: string | null
         }
@@ -429,7 +457,9 @@ export type Database = {
           customer_name?: string | null
           disposition?: string | null
           external_id?: string | null
+          flags?: Json
           id?: string
+          identity_key?: string | null
           import_id?: string | null
           is_current?: boolean
           job_status?: string | null
@@ -437,10 +467,13 @@ export type Database = {
           local_status?: string | null
           local_updated_at?: string | null
           local_updated_by?: string | null
+          needs_review?: boolean
           record_kind?: string
           requested_service?: string | null
           shop_id?: string
           snapshot_at?: string
+          superseded_at?: string | null
+          superseded_by?: string | null
           technician?: string | null
           vehicle_label?: string | null
         }
@@ -535,8 +568,10 @@ export type Database = {
           customer_id: string | null
           external_id: string | null
           id: string
+          identity_key: string | null
           make: string | null
           model: string | null
+          needs_review: boolean
           plate: string | null
           shop_id: string
           vin: string | null
@@ -547,8 +582,10 @@ export type Database = {
           customer_id?: string | null
           external_id?: string | null
           id?: string
+          identity_key?: string | null
           make?: string | null
           model?: string | null
+          needs_review?: boolean
           plate?: string | null
           shop_id: string
           vin?: string | null
@@ -559,8 +596,10 @@ export type Database = {
           customer_id?: string | null
           external_id?: string | null
           id?: string
+          identity_key?: string | null
           make?: string | null
           model?: string | null
+          needs_review?: boolean
           plate?: string | null
           shop_id?: string
           vin?: string | null
@@ -591,6 +630,15 @@ export type Database = {
       accept_import_metrics: {
         Args: { p_import_id: string; p_note?: string; p_rows: Json }
         Returns: number
+      }
+      accept_import_records: {
+        Args: {
+          p_import_id: string
+          p_kind: string
+          p_rows: Json
+          p_snapshot_date: string
+        }
+        Returns: Json
       }
       bootstrap_shop: {
         Args: { p_name: string; p_timezone?: string }
