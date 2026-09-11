@@ -1,24 +1,35 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { CedarLogo } from "@/components/cedar-logo";
+import { Button } from "@/components/ui/button";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Cedar Valley Hub — staff sign in" },
+      {
+        name: "description",
+        content: "Sign in to the Cedar Valley Tire & Auto Service staff hub for daily numbers and shop records.",
+      },
+      { property: "og:title", content: "Cedar Valley Hub — staff sign in" },
+      { property: "og:description", content: "Staff-only hub for Cedar Valley Tire & Auto Service." },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background px-6 text-center">
+      <CedarLogo className="h-20 w-auto" />
+      <div>
+        <h1 className="font-display text-4xl font-bold tracking-tight text-foreground">Cedar Valley Hub</h1>
+        <p className="mt-3 max-w-md text-muted-foreground">
+          Staff-only hub for daily numbers, report imports and shop records. Every record stays behind staff sign-in.
+        </p>
+      </div>
+      <Button asChild size="lg">
+        <Link to="/auth">Staff sign in</Link>
+      </Button>
+    </main>
   );
 }
