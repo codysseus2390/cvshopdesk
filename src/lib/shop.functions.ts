@@ -55,9 +55,16 @@ export const claimShop = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ name: z.string().min(2).max(120) }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId, claims } = context;
-    const email = emailOf(claims as Record<string, unknown>);
-    if (email !== OWNER_EMAIL) throw new Error("Only the shop owner account can set up the shop.");
+    const { supabase, userId } = context;
+    const { trustedIdentity } = await import("@/lib/owner.server");
+    const identity = await trustedIdentity(userId);
+    const email = identity.email;
+    if (!identity.isOwner) {
+      throw new Error(
+        "Only the shop owner account with a confirmed email address can set up the shop.",
+      );
+    }
+
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { count } = await supabaseAdmin.from("shops").select("id", { count: "exact", head: true });
