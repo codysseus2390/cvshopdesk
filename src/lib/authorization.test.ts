@@ -121,3 +121,46 @@ dbTest("membership request policy", () => {
     }
   });
 });
+
+dbTest("atomic shop bootstrap", () => {
+  it("verifies auth.uid() and the confirmed owner email inside the database", async () => {
+    const [fn] = await sql!`
+      select p.prosecdef, pg_get_functiondef(p.oid) as def
+      from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public' and p.proname = 'bootstrap_shop'`;
+    expect(fn, "bootstrap_shop must exist").toBeTruthy();
+    expect(fn!["prosecdef"]).toBe(true);
+    const def = fn!["def"] as string;
+    expect(def).toContain("auth.uid()");
+    expect(def).toContain("auth.users");
+    expect(def).toContain("email_confirmed_at is null");
+    expect(def).toContain("codysseus2390@gmail.com");
+    expect(def).not.toContain("user_metadata");
+    expect(def).not.toContain("auth.jwt");
+  });
+
+  it("creates the shop and its owner membership together, locked and retry-safe", async () => {
+    const [fn] = await sql!`
+      select pg_get_functiondef(p.oid) as def
+      from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public' and p.proname = 'bootstrap_shop'`;
+    const def = fn!["def"] as string;
+    expect(def).toContain("pg_advisory_xact_lock");
+    expect(def).toContain("insert into public.shops");
+    expect(def).toContain("insert into public.shop_members");
+    expect(def).toContain("on conflict (shop_id, user_id) do update");
+    // Same routine, one transaction: a shop can never exist without its owner row.
+    expect(def.indexOf("insert into public.shops")).toBeLessThan(def.indexOf("insert into public.shop_members"));
+  });
+
+  it("is callable by signed-in users only, never anonymously", async () => {
+    const [grants] = await sql!`
+      select
+        has_function_privilege('authenticated', p.oid, 'execute') as auth_exec,
+        has_function_privilege('anon', p.oid, 'execute') as anon_exec
+      from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public' and p.proname = 'bootstrap_shop'`;
+    expect(grants!["auth_exec"]).toBe(true);
+    expect(grants!["anon_exec"]).toBe(false);
+  });
+});
