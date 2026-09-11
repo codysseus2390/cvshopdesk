@@ -116,7 +116,12 @@ const itemSchema = z.record(z.string(), z.union([z.string(), z.number(), z.null(
 
 /**
  * Saves reviewed rows from an import into inventory / customers / job snapshots.
- * Existing rows are never deleted, so a partial import cannot silently close jobs.
+ *
+ * The whole save runs inside one database function so it either fully commits or
+ * changes nothing. That function locks the import row, checks the signed-in user
+ * belongs to the import's shop, refuses an import that was already accepted or
+ * rejected, keeps previous snapshots as history, carries staff notes forward and
+ * leaves records that were not in this file untouched.
  */
 export const acceptImportRecords = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -131,111 +136,16 @@ export const acceptImportRecords = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const shopId = await resolveShopId(supabase as unknown as Supa, userId);
-    const str = (v: unknown) => (v === null || v === undefined || v === "" ? null : String(v));
-    const num = (v: unknown) => {
-      const n = Number(String(v ?? "").replace(/[^0-9.-]/g, ""));
-      return Number.isFinite(n) && String(v ?? "").trim() !== "" ? n : null;
-    };
-
-    let saved = 0;
-    if (data.kind === "inventory") {
-      const rows = data.items.map((i) => ({
-        shop_id: shopId,
-        import_id: data.importId,
-        snapshot_date: data.snapshot_date,
-        external_id: str(i["external_id"] ?? i["sku"] ?? i["part_number"]),
-        description: str(i["description"] ?? i["item"] ?? i["name"]) ?? "Unlabelled item",
-        brand: str(i["brand"]),
-        size: str(i["size"]),
-        quantity: num(i["quantity"] ?? i["qty"]),
-        price: num(i["price"]),
-        cost: num(i["cost"]),
-      }));
-      const { error } = await supabase.from("inventory_items").upsert(rows, {
-        onConflict: "shop_id,snapshot_date,external_id,description",
-        ignoreDuplicates: true,
-      });
-      if (error) throw new Error(error.message);
-      saved = rows.length;
-    } else if (data.kind === "customers") {
-      for (const i of data.items) {
-        const name = str(i["name"] ?? i["customer"] ?? i["customer_name"]);
-        if (!name) continue;
-        const externalId = str(i["external_id"] ?? i["customer_id"]);
-        const { data: customer, error } = await supabase
-          .from("customers")
-          .upsert(
-            {
-              shop_id: shopId,
-              import_id: data.importId,
-              external_id: externalId,
-              name,
-              phone: str(i["phone"]),
-              email: str(i["email"]),
-            },
-            { onConflict: "shop_id,external_id" },
-          )
-          .select("id")
-          .maybeSingle();
-        if (error) throw new Error(error.message);
-        saved += 1;
-        const make = str(i["make"]);
-        if (customer?.id && (make || str(i["vin"]))) {
-          await supabase.from("vehicles").upsert(
-            {
-              shop_id: shopId,
-              customer_id: customer.id,
-              external_id: str(i["vehicle_id"] ?? i["vin"]),
-              year: str(i["year"]),
-              make,
-              model: str(i["model"]),
-              vin: str(i["vin"]),
-              plate: str(i["plate"]),
-            },
-            { onConflict: "shop_id,external_id" },
-          );
-        }
-      }
-    } else {
-      const kind = data.kind === "appointments" ? "appointment" : "job";
-      const rows = data.items.map((i) => ({
-        shop_id: shopId,
-        import_id: data.importId,
-        record_kind: kind,
-        external_id: str(i["external_id"] ?? i["ticket"] ?? i["work_order"]),
-        customer_name: str(i["customer_name"] ?? i["customer"] ?? i["name"]),
-        vehicle_label: str(i["vehicle"] ?? i["vehicle_label"]),
-        requested_service: str(i["service"] ?? i["requested_service"] ?? i["description"]),
-        technician: str(i["technician"] ?? i["tech"]),
-        arrival_at: str(i["arrival_at"]),
-        appointment_at: str(i["appointment_at"] ?? i["appointment"]),
-        disposition: str(i["disposition"]),
-        job_status: str(i["status"] ?? i["job_status"]),
-        snapshot_at: new Date().toISOString(),
-        is_current: true,
-      }));
-      const withId = rows.filter((r) => r.external_id);
-      const withoutId = rows.filter((r) => !r.external_id);
-      if (withId.length) {
-        const { error } = await supabase
-          .from("shop_jobs")
-          .upsert(withId, { onConflict: "shop_id,record_kind,external_id" });
-        if (error) throw new Error(error.message);
-      }
-      if (withoutId.length) {
-        const { error } = await supabase.from("shop_jobs").insert(withoutId);
-        if (error) throw new Error(error.message);
-      }
-      saved = rows.length;
-    }
-
-    const { error: impError } = await supabase
-      .from("imports")
-      .update({ status: "accepted", reviewed_by: userId, reviewed_at: new Date().toISOString() })
-      .eq("id", data.importId);
-    if (impError) throw new Error(impError.message);
-
-    return { saved };
+    const rows = normalizeRows(data.kind, data.items, data.importId);
+    const sb = context.supabase as unknown as { rpc: (f: string, a?: unknown) => any };
+    const { data: result, error } = await sb.rpc("accept_import_records", {
+      p_import_id: data.importId,
+      p_kind: data.kind,
+      p_snapshot_date: data.snapshot_date,
+      p_rows: rows,
+    });
+    if (error) throw new Error(error.message);
+    const summary = (result ?? {}) as { saved?: number; needs_review?: number };
+    return { saved: summary.saved ?? 0, needsReview: summary.needs_review ?? 0 };
   });
+
