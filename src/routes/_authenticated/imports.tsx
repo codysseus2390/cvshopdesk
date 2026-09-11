@@ -41,6 +41,8 @@ export const Route = createFileRoute("/_authenticated/imports")({
 });
 
 type ScopeValue = "daily" | "mtd" | "ytd" | "invoice" | "inventory" | "jobs" | "other";
+type RecordKind = "inventory" | "jobs" | "appointments" | "customers";
+
 
 interface ExtractedRow {
   business_date: string;
