@@ -8,7 +8,7 @@ export function MetricCard({
 }: {
   label: string;
   value: string;
-  hint?: string;
+  hint?: string | undefined;
   size?: "normal" | "tv";
 }) {
   const notUpdated = value === "Not updated" || value === "Unavailable";
