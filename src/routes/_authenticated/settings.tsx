@@ -118,7 +118,7 @@ function SettingsPage() {
                     onChange={(e) => setNewRole(e.target.value as "manager" | "staff")}
                   >
                     <option value="staff">Staff — can use the hub</option>
-                    <option value="manager">Manager — can also add and edit employees</option>
+                    <option value="manager">Admin (manager) — can also add and edit employees</option>
                   </select>
                 </div>
                 <Button disabled={busy || email.trim().length < 5} onClick={addEmployee}>
