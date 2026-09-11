@@ -86,13 +86,23 @@ function TvMode() {
             <MetricCard label="Month to date GP" value={formatCurrency(dashboard.data?.mtd.gross_profit ?? null)} />
             <MetricCard label="MTD tires" value={formatCount(dashboard.data?.mtd.tires_sold ?? null)} />
             <MetricCard label="MTD cars" value={formatCount(dashboard.data?.mtd.car_count ?? null)} />
-            <MetricCard label="MTD GP per car" value={formatCurrency(dashboard.data?.mtd.gp_per_car ?? null)} />
+            <MetricCard
+              label="MTD GP per car"
+              value={formatCurrency(dashboard.data?.mtd.gp_per_car ?? null)}
+              hint={dashboard.data?.mtd.gp_per_car_note ?? undefined}
+            />
           </div>
+          {dashboard.data?.mtd.as_of && (
+            <p className="text-lg text-muted-foreground">
+              Month to date as of {dashboard.data.mtd.as_of}
+              {dashboard.data.mtd.stale ? ` · ${dashboard.data.mtd.days_behind} day(s) behind, coverage incomplete` : ""}
+            </p>
+          )}
           {(dashboard.data?.monthly.length ?? 0) > 1 && (
             <div className="h-64 rounded-lg bg-card p-6">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={(dashboard.data?.monthly ?? []).map((m) => ({ month: m.month, gp: m.totals.gross_profit ?? 0 }))}
+                  data={(dashboard.data?.monthly ?? []).map((m) => ({ month: m.month, gp: m.totals.gross_profit }))}
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="month" tick={{ fontSize: 16 }} />
@@ -102,6 +112,7 @@ function TvMode() {
               </ResponsiveContainer>
             </div>
           )}
+
         </div>
       ) : (
         <div className="grid gap-8 lg:grid-cols-2">
