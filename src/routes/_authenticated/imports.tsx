@@ -456,8 +456,12 @@ function ImportsPage() {
                 <div>
                   <p className="font-semibold">{imp.file_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {imp.report_scope} · covers {imp.period_start ?? "?"} → {imp.period_end ?? "?"} · uploaded{" "}
+                    {imp.report_scope} · covers {imp.period_start ?? "?"} → {imp.period_end ?? "?"} · captured{" "}
+                    {imp.captured_at ? new Date(imp.captured_at).toLocaleString() : "time not recorded"} · uploaded{" "}
                     {new Date(imp.uploaded_at).toLocaleString()} · {imp.status}
+                    {imp.status === "accepted" && imp.reviewed_at
+                      ? ` on ${new Date(imp.reviewed_at).toLocaleString()} — locked`
+                      : ""}
                     {imp.error_message ? ` · ${imp.error_message}` : ""}
                   </p>
                 </div>
@@ -465,10 +469,12 @@ function ImportsPage() {
                   <Button size="sm" variant="outline" onClick={() => void openFile(imp.id)}>
                     View file
                   </Button>
-                  <Button size="sm" onClick={() => runExtract(imp.id)} disabled={busy === imp.id}>
-                    {busy === imp.id ? "Reading…" : "Read with AI"}
-                  </Button>
-                  {imp.extraction && (
+                  {imp.status !== "accepted" && (
+                    <Button size="sm" onClick={() => runExtract(imp.id)} disabled={busy === imp.id}>
+                      {busy === imp.id ? "Reading…" : "Read with AI"}
+                    </Button>
+                  )}
+                  {imp.extraction && imp.status !== "accepted" && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -482,12 +488,22 @@ function ImportsPage() {
                       size="sm"
                       variant="ghost"
                       onClick={async () => {
-                        await reject({ data: { importId: imp.id, reason: "Rejected by staff" } });
+                        setStatus(null);
+                        try {
+                          await reject({ data: { importId: imp.id, reason: "Rejected by staff" } });
+                          setStatus({ kind: "warn", text: `${imp.file_name} was marked as rejected.` });
+                        } catch (err) {
+                          setStatus({
+                            kind: "error",
+                            text: err instanceof Error ? err.message : "The file was not rejected.",
+                          });
+                        }
                         await queryClient.invalidateQueries({ queryKey: ["imports"] });
                       }}
                     >
                       Reject
                     </Button>
+
                   )}
                 </div>
               </div>
