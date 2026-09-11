@@ -281,7 +281,20 @@ function ImportsPage() {
                   <Input id="pe" type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
                 </div>
               </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="cap">Time the report was taken (leave blank if you do not know)</Label>
+                <Input
+                  id="cap"
+                  type="datetime-local"
+                  value={capturedAt}
+                  onChange={(e) => setCapturedAt(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Left blank, this stays unknown — it is never guessed from the dates above.
+                </p>
+              </div>
             </div>
+
             <Button onClick={upload} disabled={!file || !shopId || busy === "upload"}>
               {busy === "upload" ? "Uploading…" : "Upload file"}
             </Button>
