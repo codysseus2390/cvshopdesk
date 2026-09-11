@@ -171,7 +171,7 @@ function SettingsPage() {
                         }
                       >
                         <option value="staff">Staff</option>
-                        <option value="manager">Manager</option>
+                        <option value="manager">Admin (manager)</option>
                       </select>
                     )}
                     {m.status !== "approved" && (
