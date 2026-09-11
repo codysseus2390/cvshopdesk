@@ -34,10 +34,20 @@ export const Route = createFileRoute("/_authenticated/hub")({
   ),
 });
 
+/** Dashboard numbers refresh on their own and whenever the tab is focused, so an
+ *  import saved on another device reaches this screen (and the shop day rolls over). */
 export function useDashboard() {
   const fetchDashboard = useServerFn(getDashboard);
-  return useQuery({ queryKey: ["dashboard"], queryFn: () => fetchDashboard() });
+  return useQuery({
+    queryKey: ["dashboard"],
+    queryFn: () => fetchDashboard(),
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: "always",
+    staleTime: 0,
+  });
 }
+
 
 function Dashboard() {
   const { data, isLoading, error } = useDashboard();
