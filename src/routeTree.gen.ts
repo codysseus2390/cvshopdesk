@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedEntryRouteImport } from './routes/_authenticated/entry'
+import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedHubRouteImport } from './routes/_authenticated/hub'
 
 const IndexRoute = IndexRouteImport.update({
@@ -28,6 +30,16 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedEntryRoute = AuthenticatedEntryRouteImport.update({
+  id: '/entry',
+  path: '/entry',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHubRoute = AuthenticatedHubRouteImport.update({
   id: '/hub',
   path: '/hub',
@@ -37,11 +49,15 @@ const AuthenticatedHubRoute = AuthenticatedHubRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/entry': typeof AuthenticatedEntryRoute
+  '/history': typeof AuthenticatedHistoryRoute
   '/hub': typeof AuthenticatedHubRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/entry': typeof AuthenticatedEntryRoute
+  '/history': typeof AuthenticatedHistoryRoute
   '/hub': typeof AuthenticatedHubRoute
 }
 export interface FileRoutesById {
@@ -49,14 +65,23 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/entry': typeof AuthenticatedEntryRoute
+  '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/hub': typeof AuthenticatedHubRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/hub'
+  fullPaths: '/' | '/auth' | '/entry' | '/history' | '/hub'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/hub'
-  id: '__root__' | '/' | '/_authenticated' | '/auth' | '/_authenticated/hub'
+  to: '/' | '/auth' | '/entry' | '/history' | '/hub'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/entry'
+    | '/_authenticated/history'
+    | '/_authenticated/hub'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -88,6 +113,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/entry': {
+      id: '/_authenticated/entry'
+      path: '/entry'
+      fullPath: '/entry'
+      preLoaderRoute: typeof AuthenticatedEntryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/history': {
+      id: '/_authenticated/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof AuthenticatedHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/hub': {
       id: '/_authenticated/hub'
       path: '/hub'
@@ -99,10 +138,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedEntryRoute: typeof AuthenticatedEntryRoute
+  AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedHubRoute: typeof AuthenticatedHubRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedEntryRoute: AuthenticatedEntryRoute,
+  AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedHubRoute: AuthenticatedHubRoute,
 }
 
