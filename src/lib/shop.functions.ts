@@ -95,8 +95,10 @@ export const claimShop = createServerFn({ method: "POST" })
 export const requestAccess = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, userId, claims } = context;
-    const email = emailOf(claims as Record<string, unknown>);
+    const { supabase, userId } = context;
+    const { trustedIdentity } = await import("@/lib/owner.server");
+    const email = (await trustedIdentity(userId)).email;
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: shop } = await supabaseAdmin.from("shops").select("id").limit(1).maybeSingle();
     if (!shop) throw new Error("No shop has been set up yet.");
