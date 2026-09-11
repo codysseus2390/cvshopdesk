@@ -83,7 +83,11 @@ function ImportsPage() {
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [rows, setRows] = useState<ExtractedRow[]>([]);
   const [items, setItems] = useState<Record<string, string | number | null>[]>([]);
+  const [recordKind, setRecordKind] = useState<RecordKind>("inventory");
   const [unreadable, setUnreadable] = useState<string[]>([]);
+
+  const itemColumns = Array.from(new Set(items.flatMap((item) => Object.keys(item)))).slice(0, 12);
+
 
   async function upload() {
     if (!file || !shopId) return;
