@@ -1,7 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { monthToDate, shopToday, sumDaily, type MetricRow, type Totals } from "./metrics-math";
+import {
+  monthToDate,
+  shopToday,
+  yearToDate,
+  type MetricRow,
+  type PeriodTotals,
+} from "./metrics-math";
+
 
 type Supa = { from: (t: string) => any; rpc: (f: string, a?: unknown) => any };
 
