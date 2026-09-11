@@ -12,7 +12,7 @@ export const listInventory = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     let query = context.supabase
       .from("inventory_items")
-      .select("id, external_id, description, brand, size, quantity, price, cost, snapshot_date")
+      .select("id, external_id, description, brand, size, quantity, price, cost, snapshot_date, needs_review, flags")
       .order("snapshot_date", { ascending: false })
       .limit(200);
     if (data.search.trim()) {
@@ -30,7 +30,7 @@ export const listCustomers = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     let query = context.supabase
       .from("customers")
-      .select("id, external_id, name, phone, email, first_seen_at, vehicles(id, year, make, model, vin, plate)")
+      .select("id, external_id, name, phone, email, first_seen_at, needs_review, flags, vehicles(id, year, make, model, vin, plate, needs_review)")
       .order("name", { ascending: true })
       .limit(200);
     if (data.search.trim()) {
