@@ -355,30 +355,71 @@ function ImportsPage() {
               )}
 
               {items.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold">{items.length} record row(s) read from this file</p>
-                  <pre className="max-h-48 overflow-auto rounded-md bg-muted p-3 text-xs">
-                    {JSON.stringify(items.slice(0, 20), null, 2)}
-                  </pre>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" onClick={() => confirmRecords("inventory")}>
-                      Save as inventory snapshot
-                    </Button>
-                    <Button variant="outline" onClick={() => confirmRecords("customers")}>
-                      Save as customers &amp; vehicles
-                    </Button>
-                    <Button variant="outline" onClick={() => confirmRecords("jobs")}>
-                      Save as existing job records
-                    </Button>
-                    <Button variant="outline" onClick={() => confirmRecords("appointments")}>
-                      Save as existing appointment records
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold">
+                    {items.length} detail row(s) read from this file — edit anything that is wrong before saving
+                  </p>
+                  <div className="flex flex-wrap items-end gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="rk">These rows are</Label>
+                      <select
+                        id="rk"
+                        className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                        value={recordKind}
+                        onChange={(e) => setRecordKind(e.target.value as RecordKind)}
+                      >
+                        <option value="inventory">Inventory items</option>
+                        <option value="jobs">Existing job records</option>
+                        <option value="appointments">Existing appointment records</option>
+                        <option value="customers">Customers &amp; vehicles</option>
+                      </select>
+                    </div>
+                    <Button onClick={() => confirmRecords(recordKind)} disabled={busy === reviewId}>
+                      {busy === reviewId ? "Saving…" : "Save these existing records"}
                     </Button>
                   </div>
+                  <div className="max-h-96 overflow-auto rounded-md border border-border">
+                    <table className="w-full text-xs">
+                      <thead className="bg-muted">
+                        <tr>
+                          {itemColumns.map((col) => (
+                            <th key={col} className="p-2 text-left font-semibold">
+                              {col}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {items.map((item, i) => (
+                          <tr key={i} className="border-t border-border">
+                            {itemColumns.map((col) => (
+                              <td key={col} className="p-1">
+                                <Input
+                                  className="h-8 min-w-24 text-xs"
+                                  value={item[col] === null || item[col] === undefined ? "" : String(item[col])}
+                                  onChange={(e) =>
+                                    setItems(
+                                      items.map((row, j) =>
+                                        i === j ? { ...row, [col]: e.target.value === "" ? null : e.target.value } : row,
+                                      ),
+                                    )
+                                  }
+                                />
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    These save existing TireShop records into this app only. Nothing is booked or created in TireShop.
+                    Blanks and values like N/A stay empty — they are never saved as zero. Rows without a TireShop record
+                    number are kept against this upload and marked for a check. These save existing TireShop records into
+                    this app only. Nothing is booked or created in TireShop.
                   </p>
                 </div>
               )}
+
               <Button variant="ghost" onClick={() => setReviewId(null)}>
                 Close review
               </Button>
