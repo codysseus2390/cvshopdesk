@@ -79,6 +79,8 @@ function ImportsPage() {
   const [scope, setScope] = useState<ScopeValue>("daily");
   const [periodStart, setPeriodStart] = useState(shopToday());
   const [periodEnd, setPeriodEnd] = useState(shopToday());
+  const [capturedAt, setCapturedAt] = useState("");
+
   const [busy, setBusy] = useState<string | null>(null);
   const [status, setStatus] = useState<{ kind: "ok" | "warn" | "error"; text: string } | null>(null);
 
