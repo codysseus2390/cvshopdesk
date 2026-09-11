@@ -43,7 +43,7 @@ export const getShopContext = createServerFn({ method: "GET" })
 
     return {
       shopExists: (count ?? 0) > 0,
-      isOwnerEmail: email === OWNER_EMAIL,
+      isOwnerEmail: identity.isOwner,
       email,
       shop,
       membership: membership ? { role: membership.role, status: membership.status } : null,
