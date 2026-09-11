@@ -162,7 +162,7 @@ function ratio(args: {
 }
 
 /** Totals taken straight from one cumulative (mtd/ytd) snapshot. */
-function fromSnapshot(row: MetricRow, expectedDays: number, elapsedSinceAsOf: number): Totals {
+function fromSnapshot(row: MetricRow, elapsedSinceAsOf: number): Totals {
   const gpDays = row.gross_profit === null ? new Set<string>() : new Set([row.business_date]);
   const carDays = row.car_count === null ? new Set<string>() : new Set([row.business_date]);
   const { value, note } = ratio({
@@ -186,12 +186,9 @@ function fromSnapshot(row: MetricRow, expectedDays: number, elapsedSinceAsOf: nu
       tires_sold: cov(row.tires_sold === null ? 0 : 1, 1),
       car_count: cov(carDays.size, 1),
     },
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    ...(undefined as unknown as Record<string, never>),
-    ...{},
-    ...(expectedDays ? {} : {}),
   };
 }
+
 
 export interface PeriodTotals extends Totals {
   basis: "cumulative-snapshot" | "daily-sum" | "none";
