@@ -167,3 +167,19 @@ export const decideMember = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Changes an employee's role. Database policies limit this to the owner and managers, and the owner row is never touched. */
+export const setMemberRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ memberId: z.string().uuid(), role: z.enum(["manager", "staff"]) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("shop_members")
+      .update({ role: data.role, decided_at: new Date().toISOString(), decided_by: context.userId })
+      .eq("id", data.memberId)
+      .neq("role", "owner");
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
