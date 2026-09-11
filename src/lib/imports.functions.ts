@@ -249,9 +249,20 @@ Rules: never guess a number or a name you cannot read - use null and add an entr
     } catch (err) {
       const message =
         err instanceof AiUnavailableError ? err.message : err instanceof Error ? err.message : "Extraction failed.";
-      await supabase.from("imports").update({ status: "failed", error_message: message }).eq("id", imp.id);
+      const { error: markError } = await supabase
+        .from("imports")
+        .update({ status: "failed", error_message: message })
+        .eq("id", imp.id);
+      // Never claim the failure was recorded when recording it also failed.
+      if (markError) {
+        return {
+          ok: false as const,
+          message: `${message} The file could also not be marked as failed (${markError.message}), so please try again.`,
+        };
+      }
       return { ok: false as const, message };
     }
+
   });
 
 export const acceptImport = createServerFn({ method: "POST" })
