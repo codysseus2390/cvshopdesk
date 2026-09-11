@@ -12,12 +12,6 @@ export interface ShopContext {
   membership: { role: string; status: string } | null;
 }
 
-function emailOf(claims: Record<string, unknown>): string | null {
-  const direct = claims["email"];
-  if (typeof direct === "string") return direct.toLowerCase();
-  const meta = claims["user_metadata"] as { email?: string } | undefined;
-  return meta?.email ? meta.email.toLowerCase() : null;
-}
 
 export const getShopContext = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
