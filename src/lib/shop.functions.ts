@@ -12,18 +12,15 @@ export interface ShopContext {
   membership: { role: string; status: string } | null;
 }
 
-function emailOf(claims: Record<string, unknown>): string | null {
-  const direct = claims["email"];
-  if (typeof direct === "string") return direct.toLowerCase();
-  const meta = claims["user_metadata"] as { email?: string } | undefined;
-  return meta?.email ? meta.email.toLowerCase() : null;
-}
 
 export const getShopContext = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<ShopContext> => {
-    const { supabase, userId, claims } = context;
-    const email = emailOf(claims as Record<string, unknown>);
+    const { supabase, userId } = context;
+    const { trustedIdentity } = await import("@/lib/owner.server");
+    const identity = await trustedIdentity(userId);
+    const email = identity.email;
+
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { count } = await supabaseAdmin.from("shops").select("id", { count: "exact", head: true });
@@ -46,7 +43,7 @@ export const getShopContext = createServerFn({ method: "GET" })
 
     return {
       shopExists: (count ?? 0) > 0,
-      isOwnerEmail: email === OWNER_EMAIL,
+      isOwnerEmail: identity.isOwner,
       email,
       shop,
       membership: membership ? { role: membership.role, status: membership.status } : null,
@@ -58,9 +55,16 @@ export const claimShop = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ name: z.string().min(2).max(120) }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId, claims } = context;
-    const email = emailOf(claims as Record<string, unknown>);
-    if (email !== OWNER_EMAIL) throw new Error("Only the shop owner account can set up the shop.");
+    const { supabase, userId } = context;
+    const { trustedIdentity } = await import("@/lib/owner.server");
+    const identity = await trustedIdentity(userId);
+    const email = identity.email;
+    if (!identity.isOwner) {
+      throw new Error(
+        "Only the shop owner account with a confirmed email address can set up the shop.",
+      );
+    }
+
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { count } = await supabaseAdmin.from("shops").select("id", { count: "exact", head: true });
@@ -91,8 +95,10 @@ export const claimShop = createServerFn({ method: "POST" })
 export const requestAccess = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, userId, claims } = context;
-    const email = emailOf(claims as Record<string, unknown>);
+    const { supabase, userId } = context;
+    const { trustedIdentity } = await import("@/lib/owner.server");
+    const email = (await trustedIdentity(userId)).email;
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: shop } = await supabaseAdmin.from("shops").select("id").limit(1).maybeSingle();
     if (!shop) throw new Error("No shop has been set up yet.");
@@ -127,16 +133,21 @@ export const decideMember = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    // RLS restricts this update to the shop owner.
+    // RLS restricts this update to the shop owner. The role is always written
+    // explicitly so approving a request can never carry over an escalated role
+    // that was submitted with it; the owner row itself is never touched here.
     const { error } = await context.supabase
       .from("shop_members")
       .update({
         status: data.status,
-        ...(data.role ? { role: data.role } : {}),
+        role: data.role ?? "staff",
         decided_at: new Date().toISOString(),
         decided_by: context.userId,
       })
-      .eq("id", data.memberId);
+      .eq("id", data.memberId)
+      .neq("role", "owner");
+
+
     if (error) throw new Error(error.message);
     return { ok: true };
   });
