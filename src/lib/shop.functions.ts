@@ -10,6 +10,8 @@ export interface ShopContext {
   email: string | null;
   shop: { id: string; name: string; timezone: string } | null;
   membership: { role: string; status: string } | null;
+  /** People waiting for approval. Only counted for the owner and managers. */
+  pendingCount: number;
 }
 
 
