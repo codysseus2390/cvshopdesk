@@ -114,8 +114,10 @@ function ImportsPage() {
           report_scope: scope,
           period_start: periodStart || null,
           period_end: periodEnd || null,
+          captured_at: capturedAt ? new Date(capturedAt).toISOString() : null,
         },
       });
+
 
       if (result.duplicate) {
         await supabase.storage.from("shop-uploads").remove([path]);
