@@ -112,8 +112,9 @@ dbTest("membership request policy", () => {
       select pg_get_functiondef(oid) as def from pg_proc
       where proname = 'add_staff_member' and pronamespace = 'public'::regnamespace`;
     const def = fn!["def"] as string;
-    expect(def).toContain("is_shop_manager");
-    expect(def).toMatch(/owner/);
+    expect(def).toContain("The owner role cannot be granted");
+    expect(def).toContain("role in ('owner','manager')");
+    expect(def).toContain("when public.shop_members.role = 'owner' then public.shop_members.role");
   });
 
   it("keeps every table locked to authenticated members", async () => {
