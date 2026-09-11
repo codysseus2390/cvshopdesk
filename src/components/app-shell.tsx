@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CedarLogo } from "@/components/cedar-logo";
 import { AssistantBar } from "@/components/assistant-bar";
 import { Button } from "@/components/ui/button";
+import { useShopContext } from "@/components/access-gate";
 
 const NAV = [
   { to: "/hub", label: "Dashboard" },
