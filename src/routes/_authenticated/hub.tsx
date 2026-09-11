@@ -72,6 +72,16 @@ function Dashboard() {
         )
       }
     >
+      {pending > 0 && (
+        <Link
+          to="/settings"
+          className="mb-6 block rounded-md border border-accent bg-accent/10 px-4 py-3 text-sm font-semibold text-foreground"
+        >
+          {pending === 1 ? "1 person is waiting for access" : `${pending} people are waiting for access`} — review in
+          Settings
+        </Link>
+      )}
+
       {isLoading && <p className="text-muted-foreground">Loading confirmed records…</p>}
       {error && <p className="text-destructive">{error instanceof Error ? error.message : "Could not load."}</p>}
 
