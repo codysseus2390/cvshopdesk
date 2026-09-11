@@ -10,6 +10,8 @@ export interface ShopContext {
   email: string | null;
   shop: { id: string; name: string; timezone: string } | null;
   membership: { role: string; status: string } | null;
+  /** People waiting for approval. Only counted for the owner and managers. */
+  pendingCount: number;
 }
 
 
@@ -41,12 +43,26 @@ export const getShopContext = createServerFn({ method: "GET" })
       shop = data ?? null;
     }
 
+    let pendingCount = 0;
+    if (
+      membership?.status === "approved" &&
+      (membership.role === "owner" || membership.role === "manager")
+    ) {
+      const { count: pending } = await supabase
+        .from("shop_members")
+        .select("id", { count: "exact", head: true })
+        .eq("shop_id", membership.shop_id)
+        .eq("status", "pending");
+      pendingCount = pending ?? 0;
+    }
+
     return {
       shopExists: (count ?? 0) > 0,
       isOwnerEmail: identity.isOwner,
       email,
       shop,
       membership: membership ? { role: membership.role, status: membership.status } : null,
+      pendingCount,
     };
   });
 

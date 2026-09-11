@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CedarLogo } from "@/components/cedar-logo";
 import { AssistantBar } from "@/components/assistant-bar";
 import { Button } from "@/components/ui/button";
+import { useShopContext } from "@/components/access-gate";
 
 const NAV = [
   { to: "/hub", label: "Dashboard" },
@@ -31,6 +32,8 @@ export function AppShell({
   const navigate = useNavigate();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { data: shopContext } = useShopContext();
+  const pending = shopContext?.pendingCount ?? 0;
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -50,10 +53,15 @@ export function AppShell({
               <Link
                 key={item.to}
                 to={item.to}
-                className="block rounded-md px-3 py-2 text-sm font-semibold text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
-                activeProps={{ className: "block rounded-md px-3 py-2 text-sm font-semibold bg-primary text-primary-foreground" }}
+                className="flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm font-semibold text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+                activeProps={{ className: "flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm font-semibold bg-primary text-primary-foreground" }}
               >
-                {item.label}
+                <span>{item.label}</span>
+                {item.to === "/settings" && pending > 0 && (
+                  <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-accent-foreground">
+                    {pending}
+                  </span>
+                )}
               </Link>
             ))}
           </nav>
@@ -81,6 +89,7 @@ export function AppShell({
                 activeProps={{ className: "whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground" }}
               >
                 {item.label}
+                {item.to === "/settings" && pending > 0 ? ` (${pending})` : ""}
               </Link>
             ))}
           </nav>

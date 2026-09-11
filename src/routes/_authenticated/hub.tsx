@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { getDashboard } from "@/lib/metrics.functions";
 import { AppShell } from "@/components/app-shell";
-import { AccessGate } from "@/components/access-gate";
+import { AccessGate, useShopContext } from "@/components/access-gate";
 import { MetricCard } from "@/components/metric-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,6 +51,8 @@ export function useDashboard() {
 
 function Dashboard() {
   const { data, isLoading, error } = useDashboard();
+  const { data: shopContext } = useShopContext();
+  const pending = shopContext?.pendingCount ?? 0;
 
   const today = data?.todayRow;
   const todayGp = today?.gross_profit ?? null;
@@ -70,6 +72,16 @@ function Dashboard() {
         )
       }
     >
+      {pending > 0 && (
+        <Link
+          to="/settings"
+          className="mb-6 block rounded-md border border-accent bg-accent/10 px-4 py-3 text-sm font-semibold text-foreground"
+        >
+          {pending === 1 ? "1 person is waiting for access" : `${pending} people are waiting for access`} — review in
+          Settings
+        </Link>
+      )}
+
       {isLoading && <p className="text-muted-foreground">Loading confirmed records…</p>}
       {error && <p className="text-destructive">{error instanceof Error ? error.message : "Could not load."}</p>}
 
