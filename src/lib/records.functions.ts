@@ -54,25 +54,34 @@ export const listCustomers = createServerFn({ method: "POST" })
 export const listBoard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { data: member } = await context.supabase
+      .from("shop_members")
+      .select("shop_id, shops(timezone)")
+      .eq("user_id", context.userId)
+      .eq("status", "approved")
+      .maybeSingle();
+    if (!member?.shop_id) throw new Error("You do not have access to a shop yet.");
+    const timezone = (member.shops?.timezone as string | undefined) ?? "America/Chicago";
+
     const { data, error } = await context.supabase
       .from("shop_jobs")
       .select(
-        "id, record_kind, external_id, customer_name, vehicle_label, requested_service, technician, arrival_at, appointment_at, disposition, job_status, snapshot_at, local_status, local_note, local_updated_at",
+        "id, record_kind, external_id, identity_key, customer_name, vehicle_label, requested_service, technician, arrival_at, appointment_at, disposition, job_status, snapshot_at, local_status, local_note, local_updated_at, needs_review, flags",
       )
       .eq("is_current", true)
-      .limit(300);
+      .limit(500);
     if (error) throw new Error(error.message);
     const rows = data ?? [];
+    const split = splitBoard(rows, Date.now());
     return {
-      appointments: rows
-        .filter((r) => r.record_kind === "appointment")
-        .sort((a, b) => (a.appointment_at ?? "") .localeCompare(b.appointment_at ?? "")),
-      jobs: rows
-        .filter((r) => r.record_kind !== "appointment")
-        .sort((a, b) => (a.arrival_at ?? a.snapshot_at).localeCompare(b.arrival_at ?? b.snapshot_at)),
+      ...split,
+      timezone,
+      shopToday: shopToday(timezone),
+      fetchedAt: new Date().toISOString(),
       lastSnapshot: rows.reduce<string | null>((acc, r) => (!acc || r.snapshot_at > acc ? r.snapshot_at : acc), null),
     };
   });
+
 
 /** Local-only status and note. Never written back to TireShop. */
 export const updateJobLocalState = createServerFn({ method: "POST" })
