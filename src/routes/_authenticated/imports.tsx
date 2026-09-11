@@ -170,7 +170,12 @@ function ImportsPage() {
       })),
     );
     setItems((extraction?.["items"] as Record<string, string | number | null>[] | undefined) ?? []);
+    const suggested = String(extraction?.["record_kind"] ?? "");
+    if (["inventory", "jobs", "appointments", "customers"].includes(suggested)) {
+      setRecordKind(suggested as RecordKind);
+    }
     setUnreadable((extraction?.["unreadable"] as string[] | undefined) ?? []);
+
   }
 
   async function confirmMetrics() {
