@@ -92,15 +92,49 @@ function Dashboard() {
           <section>
             <h2 className="mb-3 font-display text-xl font-bold">Month to date</h2>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <MetricCard label="Gross profit" value={formatCurrency(data.mtd.gross_profit)} />
-              <MetricCard label="Tires sold" value={formatCount(data.mtd.tires_sold)} />
-              <MetricCard label="Car count" value={formatCount(data.mtd.car_count)} />
-              <MetricCard label="GP per car" value={formatCurrency(data.mtd.gp_per_car)} />
+              <MetricCard
+                label="Gross profit"
+                value={formatCurrency(data.mtd.gross_profit)}
+                hint={
+                  data.mtd.coverage.gross_profit.days_missing_value > 0
+                    ? `${data.mtd.coverage.gross_profit.days_missing_value} saved day(s) have no gross profit`
+                    : undefined
+                }
+              />
+              <MetricCard
+                label="Tires sold"
+                value={formatCount(data.mtd.tires_sold)}
+                hint={
+                  data.mtd.coverage.tires_sold.days_missing_value > 0
+                    ? `${data.mtd.coverage.tires_sold.days_missing_value} saved day(s) have no tire count`
+                    : undefined
+                }
+              />
+              <MetricCard
+                label="Car count"
+                value={formatCount(data.mtd.car_count)}
+                hint={
+                  data.mtd.coverage.car_count.days_missing_value > 0
+                    ? `${data.mtd.coverage.car_count.days_missing_value} saved day(s) have no car count`
+                    : undefined
+                }
+              />
+              <MetricCard
+                label="GP per car"
+                value={formatCurrency(data.mtd.gp_per_car)}
+                hint={data.mtd.gp_per_car_note ?? undefined}
+              />
             </div>
             <p className="mt-3 text-sm text-muted-foreground">
-              {data.mtd.missing_days > 0
-                ? `Incomplete coverage: ${data.mtd.covered_days} day(s) saved, ${data.mtd.missing_days} still missing this month.`
-                : `Coverage complete for ${data.mtd.covered_days} day(s) so far.`}
+              {data.mtd.basis === "cumulative-snapshot"
+                ? `From the accepted month-to-date report as of ${data.mtd.as_of}${
+                    data.mtd.stale ? ` · ${data.mtd.days_behind} day(s) behind the shop day, coverage incomplete` : ""
+                  }`
+                : data.mtd.basis === "none"
+                  ? "No confirmed records for this month yet. Nothing is assumed to be zero."
+                  : `Sum of ${data.mtd.covered_days} confirmed day(s) through ${data.mtd.as_of}${
+                      data.mtd.missing_days > 0 ? ` · ${data.mtd.missing_days} day(s) still missing` : ""
+                    }`}
             </p>
           </section>
 
@@ -117,16 +151,19 @@ function Dashboard() {
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                      data={data.monthly.map((m) => ({ month: m.month, gp: m.totals.gross_profit ?? 0 }))}
+                      data={data.monthly.map((m) => ({ month: m.month, gp: m.totals.gross_profit }))}
                     >
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 12 }} />
-                      <ChartTooltip formatter={(v: number) => formatCurrency(v)} />
+                      <ChartTooltip formatter={(v) => formatCurrency(typeof v === "number" ? v : null)} />
                       <Bar dataKey="gp" fill="var(--color-primary)" radius={4} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Months with no saved gross profit are left blank, never drawn as zero.
+                </p>
               </CardContent>
             </Card>
 
@@ -139,13 +176,30 @@ function Dashboard() {
                 <Row label="Tires sold" value={formatCount(data.ytd.tires_sold)} />
                 <Row label="Car count" value={formatCount(data.ytd.car_count)} />
                 <Row label="GP per car" value={formatCurrency(data.ytd.gp_per_car)} />
+                {data.ytd.gp_per_car_note && (
+                  <p className="text-xs text-muted-foreground">{data.ytd.gp_per_car_note}</p>
+                )}
                 <p className="pt-2 text-xs text-muted-foreground">
-                  Built from {data.ytd.covered_days} confirmed daily record(s). Cumulative reports are never added to
-                  daily totals.
+                  {data.ytd.basis === "cumulative-snapshot"
+                    ? `From the accepted year-to-date report as of ${data.ytd.as_of}.`
+                    : data.ytd.basis === "none"
+                      ? "No confirmed records for this year yet."
+                      : `Sum of ${data.ytd.covered_days} confirmed daily record(s) through ${data.ytd.as_of}, of ${
+                          data.ytd.covered_days + data.ytd.missing_days
+                        } day(s) elapsed.`}{" "}
+                  Cumulative reports are never added to daily totals.
                 </p>
+                <div className="border-t pt-2">
+                  <p className="mb-1 text-xs font-semibold text-muted-foreground">
+                    Same period last year
+                  </p>
+                  <Row label="Gross profit" value={formatCurrency(data.ytdLastYear.gross_profit)} />
+                  <Row label="Cars" value={formatCount(data.ytdLastYear.car_count)} />
+                </div>
               </CardContent>
             </Card>
           </section>
+
 
           <section>
             <h2 className="mb-3 font-display text-xl font-bold">Monthly scorecards</h2>

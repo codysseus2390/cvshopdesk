@@ -2,8 +2,11 @@
  * Pure metric math for Cedar Valley Hub.
  * Rules enforced here:
  *  - Missing values stay null ("Not updated"); a verified 0 is a real value.
- *  - Gross profit per car = gross profit total / car count total. Never an average of daily ratios.
+ *  - A missing per-field value is never treated as zero: each metric tracks its own coverage.
+ *  - Gross profit per car = gross profit total / car count total over the SAME complete records.
+ *    If gross profit and car count do not cover the same days, GP/car is unavailable.
  *  - Daily / MTD / YTD scopes never mix. Cumulative snapshots are replacements, not addends.
+ *  - Nothing dated after the shop's current business day is counted in current results.
  */
 
 export type Scope = "daily" | "mtd" | "ytd" | "invoice" | "inventory" | "jobs" | "other";
@@ -14,6 +17,14 @@ export interface MetricRow {
   gross_profit: number | null;
   tires_sold: number | null;
   car_count: number | null;
+  created_at?: string;
+}
+
+export interface FieldCoverage {
+  /** Days inside the window that have a saved value for this metric. */
+  days_with_value: number;
+  /** Days that have a saved record but no value for this metric. */
+  days_missing_value: number;
 }
 
 export interface Totals {
@@ -21,9 +32,17 @@ export interface Totals {
   tires_sold: number | null;
   car_count: number | null;
   gp_per_car: number | null;
+  /** Plain-language reason GP/car is unavailable, or a partial-coverage caveat. */
+  gp_per_car_note: string | null;
+  /** Days in the window with at least one saved record. */
   covered_days: number;
-  /** Days in the requested window with no confirmed record at all. */
+  /** Days in the window with no saved record at all. */
   missing_days: number;
+  coverage: {
+    gross_profit: FieldCoverage;
+    tires_sold: FieldCoverage;
+    car_count: FieldCoverage;
+  };
 }
 
 export function gpPerCar(grossProfit: number | null, carCount: number | null): number | null {
@@ -33,69 +52,268 @@ export function gpPerCar(grossProfit: number | null, carCount: number | null): n
   return grossProfit / carCount;
 }
 
-function addNullable(a: number | null, b: number | null): number | null {
-  if (a === null && b === null) return null;
-  return (a ?? 0) + (b ?? 0);
-}
+const FIELDS = ["gross_profit", "tires_sold", "car_count"] as const;
+type Field = (typeof FIELDS)[number];
 
-/** Sum of daily-scope rows only. Cumulative rows are ignored on purpose. */
-export function sumDaily(rows: MetricRow[], expectedDays: number): Totals {
-  const daily = rows.filter((r) => r.scope === "daily");
-  let gp: number | null = null;
-  let tires: number | null = null;
-  let cars: number | null = null;
-  const dates = new Set<string>();
-  for (const r of daily) {
-    dates.add(r.business_date);
-    gp = addNullable(gp, r.gross_profit);
-    tires = addNullable(tires, r.tires_sold);
-    cars = addNullable(cars, r.car_count);
-  }
+function emptyTotals(expectedDays: number): Totals {
+  const none: FieldCoverage = { days_with_value: 0, days_missing_value: 0 };
   return {
-    gross_profit: gp,
-    tires_sold: tires,
-    car_count: cars,
-    gp_per_car: gpPerCar(gp, cars),
-    covered_days: dates.size,
-    missing_days: Math.max(0, expectedDays - dates.size),
+    gross_profit: null,
+    tires_sold: null,
+    car_count: null,
+    gp_per_car: null,
+    gp_per_car_note: "No confirmed records for this period",
+    covered_days: 0,
+    missing_days: Math.max(0, expectedDays),
+    coverage: { gross_profit: { ...none }, tires_sold: { ...none }, car_count: { ...none } },
   };
 }
 
 /**
- * Month-to-date result. A confirmed cumulative `mtd` snapshot (the latest business
- * date in the month) replaces the daily sum; otherwise daily rows are summed.
+ * Sum of daily-scope rows only. Cumulative rows are ignored on purpose.
+ * `upTo` (the shop's current business date) excludes future-dated records.
  */
-export function monthToDate(
-  rows: MetricRow[],
-  monthPrefix: string,
-  daysElapsed: number,
-): Totals & { basis: "cumulative-snapshot" | "daily-sum" | "none"; as_of: string | null } {
-  const inMonth = rows.filter((r) => r.business_date.startsWith(monthPrefix));
-  const mtdRows = inMonth
-    .filter((r) => r.scope === "mtd")
-    .sort((a, b) => (a.business_date < b.business_date ? 1 : -1));
-  const latest = mtdRows[0];
-  if (latest) {
+export function sumDaily(rows: MetricRow[], expectedDays: number, upTo?: string): Totals {
+  const daily = rows.filter(
+    (r) => r.scope === "daily" && (upTo === undefined || r.business_date <= upTo),
+  );
+  // One record per business date: the newest current snapshot wins.
+  const byDate = new Map<string, MetricRow>();
+  for (const r of daily) {
+    const existing = byDate.get(r.business_date);
+    if (!existing || (r.created_at ?? "") >= (existing.created_at ?? "")) byDate.set(r.business_date, r);
+  }
+  if (byDate.size === 0) return emptyTotals(expectedDays);
+
+  const sums: Record<Field, number | null> = { gross_profit: null, tires_sold: null, car_count: null };
+  const withValue: Record<Field, Set<string>> = {
+    gross_profit: new Set(),
+    tires_sold: new Set(),
+    car_count: new Set(),
+  };
+
+  for (const [date, row] of byDate) {
+    for (const f of FIELDS) {
+      const v = row[f];
+      if (v === null || v === undefined || !Number.isFinite(v)) continue;
+      withValue[f].add(date);
+      sums[f] = (sums[f] ?? 0) + v;
+    }
+  }
+
+  const coveredDays = byDate.size;
+  const missingDays = Math.max(0, expectedDays - coveredDays);
+  const coverage = {
+    gross_profit: cov(withValue.gross_profit.size, coveredDays),
+    tires_sold: cov(withValue.tires_sold.size, coveredDays),
+    car_count: cov(withValue.car_count.size, coveredDays),
+  };
+
+  const { value, note } = ratio({
+    grossProfit: sums.gross_profit,
+    carCount: sums.car_count,
+    gpDays: withValue.gross_profit,
+    carDays: withValue.car_count,
+    coveredDays,
+    missingDays,
+  });
+
+  return {
+    gross_profit: sums.gross_profit,
+    tires_sold: sums.tires_sold,
+    car_count: sums.car_count,
+    gp_per_car: value,
+    gp_per_car_note: note,
+    covered_days: coveredDays,
+    missing_days: missingDays,
+    coverage,
+  };
+}
+
+function cov(withValue: number, coveredDays: number): FieldCoverage {
+  return { days_with_value: withValue, days_missing_value: Math.max(0, coveredDays - withValue) };
+}
+
+function ratio(args: {
+  grossProfit: number | null;
+  carCount: number | null;
+  gpDays: Set<string>;
+  carDays: Set<string>;
+  coveredDays: number;
+  missingDays: number;
+}): { value: number | null; note: string | null } {
+  const { grossProfit, carCount, gpDays, carDays, coveredDays, missingDays } = args;
+  if (gpDays.size === 0 || carDays.size === 0) {
+    return { value: null, note: "Needs both gross profit and car count" };
+  }
+  if (gpDays.size !== coveredDays || carDays.size !== coveredDays) {
     return {
-      gross_profit: latest.gross_profit,
-      tires_sold: latest.tires_sold,
-      car_count: latest.car_count,
-      gp_per_car: gpPerCar(latest.gross_profit, latest.car_count),
-      covered_days: 1,
-      missing_days: 0,
-      basis: "cumulative-snapshot",
-      as_of: latest.business_date,
+      value: null,
+      note: `Unavailable: gross profit saved for ${gpDays.size} of ${coveredDays} day(s), car count for ${carDays.size} of ${coveredDays}`,
     };
   }
-  const summed = sumDaily(inMonth, daysElapsed);
+  // Same days on both metrics — safe to divide.
+  const value = gpPerCar(grossProfit, carCount);
+  if (value === null) return { value: null, note: "Car count is zero or unknown for this period" };
+  if (missingDays > 0) {
+    return { value, note: `Based on ${coveredDays} saved day(s); ${missingDays} day(s) still missing` };
+  }
+  return { value, note: null };
+}
+
+/** Totals taken straight from one cumulative (mtd/ytd) snapshot. */
+function fromSnapshot(row: MetricRow, elapsedSinceAsOf: number): Totals {
+  const gpDays = row.gross_profit === null ? new Set<string>() : new Set([row.business_date]);
+  const carDays = row.car_count === null ? new Set<string>() : new Set([row.business_date]);
+  const { value, note } = ratio({
+    grossProfit: row.gross_profit,
+    carCount: row.car_count,
+    gpDays,
+    carDays,
+    coveredDays: 1,
+    missingDays: 0,
+  });
+  return {
+    gross_profit: row.gross_profit,
+    tires_sold: row.tires_sold,
+    car_count: row.car_count,
+    gp_per_car: value,
+    gp_per_car_note: note,
+    covered_days: 1,
+    missing_days: Math.max(0, elapsedSinceAsOf),
+    coverage: {
+      gross_profit: cov(gpDays.size, 1),
+      tires_sold: cov(row.tires_sold === null ? 0 : 1, 1),
+      car_count: cov(carDays.size, 1),
+    },
+  };
+}
+
+
+export interface PeriodTotals extends Totals {
+  basis: "cumulative-snapshot" | "daily-sum" | "none";
+  /** Business date the numbers actually describe. */
+  as_of: string | null;
+  /** True when the newest record is older than the shop's current business day. */
+  stale: boolean;
+  /** Days between as_of and the shop's business day that are not represented. */
+  days_behind: number;
+}
+
+/** How many days of a month have happened as of `today` (0 for future months). */
+export function daysElapsedInMonth(monthPrefix: string, today: string): number {
+  const todayMonth = today.slice(0, 7);
+  if (monthPrefix > todayMonth) return 0;
+  if (monthPrefix === todayMonth) return Number(today.slice(8, 10));
+  return daysInMonth(monthPrefix);
+}
+
+export function daysInMonth(monthPrefix: string): number {
+  const year = Number(monthPrefix.slice(0, 4));
+  const month = Number(monthPrefix.slice(5, 7));
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+/** 1-based day of the year for a YYYY-MM-DD date. */
+export function dayOfYear(date: string): number {
+  const start = Date.UTC(Number(date.slice(0, 4)), 0, 1);
+  const day = Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, Number(date.slice(8, 10)));
+  return Math.round((day - start) / 86_400_000) + 1;
+}
+
+function daysBetween(from: string, to: string): number {
+  const a = Date.UTC(Number(from.slice(0, 4)), Number(from.slice(5, 7)) - 1, Number(from.slice(8, 10)));
+  const b = Date.UTC(Number(to.slice(0, 4)), Number(to.slice(5, 7)) - 1, Number(to.slice(8, 10)));
+  return Math.max(0, Math.round((b - a) / 86_400_000));
+}
+
+function latestCumulative(rows: MetricRow[], scope: "mtd" | "ytd", upTo: string): MetricRow | undefined {
+  return rows
+    .filter((r) => r.scope === scope && r.business_date <= upTo)
+    .sort((a, b) =>
+      a.business_date === b.business_date
+        ? (a.created_at ?? "") < (b.created_at ?? "")
+          ? 1
+          : -1
+        : a.business_date < b.business_date
+          ? 1
+          : -1,
+    )[0];
+}
+
+/**
+ * Month-to-date result as of the shop's business day `today`.
+ * The latest accepted cumulative `mtd` snapshot replaces the daily sum, but its own
+ * as-of date is reported and coverage is marked stale when it predates today.
+ */
+export function monthToDate(rows: MetricRow[], monthPrefix: string, today: string): PeriodTotals {
+  const elapsed = daysElapsedInMonth(monthPrefix, today);
+  const boundary = monthPrefix === today.slice(0, 7) ? today : `${monthPrefix}-31`;
+  const inMonth = rows.filter((r) => r.business_date.startsWith(monthPrefix));
+  const snapshot = latestCumulative(inMonth, "mtd", boundary);
+
+  if (snapshot) {
+    const behind = daysBetween(snapshot.business_date, boundary);
+    return {
+      ...fromSnapshot(snapshot, behind),
+      basis: "cumulative-snapshot",
+      as_of: snapshot.business_date,
+      stale: behind > 0,
+      days_behind: behind,
+    };
+  }
+
+  const summed = sumDaily(inMonth, elapsed, boundary);
   const dailyDates = inMonth
-    .filter((r) => r.scope === "daily")
+    .filter((r) => r.scope === "daily" && r.business_date <= boundary)
     .map((r) => r.business_date)
     .sort();
+  const asOf = dailyDates.length ? dailyDates[dailyDates.length - 1]! : null;
+  const behind = asOf ? daysBetween(asOf, boundary) : elapsed;
   return {
     ...summed,
     basis: summed.covered_days > 0 ? "daily-sum" : "none",
-    as_of: dailyDates.length ? dailyDates[dailyDates.length - 1]! : null,
+    as_of: asOf,
+    stale: behind > 0,
+    days_behind: behind,
+  };
+}
+
+/**
+ * Year-to-date result. A confirmed cumulative `ytd` snapshot is respected (latest wins);
+ * otherwise daily rows in the year are summed against elapsed days of the year.
+ * Cumulative and daily scopes are never added together.
+ */
+export function yearToDate(rows: MetricRow[], year: string, today: string): PeriodTotals {
+  const inYear = rows.filter((r) => r.business_date.startsWith(year));
+  const boundary = year === today.slice(0, 4) ? today : `${year}-12-31`;
+  const elapsed = year === today.slice(0, 4) ? dayOfYear(today) : dayOfYear(`${year}-12-31`);
+  const snapshot = latestCumulative(inYear, "ytd", boundary);
+
+  if (snapshot) {
+    const behind = daysBetween(snapshot.business_date, boundary);
+    return {
+      ...fromSnapshot(snapshot, behind),
+      basis: "cumulative-snapshot",
+      as_of: snapshot.business_date,
+      stale: behind > 0,
+      days_behind: behind,
+    };
+  }
+
+  const summed = sumDaily(inYear, elapsed, boundary);
+  const dailyDates = inYear
+    .filter((r) => r.scope === "daily" && r.business_date <= boundary)
+    .map((r) => r.business_date)
+    .sort();
+  const asOf = dailyDates.length ? dailyDates[dailyDates.length - 1]! : null;
+  const behind = asOf ? daysBetween(asOf, boundary) : elapsed;
+  return {
+    ...summed,
+    basis: summed.covered_days > 0 ? "daily-sum" : "none",
+    as_of: asOf,
+    stale: behind > 0,
+    days_behind: behind,
   };
 }
 

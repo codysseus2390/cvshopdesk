@@ -50,7 +50,12 @@ export const getShopContext = createServerFn({ method: "GET" })
     };
   });
 
-/** Only the verified owner email may create the shop, and only once. */
+/**
+ * Only the verified owner email may create the shop, and only once.
+ * The shop and its owner membership are created together by one database routine that
+ * re-verifies auth.uid() plus the confirmed owner email, takes a lock against races, and
+ * is safe to retry (a half-finished setup is repaired rather than duplicated).
+ */
 export const claimShop = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ name: z.string().min(2).max(120) }).parse(input))
@@ -58,39 +63,21 @@ export const claimShop = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { trustedIdentity } = await import("@/lib/owner.server");
     const identity = await trustedIdentity(userId);
-    const email = identity.email;
     if (!identity.isOwner) {
       throw new Error(
         "Only the shop owner account with a confirmed email address can set up the shop.",
       );
     }
 
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { count } = await supabaseAdmin.from("shops").select("id", { count: "exact", head: true });
-    if ((count ?? 0) > 0) throw new Error("A shop has already been set up.");
-
-    // RLS on shops also requires the owner email, so this insert is enforced twice.
-    const { data: shop, error } = await supabase
-      .from("shops")
-      .insert({ name: data.name, created_by: userId })
-      .select("id")
-      .single();
+    const { data: shopId, error } = await (supabase as unknown as {
+      rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+    }).rpc("bootstrap_shop", { p_name: data.name });
     if (error) throw new Error(error.message);
+    if (!shopId) throw new Error("Shop setup did not complete. Nothing was saved — please try again.");
 
-    const { error: memberError } = await supabaseAdmin.from("shop_members").insert({
-      shop_id: shop.id,
-      user_id: userId,
-      email,
-      role: "owner",
-      status: "approved",
-      decided_at: new Date().toISOString(),
-      decided_by: userId,
-    });
-    if (memberError) throw new Error(memberError.message);
-
-    return { shopId: shop.id };
+    return { shopId: shopId as string };
   });
+
 
 export const requestAccess = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
