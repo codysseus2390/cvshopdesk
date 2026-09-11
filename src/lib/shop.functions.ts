@@ -79,22 +79,19 @@ export const claimShop = createServerFn({ method: "POST" })
   });
 
 
+/**
+ * Records a staff access request. One database routine decides the outcome: an
+ * employee the owner or a manager already added is approved straight away, anyone
+ * else is left pending until an admin approves them.
+ */
 export const requestAccess = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, userId } = context;
-    const { trustedIdentity } = await import("@/lib/owner.server");
-    const email = (await trustedIdentity(userId)).email;
-
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: shop } = await supabaseAdmin.from("shops").select("id").limit(1).maybeSingle();
-    if (!shop) throw new Error("No shop has been set up yet.");
-
-    const { error } = await supabase
-      .from("shop_members")
-      .insert({ shop_id: shop.id, user_id: userId, email, status: "pending", role: "staff" });
-    if (error && !error.message.includes("duplicate")) throw new Error(error.message);
-    return { ok: true };
+    const { data, error } = await (context.supabase as unknown as {
+      rpc: (fn: string) => Promise<{ data: unknown; error: { message: string } | null }>;
+    }).rpc("request_shop_access");
+    if (error) throw new Error(error.message);
+    return (data ?? { status: "pending" }) as { status: string };
   });
 
 export const listMembers = createServerFn({ method: "GET" })
@@ -106,6 +103,38 @@ export const listMembers = createServerFn({ method: "GET" })
       .order("requested_at", { ascending: true });
     if (error) throw new Error(error.message);
     return data ?? [];
+  });
+
+/** Pre-authorised employees who have not signed in yet. */
+export const listInvites = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("staff_invites")
+      .select("id, email, role, created_at, claimed_at")
+      .is("claimed_at", null)
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+/**
+ * Adds an employee by email. Only the owner or a manager may do this, enforced in
+ * the database. Nothing is emailed and no password is created here.
+ */
+export const addStaffMember = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({ email: z.string().email().max(200), role: z.enum(["manager", "staff"]) })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: result, error } = await (context.supabase as unknown as {
+      rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+    }).rpc("add_staff_member", { p_email: data.email, p_role: data.role });
+    if (error) throw new Error(error.message);
+    return (result ?? { status: "invited" }) as { status: "approved" | "invited" };
   });
 
 export const decideMember = createServerFn({ method: "POST" })
@@ -135,6 +164,22 @@ export const decideMember = createServerFn({ method: "POST" })
       .neq("role", "owner");
 
 
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Changes an employee's role. Database policies limit this to the owner and managers, and the owner row is never touched. */
+export const setMemberRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ memberId: z.string().uuid(), role: z.enum(["manager", "staff"]) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("shop_members")
+      .update({ role: data.role, decided_at: new Date().toISOString(), decided_by: context.userId })
+      .eq("id", data.memberId)
+      .neq("role", "owner");
     if (error) throw new Error(error.message);
     return { ok: true };
   });
