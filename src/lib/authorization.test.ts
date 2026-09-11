@@ -97,12 +97,23 @@ dbTest("membership request policy", () => {
     expect(check).toContain("role = 'staff'");
   });
 
-  it("restricts membership decisions to the shop owner", async () => {
+  it("restricts membership decisions to the owner or a manager and never the owner row", async () => {
     const [policy] = await sql!`
       select qual from pg_policies
       where schemaname = 'public' and tablename = 'shop_members'
         and cmd = 'UPDATE'`;
-    expect(policy!["qual"] as string).toContain("is_shop_owner");
+    const qual = policy!["qual"] as string;
+    expect(qual).toContain("is_shop_manager");
+    expect(qual).toContain("role <> 'owner'");
+  });
+
+  it("never lets an added employee be granted the owner role", async () => {
+    const [fn] = await sql!`
+      select pg_get_functiondef(oid) as def from pg_proc
+      where proname = 'add_staff_member' and pronamespace = 'public'::regnamespace`;
+    const def = fn!["def"] as string;
+    expect(def).toContain("is_shop_manager");
+    expect(def).toMatch(/owner/);
   });
 
   it("keeps every table locked to authenticated members", async () => {
