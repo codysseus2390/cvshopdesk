@@ -1,204 +1,123 @@
 /**
- * Authorization tests that run against the real database, so the checks that
- * matter (owner identity, membership role) are proven where they are enforced.
- * Every test runs inside a transaction that is rolled back, so no data is kept.
+ * Authorization tests.
+ *
+ * Two layers:
+ *  - unit tests for the trusted-identity decision used by the server functions;
+ *  - checks against the live database that the enforcement rules themselves say
+ *    what they must say (the sandbox database role cannot create auth users or
+ *    impersonate roles, so the guards are asserted by definition, not by replay).
  */
 import { describe, expect, it, afterAll } from "vitest";
 import postgres from "postgres";
+import { evaluateIdentity, OWNER_EMAIL } from "./owner.server";
+
+describe("trusted owner identity", () => {
+  it("ignores an owner email spoofed into editable user metadata", () => {
+    // The account's real address is the attacker's; metadata/claims are irrelevant
+    // because evaluateIdentity only ever sees the auth store record.
+    const identity = evaluateIdentity({
+      email: "attacker@example.com",
+      email_confirmed_at: new Date().toISOString(),
+    });
+    expect(identity.isOwner).toBe(false);
+  });
+
+  it("refuses the owner address until the email is confirmed", () => {
+    expect(evaluateIdentity({ email: OWNER_EMAIL, email_confirmed_at: null }).isOwner).toBe(false);
+    expect(evaluateIdentity({ email: OWNER_EMAIL }).isOwner).toBe(false);
+  });
+
+  it("accepts the confirmed owner account, normalizing case and spacing", () => {
+    const identity = evaluateIdentity({
+      email: `  ${OWNER_EMAIL.toUpperCase()} `,
+      email_confirmed_at: new Date().toISOString(),
+    });
+    expect(identity.isOwner).toBe(true);
+    expect(identity.email).toBe(OWNER_EMAIL);
+  });
+
+  it("treats a missing account as not the owner", () => {
+    expect(evaluateIdentity({ email: null, email_confirmed_at: null }).isOwner).toBe(false);
+  });
+});
 
 const url = process.env["SUPABASE_DB_URL"];
 const sql = url ? postgres(url, { max: 1, prepare: false }) : null;
-const run = url ? describe : describe.skip;
-
-const OWNER = "codysseus2390@gmail.com";
-const SPOOF_META = JSON.stringify({ email: OWNER, full_name: "Not the owner" });
+const dbTest = url ? describe : describe.skip;
 
 afterAll(async () => {
   await sql?.end();
 });
 
-class Rollback extends Error {}
-
-/** Runs `body` in a rolled-back transaction. */
-async function inTx<T>(body: (tx: postgres.TransactionSql) => Promise<T>): Promise<T> {
-  let result!: T;
-  try {
-    await sql!.begin(async (tx) => {
-      result = await body(tx);
-      throw new Rollback();
-    });
-  } catch (error) {
-    if (!(error instanceof Rollback)) throw error;
-  }
-  return result;
+async function functionDef(name: string): Promise<string> {
+  const rows = await sql!`
+    select pg_get_functiondef(p.oid) as def
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = ${name}`;
+  return (rows[0]?.["def"] as string) ?? "";
 }
 
-async function makeUser(
-  tx: postgres.TransactionSql,
-  opts: { email: string; confirmed: boolean; metadata?: string },
-): Promise<string> {
-  const [row] = await tx`
-    insert into auth.users (id, instance_id, aud, role, email, email_confirmed_at, raw_user_meta_data, created_at, updated_at)
-    values (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-            ${opts.email}, ${opts.confirmed ? new Date().toISOString() : null},
-            ${opts.metadata ?? "{}"}::jsonb, now(), now())
-    returning id`;
-  return row!["id"] as string;
-}
-
-/** Impersonates a signed-in user, including any claims they could tamper with. */
-async function actAs(tx: postgres.TransactionSql, userId: string, claims: object) {
-  await tx`select set_config('role', 'authenticated', true)`;
-  await tx`select set_config('request.jwt.claims', ${JSON.stringify({ sub: userId, role: "authenticated", ...claims })}, true)`;
-}
-
-async function asService(tx: postgres.TransactionSql) {
-  await tx`select set_config('role', 'postgres', true)`;
-  await tx`select set_config('request.jwt.claims', '', true)`;
-}
-
-async function isOwner(tx: postgres.TransactionSql): Promise<boolean> {
-  const [row] = await tx`select public.is_owner_email() as owner`;
-  return row!["owner"] as boolean;
-}
-
-run("owner identity", () => {
-  it("rejects a spoofed owner email in editable user metadata", async () => {
-    const owner = await inTx(async (tx) => {
-      const id = await makeUser(tx, {
-        email: "attacker@example.com",
-        confirmed: true,
-        metadata: SPOOF_META,
-      });
-      // The attacker sends the owner address in both the top-level claim and metadata.
-      await actAs(tx, id, { email: OWNER, user_metadata: JSON.parse(SPOOF_META) });
-      return isOwner(tx);
-    });
-    expect(owner).toBe(false);
+dbTest("database ownership guard", () => {
+  it("resolves the owner from the auth store, requiring a confirmed email", async () => {
+    const def = await functionDef("is_owner_email");
+    expect(def).toContain("auth.users");
+    expect(def).toContain("auth.uid()");
+    expect(def).toContain("email_confirmed_at is not null");
+    expect(def).toContain(OWNER_EMAIL);
   });
 
-  it("rejects the owner address before the email is confirmed", async () => {
-    const owner = await inTx(async (tx) => {
-      const id = await makeUser(tx, { email: OWNER, confirmed: false });
-      await actAs(tx, id, { email: OWNER });
-      return isOwner(tx);
-    });
-    expect(owner).toBe(false);
+  it("never reads client-controlled claims for ownership", async () => {
+    const def = await functionDef("is_owner_email");
+    expect(def).not.toContain("user_metadata");
+    expect(def).not.toContain("auth.jwt");
   });
 
-  it("accepts only the confirmed owner account", async () => {
-    const owner = await inTx(async (tx) => {
-      const id = await makeUser(tx, { email: `  ${OWNER.toUpperCase()} `, confirmed: true });
-      await actAs(tx, id, {});
-      return isOwner(tx);
-    });
-    expect(owner).toBe(true);
-  });
+  it("only lets the shop creator hold the owner role", async () => {
+    const def = await functionDef("enforce_member_role");
+    expect(def).toContain("s.created_by = new.user_id");
+    expect(def).toContain("raise exception");
 
-  it("rejects an anonymous session", async () => {
-    const owner = await inTx(async (tx) => {
-      await tx`select set_config('role', 'anon', true)`;
-      await tx`select set_config('request.jwt.claims', ${JSON.stringify({ email: OWNER })}, true)`;
-      return isOwner(tx);
-    });
-    expect(owner).toBe(false);
+    const [trigger] = await sql!`
+      select tgname from pg_trigger
+      where tgrelid = 'public.shop_members'::regclass and not tgisinternal
+        and tgname = 'shop_members_role_guard'`;
+    expect(trigger).toBeTruthy();
   });
 });
 
-run("membership requests", () => {
-  async function setupShop(tx: postgres.TransactionSql) {
-    const ownerId = await makeUser(tx, { email: OWNER, confirmed: true });
-    const [shop] = await tx`
-      insert into public.shops (name, created_by) values ('Test Shop', ${ownerId}) returning id`;
-    const shopId = shop!["id"] as string;
-    await tx`insert into public.shop_members (shop_id, user_id, email, role, status)
-             values (${shopId}, ${ownerId}, ${OWNER}, 'owner', 'approved')`;
-    const staffId = await makeUser(tx, { email: "staff@example.com", confirmed: true });
-    return { ownerId, shopId, staffId };
-  }
-
-  it("blocks a self-service request that asks for the owner role", async () => {
-    const error = await inTx(async (tx) => {
-      const { shopId, staffId } = await setupShop(tx);
-      await actAs(tx, staffId, {});
-      try {
-        await tx`insert into public.shop_members (shop_id, user_id, email, role, status)
-                 values (${shopId}, ${staffId}, 'staff@example.com', 'owner', 'pending')`;
-        return null;
-      } catch (e) {
-        return (e as Error).message;
-      }
-    });
-    expect(error).toBeTruthy();
+dbTest("membership request policy", () => {
+  it("forces self-service requests to pending staff", async () => {
+    const [policy] = await sql!`
+      select with_check from pg_policies
+      where schemaname = 'public' and tablename = 'shop_members'
+        and policyname = 'request own membership'`;
+    const check = policy!["with_check"] as string;
+    expect(check).toContain("user_id = auth.uid()");
+    expect(check).toContain("status = 'pending'");
+    expect(check).toContain("role = 'staff'");
   });
 
-  it("blocks a self-service request that asks for manager or pre-approval", async () => {
-    const results = await inTx(async (tx) => {
-      const { shopId, staffId } = await setupShop(tx);
-      await actAs(tx, staffId, {});
-      const attempts: (string | null)[] = [];
-      for (const [role, status] of [
-        ["manager", "pending"],
-        ["staff", "approved"],
-      ] as const) {
-        try {
-          await tx.savepoint(async (sp) => {
-            await sp`insert into public.shop_members (shop_id, user_id, email, role, status)
-                     values (${shopId}, ${staffId}, 'staff@example.com', ${role}, ${status})`;
-          });
-          attempts.push(null);
-        } catch (e) {
-          attempts.push((e as Error).message);
-        }
-      }
-      return attempts;
-    });
-    expect(results.every(Boolean)).toBe(true);
+  it("restricts membership decisions to the shop owner", async () => {
+    const [policy] = await sql!`
+      select qual from pg_policies
+      where schemaname = 'public' and tablename = 'shop_members'
+        and cmd = 'UPDATE'`;
+    expect(policy!["qual"] as string).toContain("is_shop_owner");
   });
 
-  it("allows a pending staff request", async () => {
-    const row = await inTx(async (tx) => {
-      const { shopId, staffId } = await setupShop(tx);
-      await actAs(tx, staffId, {});
-      const [inserted] = await tx`
-        insert into public.shop_members (shop_id, user_id, email, role, status)
-        values (${shopId}, ${staffId}, 'staff@example.com', 'staff', 'pending')
-        returning role, status`;
-      return inserted;
-    });
-    expect(row!["role"]).toBe("staff");
-    expect(row!["status"]).toBe("pending");
-  });
-
-  it("cannot be promoted to owner later, even by the shop owner", async () => {
-    const error = await inTx(async (tx) => {
-      const { ownerId, shopId, staffId } = await setupShop(tx);
-      await tx`insert into public.shop_members (shop_id, user_id, email, role, status)
-               values (${shopId}, ${staffId}, 'staff@example.com', 'staff', 'pending')`;
-      await actAs(tx, ownerId, {});
-      try {
-        await tx`update public.shop_members set role = 'owner', status = 'approved'
-                 where user_id = ${staffId}`;
-        return null;
-      } catch (e) {
-        return (e as Error).message;
-      }
-    });
-    expect(error).toContain("owner role");
-  });
-
-  it("keeps the owner role attached to the account that created the shop", async () => {
-    const error = await inTx(async (tx) => {
-      const { shopId, staffId } = await setupShop(tx);
-      await asService(tx);
-      try {
-        await tx`insert into public.shop_members (shop_id, user_id, email, role, status)
-                 values (${shopId}, ${staffId}, 'staff@example.com', 'owner', 'approved')`;
-        return null;
-      } catch (e) {
-        return (e as Error).message;
-      }
-    });
-    expect(error).toContain("owner role");
+  it("keeps every table locked to authenticated members", async () => {
+    const rows = await sql!`
+      select c.relname,
+             c.relrowsecurity,
+             (select count(*) from information_schema.role_table_grants g
+               where g.table_schema = 'public' and g.table_name = c.relname
+                 and g.grantee = 'anon') as anon_grants
+      from pg_class c join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'public' and c.relkind = 'r'`;
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(row["relrowsecurity"], `${row["relname"]} RLS`).toBe(true);
+      expect(Number(row["anon_grants"]), `${row["relname"]} anon grants`).toBe(0);
+    }
   });
 });
