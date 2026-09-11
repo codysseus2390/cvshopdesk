@@ -5,18 +5,6 @@ import { normalizeRows, splitBoard } from "./import-records";
 import { shopToday } from "./metrics-math";
 
 
-type Supa = { from: (t: string) => any };
-
-async function resolveShopId(supabase: Supa, userId: string) {
-  const { data } = await supabase
-    .from("shop_members")
-    .select("shop_id")
-    .eq("user_id", userId)
-    .eq("status", "approved")
-    .maybeSingle();
-  if (!data?.shop_id) throw new Error("You do not have access to a shop yet.");
-  return data.shop_id as string;
-}
 
 export const listInventory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
