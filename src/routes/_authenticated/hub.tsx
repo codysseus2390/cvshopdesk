@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { getDashboard } from "@/lib/metrics.functions";
 import { AppShell } from "@/components/app-shell";
-import { AccessGate } from "@/components/access-gate";
+import { AccessGate, useShopContext } from "@/components/access-gate";
 import { MetricCard } from "@/components/metric-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
