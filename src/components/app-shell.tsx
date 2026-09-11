@@ -32,6 +32,8 @@ export function AppShell({
   const navigate = useNavigate();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { data: shopContext } = useShopContext();
+  const pending = shopContext?.pendingCount ?? 0;
 
   async function signOut() {
     await queryClient.cancelQueries();
