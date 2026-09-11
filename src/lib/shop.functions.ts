@@ -16,8 +16,11 @@ export interface ShopContext {
 export const getShopContext = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<ShopContext> => {
-    const { supabase, userId, claims } = context;
-    const email = emailOf(claims as Record<string, unknown>);
+    const { supabase, userId } = context;
+    const { trustedIdentity } = await import("@/lib/owner.server");
+    const identity = await trustedIdentity(userId);
+    const email = identity.email;
+
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { count } = await supabaseAdmin.from("shops").select("id", { count: "exact", head: true });
