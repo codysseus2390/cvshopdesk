@@ -562,6 +562,44 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_invites: {
+        Row: {
+          claimed_at: string | null
+          created_at: string
+          created_by: string
+          email: string
+          id: string
+          role: Database["public"]["Enums"]["member_role"]
+          shop_id: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          created_at?: string
+          created_by: string
+          email: string
+          id?: string
+          role?: Database["public"]["Enums"]["member_role"]
+          shop_id: string
+        }
+        Update: {
+          claimed_at?: string | null
+          created_at?: string
+          created_by?: string
+          email?: string
+          id?: string
+          role?: Database["public"]["Enums"]["member_role"]
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_invites_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicles: {
         Row: {
           created_at: string
@@ -640,6 +678,13 @@ export type Database = {
         }
         Returns: Json
       }
+      add_staff_member: {
+        Args: {
+          p_email: string
+          p_role?: Database["public"]["Enums"]["member_role"]
+        }
+        Returns: Json
+      }
       bootstrap_shop: {
         Args: { p_name: string; p_timezone?: string }
         Returns: string
@@ -649,10 +694,15 @@ export type Database = {
         Returns: boolean
       }
       is_owner_email: { Args: never; Returns: boolean }
+      is_shop_manager: {
+        Args: { _shop_id: string; _user_id?: string }
+        Returns: boolean
+      }
       is_shop_owner: {
         Args: { _shop_id: string; _user_id?: string }
         Returns: boolean
       }
+      request_shop_access: { Args: never; Returns: Json }
       save_metric_snapshot: {
         Args: {
           p_business_date: string

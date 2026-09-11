@@ -57,6 +57,13 @@
       "when": 1789165884729,
       "tag": "0007_restrict_accept_import_records_execute",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789168589350,
+      "tag": "0008_staff_invites_and_manager_approval",
+      "breakpoints": true
     }
   ]
 }
