@@ -14,16 +14,629 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assistant_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          shop_id: string
+          sources: Json | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          shop_id: string
+          sources?: Json | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          shop_id?: string
+          sources?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_messages_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          email: string | null
+          external_id: string | null
+          first_seen_at: string
+          id: string
+          import_id: string | null
+          name: string
+          phone: string | null
+          shop_id: string
+        }
+        Insert: {
+          email?: string | null
+          external_id?: string | null
+          first_seen_at?: string
+          id?: string
+          import_id?: string | null
+          name: string
+          phone?: string | null
+          shop_id: string
+        }
+        Update: {
+          email?: string | null
+          external_id?: string | null
+          first_seen_at?: string
+          id?: string
+          import_id?: string | null
+          name?: string
+          phone?: string | null
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imports: {
+        Row: {
+          captured_at: string | null
+          error_message: string | null
+          extraction: Json | null
+          extraction_notes: string | null
+          file_hash: string
+          file_name: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          period_end: string | null
+          period_start: string | null
+          report_scope: Database["public"]["Enums"]["report_scope"]
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shop_id: string
+          status: Database["public"]["Enums"]["import_status"]
+          storage_path: string
+          uploaded_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          captured_at?: string | null
+          error_message?: string | null
+          extraction?: Json | null
+          extraction_notes?: string | null
+          file_hash: string
+          file_name: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          report_scope?: Database["public"]["Enums"]["report_scope"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shop_id: string
+          status?: Database["public"]["Enums"]["import_status"]
+          storage_path: string
+          uploaded_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          captured_at?: string | null
+          error_message?: string | null
+          extraction?: Json | null
+          extraction_notes?: string | null
+          file_hash?: string
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          report_scope?: Database["public"]["Enums"]["report_scope"]
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shop_id?: string
+          status?: Database["public"]["Enums"]["import_status"]
+          storage_path?: string
+          uploaded_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imports_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_items: {
+        Row: {
+          brand: string | null
+          cost: number | null
+          created_at: string
+          description: string
+          external_id: string | null
+          id: string
+          import_id: string | null
+          price: number | null
+          quantity: number | null
+          shop_id: string
+          size: string | null
+          snapshot_date: string
+        }
+        Insert: {
+          brand?: string | null
+          cost?: number | null
+          created_at?: string
+          description: string
+          external_id?: string | null
+          id?: string
+          import_id?: string | null
+          price?: number | null
+          quantity?: number | null
+          shop_id: string
+          size?: string | null
+          snapshot_date: string
+        }
+        Update: {
+          brand?: string | null
+          cost?: number | null
+          created_at?: string
+          description?: string
+          external_id?: string | null
+          id?: string
+          import_id?: string | null
+          price?: number | null
+          quantity?: number | null
+          shop_id?: string
+          size?: string | null
+          snapshot_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metric_corrections: {
+        Row: {
+          business_date: string
+          corrected_at: string
+          corrected_by: string
+          field: string
+          id: string
+          new_snapshot_id: string | null
+          new_value: string | null
+          note: string | null
+          previous_snapshot_id: string | null
+          previous_value: string | null
+          scope: Database["public"]["Enums"]["report_scope"]
+          shop_id: string
+        }
+        Insert: {
+          business_date: string
+          corrected_at?: string
+          corrected_by: string
+          field: string
+          id?: string
+          new_snapshot_id?: string | null
+          new_value?: string | null
+          note?: string | null
+          previous_snapshot_id?: string | null
+          previous_value?: string | null
+          scope: Database["public"]["Enums"]["report_scope"]
+          shop_id: string
+        }
+        Update: {
+          business_date?: string
+          corrected_at?: string
+          corrected_by?: string
+          field?: string
+          id?: string
+          new_snapshot_id?: string | null
+          new_value?: string | null
+          note?: string | null
+          previous_snapshot_id?: string | null
+          previous_value?: string | null
+          scope?: Database["public"]["Enums"]["report_scope"]
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metric_corrections_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metric_snapshots: {
+        Row: {
+          business_date: string
+          car_count: number | null
+          created_at: string
+          entered_by: string
+          flags: Json
+          gross_profit: number | null
+          id: string
+          import_id: string | null
+          is_current: boolean
+          note: string | null
+          scope: Database["public"]["Enums"]["report_scope"]
+          shop_id: string
+          source: Database["public"]["Enums"]["metric_source"]
+          superseded_at: string | null
+          superseded_by: string | null
+          tires_sold: number | null
+        }
+        Insert: {
+          business_date: string
+          car_count?: number | null
+          created_at?: string
+          entered_by: string
+          flags?: Json
+          gross_profit?: number | null
+          id?: string
+          import_id?: string | null
+          is_current?: boolean
+          note?: string | null
+          scope?: Database["public"]["Enums"]["report_scope"]
+          shop_id: string
+          source?: Database["public"]["Enums"]["metric_source"]
+          superseded_at?: string | null
+          superseded_by?: string | null
+          tires_sold?: number | null
+        }
+        Update: {
+          business_date?: string
+          car_count?: number | null
+          created_at?: string
+          entered_by?: string
+          flags?: Json
+          gross_profit?: number | null
+          id?: string
+          import_id?: string | null
+          is_current?: boolean
+          note?: string | null
+          scope?: Database["public"]["Enums"]["report_scope"]
+          shop_id?: string
+          source?: Database["public"]["Enums"]["metric_source"]
+          superseded_at?: string | null
+          superseded_by?: string | null
+          tires_sold?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metric_snapshots_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metric_snapshots_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      shop_jobs: {
+        Row: {
+          appointment_at: string | null
+          arrival_at: string | null
+          customer_name: string | null
+          disposition: string | null
+          external_id: string | null
+          id: string
+          import_id: string | null
+          is_current: boolean
+          job_status: string | null
+          local_note: string | null
+          local_status: string | null
+          local_updated_at: string | null
+          local_updated_by: string | null
+          record_kind: string
+          requested_service: string | null
+          shop_id: string
+          snapshot_at: string
+          technician: string | null
+          vehicle_label: string | null
+        }
+        Insert: {
+          appointment_at?: string | null
+          arrival_at?: string | null
+          customer_name?: string | null
+          disposition?: string | null
+          external_id?: string | null
+          id?: string
+          import_id?: string | null
+          is_current?: boolean
+          job_status?: string | null
+          local_note?: string | null
+          local_status?: string | null
+          local_updated_at?: string | null
+          local_updated_by?: string | null
+          record_kind?: string
+          requested_service?: string | null
+          shop_id: string
+          snapshot_at?: string
+          technician?: string | null
+          vehicle_label?: string | null
+        }
+        Update: {
+          appointment_at?: string | null
+          arrival_at?: string | null
+          customer_name?: string | null
+          disposition?: string | null
+          external_id?: string | null
+          id?: string
+          import_id?: string | null
+          is_current?: boolean
+          job_status?: string | null
+          local_note?: string | null
+          local_status?: string | null
+          local_updated_at?: string | null
+          local_updated_by?: string | null
+          record_kind?: string
+          requested_service?: string | null
+          shop_id?: string
+          snapshot_at?: string
+          technician?: string | null
+          vehicle_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_jobs_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_jobs_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_members: {
+        Row: {
+          decided_at: string | null
+          decided_by: string | null
+          email: string | null
+          id: string
+          requested_at: string
+          role: Database["public"]["Enums"]["member_role"]
+          shop_id: string
+          status: Database["public"]["Enums"]["member_status"]
+          user_id: string
+        }
+        Insert: {
+          decided_at?: string | null
+          decided_by?: string | null
+          email?: string | null
+          id?: string
+          requested_at?: string
+          role?: Database["public"]["Enums"]["member_role"]
+          shop_id: string
+          status?: Database["public"]["Enums"]["member_status"]
+          user_id: string
+        }
+        Update: {
+          decided_at?: string | null
+          decided_by?: string | null
+          email?: string | null
+          id?: string
+          requested_at?: string
+          role?: Database["public"]["Enums"]["member_role"]
+          shop_id?: string
+          status?: Database["public"]["Enums"]["member_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_members_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shops: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          timezone: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+          timezone?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          timezone?: string
+        }
+        Relationships: []
+      }
+      vehicles: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          external_id: string | null
+          id: string
+          make: string | null
+          model: string | null
+          plate: string | null
+          shop_id: string
+          vin: string | null
+          year: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          external_id?: string | null
+          id?: string
+          make?: string | null
+          model?: string | null
+          plate?: string | null
+          shop_id: string
+          vin?: string | null
+          year?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          external_id?: string | null
+          id?: string
+          make?: string | null
+          model?: string | null
+          plate?: string | null
+          shop_id?: string
+          vin?: string | null
+          year?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      accept_import_metrics: {
+        Args: { p_import_id: string; p_note?: string; p_rows: Json }
+        Returns: number
+      }
+      has_shop_access: {
+        Args: { _shop_id: string; _user_id?: string }
+        Returns: boolean
+      }
+      is_owner_email: { Args: never; Returns: boolean }
+      is_shop_owner: {
+        Args: { _shop_id: string; _user_id?: string }
+        Returns: boolean
+      }
+      save_metric_snapshot: {
+        Args: {
+          p_business_date: string
+          p_car_count: number
+          p_correction_note?: string
+          p_flags: Json
+          p_gross_profit: number
+          p_import_id: string
+          p_note: string
+          p_scope: Database["public"]["Enums"]["report_scope"]
+          p_shop_id: string
+          p_source: Database["public"]["Enums"]["metric_source"]
+          p_tires_sold: number
+        }
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      import_status:
+        | "uploaded"
+        | "extracting"
+        | "extracted"
+        | "failed"
+        | "accepted"
+        | "rejected"
+      member_role: "owner" | "manager" | "staff"
+      member_status: "pending" | "approved" | "revoked"
+      metric_source: "manual" | "import" | "api"
+      report_scope:
+        | "daily"
+        | "mtd"
+        | "ytd"
+        | "invoice"
+        | "inventory"
+        | "jobs"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +763,27 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      import_status: [
+        "uploaded",
+        "extracting",
+        "extracted",
+        "failed",
+        "accepted",
+        "rejected",
+      ],
+      member_role: ["owner", "manager", "staff"],
+      member_status: ["pending", "approved", "revoked"],
+      metric_source: ["manual", "import", "api"],
+      report_scope: [
+        "daily",
+        "mtd",
+        "ytd",
+        "invoice",
+        "inventory",
+        "jobs",
+        "other",
+      ],
+    },
   },
 } as const
