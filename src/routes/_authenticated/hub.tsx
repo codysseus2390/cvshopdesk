@@ -1,0 +1,191 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip as ChartTooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { getDashboard } from "@/lib/metrics.functions";
+import { AppShell } from "@/components/app-shell";
+import { AccessGate } from "@/components/access-gate";
+import { MetricCard } from "@/components/metric-card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCount, formatCurrency, gpPerCar } from "@/lib/metrics-math";
+
+export const Route = createFileRoute("/_authenticated/hub")({
+  head: () => ({
+    meta: [
+      { title: "Dashboard — Cedar Valley Hub" },
+      { name: "description", content: "Today and month-to-date shop numbers from confirmed Cedar Valley records." },
+      { property: "og:title", content: "Dashboard — Cedar Valley Hub" },
+      { property: "og:description", content: "Confirmed daily and monthly shop numbers." },
+    ],
+  }),
+  component: () => (
+    <AccessGate>
+      <Dashboard />
+    </AccessGate>
+  ),
+});
+
+export function useDashboard() {
+  const fetchDashboard = useServerFn(getDashboard);
+  return useQuery({ queryKey: ["dashboard"], queryFn: () => fetchDashboard() });
+}
+
+function Dashboard() {
+  const { data, isLoading, error } = useDashboard();
+
+  const today = data?.todayRow;
+  const todayGp = today?.gross_profit ?? null;
+  const todayCars = today?.car_count ?? null;
+
+  return (
+    <AppShell
+      title="Dashboard"
+      subtitle={
+        data ? (
+          <>
+            {data.shop.name} · shop day {data.today} ({data.shop.timezone}) · last saved{" "}
+            {data.lastUpdate ? new Date(data.lastUpdate).toLocaleString() : "never"}
+          </>
+        ) : (
+          "Loading…"
+        )
+      }
+    >
+      {isLoading && <p className="text-muted-foreground">Loading confirmed records…</p>}
+      {error && <p className="text-destructive">{error instanceof Error ? error.message : "Could not load."}</p>}
+
+      {data && (
+        <div className="space-y-10">
+          <section>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-display text-xl font-bold">Today</h2>
+              <Button asChild size="sm">
+                <Link to="/entry">Enter today's numbers</Link>
+              </Button>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <MetricCard label="Gross profit" value={formatCurrency(todayGp)} />
+              <MetricCard label="Tires sold" value={formatCount(today?.tires_sold ?? null)} />
+              <MetricCard label="Car count" value={formatCount(todayCars)} />
+              <MetricCard
+                label="GP per car"
+                value={formatCurrency(gpPerCar(todayGp, todayCars))}
+                hint={gpPerCar(todayGp, todayCars) === null ? "Needs gross profit and car count" : undefined}
+              />
+            </div>
+            {!today && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                No confirmed entry for today yet. Nothing is assumed to be zero.
+              </p>
+            )}
+          </section>
+
+          <section>
+            <h2 className="mb-3 font-display text-xl font-bold">Month to date</h2>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <MetricCard label="Gross profit" value={formatCurrency(data.mtd.gross_profit)} />
+              <MetricCard label="Tires sold" value={formatCount(data.mtd.tires_sold)} />
+              <MetricCard label="Car count" value={formatCount(data.mtd.car_count)} />
+              <MetricCard label="GP per car" value={formatCurrency(data.mtd.gp_per_car)} />
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {data.mtd.missing_days > 0
+                ? `Incomplete coverage: ${data.mtd.covered_days} day(s) saved, ${data.mtd.missing_days} still missing this month.`
+                : `Coverage complete for ${data.mtd.covered_days} day(s) so far.`}
+            </p>
+          </section>
+
+          <section className="grid gap-6 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="font-display">Monthly gross profit</CardTitle>
+              </CardHeader>
+              <CardContent className="h-72">
+                {data.monthly.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No monthly totals yet. They appear as daily entries and reports are confirmed.
+                  </p>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={data.monthly.map((m) => ({ month: m.month, gp: m.totals.gross_profit ?? 0 }))}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} />
+                      <ChartTooltip formatter={(v: number) => formatCurrency(v)} />
+                      <Bar dataKey="gp" fill="var(--color-primary)" radius={4} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-display">Year to date</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <Row label="Gross profit" value={formatCurrency(data.ytd.gross_profit)} />
+                <Row label="Tires sold" value={formatCount(data.ytd.tires_sold)} />
+                <Row label="Car count" value={formatCount(data.ytd.car_count)} />
+                <Row label="GP per car" value={formatCurrency(data.ytd.gp_per_car)} />
+                <p className="pt-2 text-xs text-muted-foreground">
+                  Built from {data.ytd.covered_days} confirmed daily record(s). Cumulative reports are never added to
+                  daily totals.
+                </p>
+              </CardContent>
+            </Card>
+          </section>
+
+          <section>
+            <h2 className="mb-3 font-display text-xl font-bold">Monthly scorecards</h2>
+            {data.monthly.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nothing confirmed yet.</p>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {data.monthly
+                  .slice()
+                  .reverse()
+                  .map((m) => (
+                    <Card key={m.month}>
+                      <CardHeader>
+                        <CardTitle className="font-display text-lg">{m.month}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-1 text-sm">
+                        <Row label="GP" value={formatCurrency(m.totals.gross_profit)} />
+                        <Row label="Tires" value={formatCount(m.totals.tires_sold)} />
+                        <Row label="Cars" value={formatCount(m.totals.car_count)} />
+                        <Row label="GP/car" value={formatCurrency(m.totals.gp_per_car)} />
+                        {m.totals.missing_days > 0 && (
+                          <p className="text-xs text-muted-foreground">{m.totals.missing_days} day(s) missing</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+    </AppShell>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-4">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-semibold">{value}</span>
+    </div>
+  );
+}
