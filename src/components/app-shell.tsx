@@ -89,6 +89,7 @@ export function AppShell({
                 activeProps={{ className: "whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground" }}
               >
                 {item.label}
+                {item.to === "/settings" && pending > 0 ? ` (${pending})` : ""}
               </Link>
             ))}
           </nav>
