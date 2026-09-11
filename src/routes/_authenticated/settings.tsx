@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { decideMember, listMembers } from "@/lib/shop.functions";
+import { useState } from "react";
+import { addStaffMember, decideMember, listInvites, listMembers, setMemberRole } from "@/lib/shop.functions";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate, useShopContext } from "@/components/access-gate";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
