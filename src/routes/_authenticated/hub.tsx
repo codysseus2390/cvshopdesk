@@ -156,7 +156,7 @@ function Dashboard() {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 12 }} />
-                      <ChartTooltip formatter={(v: number | null) => formatCurrency(v ?? null)} />
+                      <ChartTooltip formatter={(v) => formatCurrency(typeof v === "number" ? v : null)} />
                       <Bar dataKey="gp" fill="var(--color-primary)" radius={4} />
                     </BarChart>
                   </ResponsiveContainer>
