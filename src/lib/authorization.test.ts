@@ -133,7 +133,8 @@ dbTest("atomic shop bootstrap", () => {
     const def = fn!["def"] as string;
     expect(def).toContain("auth.uid()");
     expect(def).toContain("auth.users");
-    expect(def).toContain("email_confirmed_at is null");
+    expect(def.toLowerCase()).toContain("email_confirmed_at");
+    expect(def.toLowerCase()).toMatch(/v_confirmed is null/);
     expect(def).toContain("codysseus2390@gmail.com");
     expect(def).not.toContain("user_metadata");
     expect(def).not.toContain("auth.jwt");
