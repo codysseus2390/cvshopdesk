@@ -205,7 +205,7 @@ function ImportsPage() {
     }
   }
 
-  async function confirmRecords(kind: "inventory" | "jobs" | "appointments" | "customers") {
+  async function confirmRecords(kind: RecordKind) {
     if (!reviewId || !items.length) return;
     setBusy(reviewId);
     setStatus(null);
@@ -213,7 +213,12 @@ function ImportsPage() {
       const result = await acceptRecords({
         data: { importId: reviewId, kind, snapshot_date: periodEnd || shopToday(), items },
       });
-      setStatus({ kind: "ok", text: `${result.saved} record(s) saved as an imported snapshot.` });
+      setStatus({
+        kind: "ok",
+        text: `${result.saved} record(s) saved as an imported snapshot${
+          result.needsReview > 0 ? ` · ${result.needsReview} row(s) marked for a check` : ""
+        }.`,
+      });
       setReviewId(null);
       await queryClient.invalidateQueries();
     } catch (err) {
@@ -222,6 +227,7 @@ function ImportsPage() {
       setBusy(null);
     }
   }
+
 
   return (
     <AppShell
