@@ -147,7 +147,7 @@ export const decideMember = createServerFn({ method: "POST" })
       .eq("id", data.memberId)
       .neq("role", "owner");
 
-      .eq("id", data.memberId);
+
     if (error) throw new Error(error.message);
     return { ok: true };
   });
