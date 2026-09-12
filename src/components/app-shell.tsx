@@ -12,7 +12,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationBell } from "@/components/notification-bell";
 import type { PermissionKey } from "@/lib/permissions";
 
-const NAV: { to: string; label: string; needs?: PermissionKey }[] = [
+const NAV = [
   { to: "/hub", label: "Dashboard", needs: "view_dashboard" },
   { to: "/entry", label: "Daily entry", needs: "edit_dashboard_numbers" },
   { to: "/history", label: "History" },
@@ -23,7 +23,7 @@ const NAV: { to: string; label: string; needs?: PermissionKey }[] = [
   { to: "/tools", label: "Tools", needs: "access_tools" },
   { to: "/account", label: "My account" },
   { to: "/settings", label: "Settings" },
-];
+] as const satisfies readonly { to: string; label: string; needs?: PermissionKey }[];
 
 export function AppShell({
   title,
