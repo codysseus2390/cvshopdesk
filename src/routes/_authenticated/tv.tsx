@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { useDashboard } from "./hub";
 import { useBoard, waitingSince, type BoardJob } from "./board";
 import { formatCount, formatCurrency, gpPerCar } from "@/lib/metrics-math";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { listDisplayNotifications } from "@/lib/notifications.functions";
 
 export const SCREEN_SECONDS = 120;
 /** Rows that stay readable across a 1920x1080 screen. */
@@ -45,6 +48,14 @@ export const Route = createFileRoute("/_authenticated/tv")({
 function TvMode() {
   const dashboard = useDashboard();
   const board = useBoard();
+  const fetchAnnouncements = useServerFn(listDisplayNotifications);
+  const announcements = useQuery({
+    queryKey: ["display-notifications"],
+    queryFn: () => fetchAnnouncements(),
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: "always",
+  });
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
@@ -95,6 +106,22 @@ function TvMode() {
           )}
         </div>
       </header>
+
+      {(announcements.data?.length ?? 0) > 0 && (
+        <div className="mb-8 space-y-3">
+          {(announcements.data ?? []).slice(0, 2).map((item) => (
+            <div
+              key={item.id}
+              className={`rounded-lg border-l-8 bg-card p-6 ${
+                item.notification?.priority === "high" ? "border-destructive" : "border-primary"
+              }`}
+            >
+              <p className="font-display text-3xl font-bold">{item.notification?.title}</p>
+              <p className="mt-1 text-2xl text-muted-foreground">{item.notification?.message}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {screen === "numbers" ? (
         <div className="space-y-8">
