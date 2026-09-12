@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { BarChart3, CalendarDays, CalendarRange, Trophy } from "lucide-react";
 import { getDashboard } from "@/lib/metrics.functions";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate, useShopContext } from "@/components/access-gate";
@@ -97,16 +98,16 @@ function Dashboard() {
       {error && <p className="text-destructive">{error instanceof Error ? error.message : "Could not load."}</p>}
 
       {data && (
-        <div className="space-y-10">
+        <div className="space-y-7">
           {shows("today") && (
           <section>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-display text-xl font-bold">Today</h2>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="flex items-center gap-2 font-display text-xl font-bold"><CalendarDays className="h-5 w-5 text-primary" />Today</h2>
               <Button asChild size="sm">
                 <Link to="/entry">Enter today's numbers</Link>
               </Button>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <MetricCard label="Gross profit" value={formatCurrency(todayGp)} />
               <MetricCard label="Tires sold" value={formatCount(today?.tires_sold ?? null)} />
               <MetricCard label="Car count" value={formatCount(todayCars)} />
@@ -126,8 +127,8 @@ function Dashboard() {
 
           {shows("mtd") && (
           <section>
-            <h2 className="mb-3 font-display text-xl font-bold">Month to date</h2>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <h2 className="mb-3 flex items-center gap-2 font-display text-xl font-bold"><CalendarRange className="h-5 w-5 text-secondary" />Month to date</h2>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <MetricCard
                 label="Gross profit"
                 value={formatCurrency(data.mtd.gross_profit)}
@@ -176,13 +177,13 @@ function Dashboard() {
           )}
 
           {(shows("monthly_chart") || shows("ytd")) && (
-          <section className="grid gap-6 lg:grid-cols-3">
+          <section className="grid gap-4 lg:grid-cols-3">
             {shows("monthly_chart") && (
             <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="font-display">Monthly gross profit</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 font-display"><BarChart3 className="h-5 w-5 text-secondary" />Monthly gross profit</CardTitle>
               </CardHeader>
-              <CardContent className="h-72">
+              <CardContent className="h-64">
                 {data.monthly.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     No monthly totals yet. They appear as daily entries and reports are confirmed.
@@ -209,8 +210,8 @@ function Dashboard() {
 
             {shows("ytd") && (
             <Card>
-              <CardHeader>
-                <CardTitle className="font-display">Year to date</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 font-display"><Trophy className="h-5 w-5 text-primary" />Year to date</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <Row label="Gross profit" value={formatCurrency(data.ytd.gross_profit)} />
@@ -246,11 +247,11 @@ function Dashboard() {
 
           {shows("scorecards") && (
           <section>
-            <h2 className="mb-3 font-display text-xl font-bold">Monthly scorecards</h2>
+            <h2 className="mb-3 flex items-center gap-2 font-display text-xl font-bold"><BarChart3 className="h-5 w-5 text-primary" />Monthly scorecards</h2>
             {data.monthly.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nothing confirmed yet.</p>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {data.monthly
                   .slice()
                   .reverse()
