@@ -115,7 +115,7 @@ export function AssistantBar() {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur">
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-card/90 shadow-[0_-8px_30px_var(--card-shadow)] backdrop-blur-xl">
       {open && turns.length > 0 && (
         <div className="max-h-64 space-y-3 overflow-y-auto px-4 py-4 sm:px-6">
           {turns.map((turn, i) => (
@@ -126,7 +126,7 @@ export function AssistantBar() {
                   ? "text-sm font-semibold text-foreground"
                   : turn.ok === false
                     ? "rounded-md bg-destructive/10 p-3 text-sm text-destructive"
-                    : "rounded-md bg-muted p-3 text-sm text-foreground"
+                    : "rounded-lg border border-border/70 bg-muted p-3 text-sm text-foreground"
               }
             >
               {turn.role === "user" ? `You: ${turn.text}` : turn.text}
@@ -136,9 +136,9 @@ export function AssistantBar() {
         </div>
       )}
 
-      <form onSubmit={submit} className="px-3 py-3 sm:px-6">
+      <form onSubmit={submit} className="mx-auto max-w-5xl px-3 py-3 sm:px-6 sm:py-4">
         {attachment && (
-          <div className="mb-2 flex max-w-full items-center gap-2 truncate rounded-full bg-muted px-3 py-1 text-xs">
+          <div className="mb-2 flex max-w-full items-center gap-2 truncate rounded-full border border-border bg-muted px-3 py-1.5 text-xs shadow-sm">
             <FileText className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">{attachment.name}</span>
             <button type="button" onClick={() => setAttachment(null)} aria-label="Remove attachment">
@@ -154,7 +154,7 @@ export function AssistantBar() {
                 type="button"
                 variant="outline"
                 size="icon"
-                className="h-10 w-10 shrink-0 rounded-full"
+                className="h-11 w-11 shrink-0 rounded-full bg-card"
                 aria-label="Add photo, file or create"
               >
                 <Plus className="h-5 w-5" />
@@ -188,13 +188,13 @@ export function AssistantBar() {
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="Ask about saved shop numbers…"
             aria-label="Ask the assistant"
-            className="h-10 min-w-0 flex-1 rounded-full"
+            className="h-11 min-w-0 flex-1 rounded-full border-border bg-background px-4 shadow-sm"
           />
 
           <Button
             type="submit"
             size="icon"
-            className="h-10 w-10 shrink-0 rounded-full"
+            className="h-11 w-11 shrink-0 rounded-full shadow-md"
             disabled={busy || (!attachment && question.trim().length < 2)}
             aria-label="Send"
           >

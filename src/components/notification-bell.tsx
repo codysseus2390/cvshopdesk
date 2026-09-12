@@ -36,7 +36,7 @@ export function NotificationBell() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="relative" aria-label="Announcements">
+        <Button variant="outline" size="icon" className="relative rounded-full bg-card" aria-label="Announcements">
           <Bell className="h-4 w-4" />
           {unread > 0 && (
             <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[11px] font-bold text-accent-foreground">
@@ -45,8 +45,8 @@ export function NotificationBell() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 p-0">
-        <div className="border-b border-border px-3 py-2 text-sm font-semibold">Announcements</div>
+       <DropdownMenuContent align="end" className="w-80 overflow-hidden rounded-xl p-0 shadow-elevated">
+         <div className="border-b border-border bg-muted/60 px-4 py-3 font-display text-base font-semibold">Announcements</div>
         <div className="max-h-80 overflow-y-auto">
           {items.length === 0 && (
             <p className="px-3 py-4 text-sm text-muted-foreground">Nothing has been sent to you yet.</p>
@@ -56,8 +56,8 @@ export function NotificationBell() {
               key={item.id}
               type="button"
               onClick={() => open(item.id, Boolean(item.read_at))}
-              className={`block w-full border-b border-border px-3 py-3 text-left last:border-0 ${
-                item.read_at ? "" : "bg-muted/60"
+               className={`block w-full border-b border-border px-4 py-3 text-left transition-colors last:border-0 hover:bg-muted ${
+                 item.read_at ? "" : "bg-primary/10"
               }`}
             >
               <div className="flex items-center justify-between gap-2">

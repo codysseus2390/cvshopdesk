@@ -13,26 +13,27 @@ export function MetricCard({
 }) {
   const notUpdated = value === "Not updated" || value === "Unavailable";
   return (
-    <Card>
-      <CardContent className={size === "tv" ? "p-8" : "p-6"}>
+    <Card className="relative overflow-hidden border-l-4 border-l-primary hover:shadow-elevated">
+      <div className="absolute inset-x-0 top-0 h-1 bg-secondary/70" aria-hidden="true" />
+      <CardContent className={size === "tv" ? "p-8 pt-9" : "p-5 pt-6 sm:p-6 sm:pt-7"}>
         <p
           className={
             size === "tv"
-              ? "text-xl font-semibold uppercase tracking-wide text-muted-foreground"
-              : "text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              ? "text-xl font-semibold uppercase text-muted-foreground"
+              : "text-xs font-bold uppercase text-muted-foreground"
           }
         >
           {label}
         </p>
         <p
-          className={`font-display font-bold tracking-tight ${
+          className={`font-display font-bold ${
             size === "tv" ? "mt-3 text-6xl" : "mt-2 text-3xl"
           } ${notUpdated ? "text-muted-foreground" : "text-foreground"}`}
         >
           {value}
         </p>
         {hint && (
-          <p className={size === "tv" ? "mt-2 text-lg text-muted-foreground" : "mt-1 text-xs text-muted-foreground"}>
+          <p className={size === "tv" ? "mt-3 text-lg text-muted-foreground" : "mt-2 text-xs leading-relaxed text-muted-foreground"}>
             {hint}
           </p>
         )}
