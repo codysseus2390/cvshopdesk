@@ -71,19 +71,7 @@ function Dashboard() {
   const todayCars = today?.car_count ?? null;
 
   return (
-    <AppShell
-      title="Dashboard"
-      subtitle={
-        data ? (
-          <>
-            {data.shop.name} · shop day {data.today} ({data.shop.timezone}) · last saved{" "}
-            {data.lastUpdate ? new Date(data.lastUpdate).toLocaleString() : "never"}
-          </>
-        ) : (
-          "Loading…"
-        )
-      }
-    >
+    <AppShell title="Dashboard">
       {pending > 0 && (
         <Link
           to="/settings"
@@ -101,13 +89,13 @@ function Dashboard() {
         <div className="space-y-7">
           {shows("today") && (
           <section>
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="flex items-center gap-2 font-display text-xl font-bold"><CalendarDays className="h-5 w-5 text-primary" />Today</h2>
-              <Button asChild size="sm">
+            <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+              <h2 className="flex min-w-0 items-center gap-2 font-display text-2xl font-bold"><CalendarDays className="h-6 w-6 shrink-0 text-primary" />Today</h2>
+              <Button asChild size="sm" className="h-11 rounded-xl px-4 text-sm shadow-md">
                 <Link to="/entry">Enter today's numbers</Link>
               </Button>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <MetricCard label="Gross profit" value={formatCurrency(todayGp)} />
               <MetricCard label="Tires sold" value={formatCount(today?.tires_sold ?? null)} />
               <MetricCard label="Car count" value={formatCount(todayCars)} />
