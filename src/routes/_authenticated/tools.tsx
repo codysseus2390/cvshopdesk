@@ -21,21 +21,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { shopToday } from "@/lib/metrics-math";
 
-export const Route = createFileRoute("/_authenticated/imports")({
+export const Route = createFileRoute("/_authenticated/tools")({
   head: () => ({
     meta: [
-      { title: "Imports — Cedar Valley Hub" },
+      { title: "Tools — Cedar Valley Hub" },
       {
         name: "description",
         content: "Upload Cedar Valley reports and screenshots, review what was read, then confirm the numbers.",
       },
-      { property: "og:title", content: "Imports — Cedar Valley Hub" },
+      { property: "og:title", content: "Tools — Cedar Valley Hub" },
       { property: "og:description", content: "Upload reports and review extracted values before saving." },
     ],
   }),
   component: () => (
     <AccessGate>
-      <ImportsPage />
+      <ToolsPage />
     </AccessGate>
   ),
 });
@@ -60,7 +60,7 @@ async function sha256(file: File) {
     .join("");
 }
 
-function ImportsPage() {
+function ToolsPage() {
   const shopContext = useShopContext();
   const shopId = shopContext.data?.shop?.id;
   const queryClient = useQueryClient();
@@ -235,8 +235,8 @@ function ImportsPage() {
 
   return (
     <AppShell
-      title="Imports"
-      subtitle="Uploaded files are kept exactly as sent. Nothing counts until you confirm it here."
+      title="Tools"
+      subtitle="Every upload and report import lives here. Nothing counts until you confirm it."
     >
       <div className="space-y-8">
         <Card>
