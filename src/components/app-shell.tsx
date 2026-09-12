@@ -15,15 +15,15 @@ import type { PermissionKey } from "@/lib/permissions";
 const NAV = [
   { to: "/hub", label: "Dashboard", needs: "view_dashboard" },
   { to: "/entry", label: "Daily entry", needs: "edit_dashboard_numbers" },
-  { to: "/history", label: "History" },
-  { to: "/inventory", label: "Inventory" },
-  { to: "/customers", label: "Customers" },
-  { to: "/board", label: "Jobs & appointments" },
-  { to: "/tv", label: "TV mode" },
+  { to: "/history", label: "History", needs: undefined },
+  { to: "/inventory", label: "Inventory", needs: undefined },
+  { to: "/customers", label: "Customers", needs: undefined },
+  { to: "/board", label: "Jobs & appointments", needs: undefined },
+  { to: "/tv", label: "TV mode", needs: undefined },
   { to: "/tools", label: "Tools", needs: "access_tools" },
-  { to: "/account", label: "My account" },
-  { to: "/settings", label: "Settings" },
-] as const satisfies readonly { to: string; label: string; needs?: PermissionKey }[];
+  { to: "/account", label: "My account", needs: undefined },
+  { to: "/settings", label: "Settings", needs: undefined },
+] as const satisfies readonly { to: string; label: string; needs: PermissionKey | undefined }[];
 
 export function AppShell({
   title,
