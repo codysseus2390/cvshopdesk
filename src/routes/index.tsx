@@ -63,9 +63,8 @@ function ShowcaseEntry() {
     setBusy(true);
     setError(null);
     try {
-      const { email, tokenHash } = await enter({ data: { passcode } });
+      const { tokenHash } = await enter({ data: { passcode } });
       const { error: verifyError } = await supabase.auth.verifyOtp({
-        email,
         token_hash: tokenHash,
         type: "magiclink",
       });
