@@ -115,7 +115,7 @@ export function AssistantBar() {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-card/90 shadow-[0_-8px_30px_var(--card-shadow)] backdrop-blur-xl">
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-card/90 shadow-elevated backdrop-blur-xl">
       {open && turns.length > 0 && (
         <div className="max-h-64 space-y-3 overflow-y-auto px-4 py-4 sm:px-6">
           {turns.map((turn, i) => (
