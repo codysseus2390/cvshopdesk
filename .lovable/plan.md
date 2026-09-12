@@ -1,15 +1,15 @@
-# Cedar Valley visual polish
+# Mobile dashboard mockup refinement
 
-## Scope
-- Refine shared color, surface, shadow, spacing, and typography treatments for a richer professional appearance.
-- Polish shared cards, buttons, inputs, tabs, and badges so improvements apply throughout the app.
-- Improve the existing app shell, metric cards, notification bell, and assistant composer without changing navigation or behavior.
-- Preserve all data, permissions, imports, notifications, AI integration, routes, and workflows.
-
-## Validation
-- Run the existing TypeScript check.
-- Run the current quick test suite.
+## Changes
+- Simplify the dashboard header by removing the visible shop-day and last-saved line.
+- Refine the mobile header, logo/action card, icon navigation, Today row, KPI cards, and assistant composer to match the supplied mockup using existing components and tokens.
+- Add an Owner/Admin-only action in the existing notification bell panel that opens the existing announcement composer; staff remain read-only.
+- Preserve desktop behavior, dark mode, all routes, data, permissions, and backend logic.
 
 ## Technical details
-- Use only existing semantic tokens and Tailwind utilities.
-- Make no schema changes, package changes, migrations, or browser automation.
+- Limit edits to shared presentation components and the dashboard route.
+- Reuse the current permissions hook, notification functions, and notification composer.
+- Add no packages, migrations, sample data, or new routes.
+
+## Validation
+- Run the existing TypeScript check and quick test suite only.
