@@ -20,6 +20,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { shopToday } from "@/lib/metrics-math";
+import { NotificationComposer } from "@/components/notification-composer";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/tools")({
   head: () => ({
@@ -239,6 +241,18 @@ function ToolsPage() {
       subtitle="Every upload and report import lives here. Nothing counts until you confirm it."
     >
       <div className="space-y-8">
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link to="/entry">Enter today's numbers</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/history">Review saved history</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/settings">Settings</Link>
+          </Button>
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle className="font-display">Upload a report or screenshot</CardTitle>
@@ -527,6 +541,10 @@ function ToolsPage() {
             ))}
           </CardContent>
         </Card>
+        <NotificationComposer
+          canSend={shopContext.data?.membership?.role === "owner" || shopContext.data?.membership?.role === "manager"}
+        />
+
       </div>
     </AppShell>
   );
