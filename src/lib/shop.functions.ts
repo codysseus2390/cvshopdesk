@@ -142,7 +142,7 @@ export const addStaffMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z
-      .object({ email: z.string().email().max(200), role: z.enum(["manager", "staff"]) })
+      .object({ email: z.string().email().max(200), role: z.enum(["manager", "staff", "display"]) })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -160,7 +160,7 @@ export const decideMember = createServerFn({ method: "POST" })
       .object({
         memberId: z.string().uuid(),
         status: z.enum(["approved", "revoked"]),
-        role: z.enum(["manager", "staff"]).optional(),
+        role: z.enum(["manager", "staff", "display"]).optional(),
       })
       .parse(input),
   )
@@ -188,7 +188,7 @@ export const decideMember = createServerFn({ method: "POST" })
 export const setMemberRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ memberId: z.string().uuid(), role: z.enum(["manager", "staff"]) }).parse(input),
+    z.object({ memberId: z.string().uuid(), role: z.enum(["manager", "staff", "display"]) }).parse(input),
   )
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase

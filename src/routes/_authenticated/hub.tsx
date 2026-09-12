@@ -17,6 +17,7 @@ import { MetricCard } from "@/components/metric-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCount, formatCurrency, gpPerCar } from "@/lib/metrics-math";
+import { usePermissions } from "@/components/use-permissions";
 
 export const Route = createFileRoute("/_authenticated/hub")({
   head: () => ({
@@ -52,7 +53,17 @@ export function useDashboard() {
 function Dashboard() {
   const { data, isLoading, error } = useDashboard();
   const { data: shopContext } = useShopContext();
+  const perms = usePermissions();
   const pending = shopContext?.pendingCount ?? 0;
+  const hidden = perms.settings?.hidden_widgets ?? [];
+  const shows = (key: string) => !hidden.includes(key);
+  const targets = perms.settings?.targets ?? {};
+  const goalNote = (key: string, actual: number | null) => {
+    const goal = targets[key];
+    if (goal === null || goal === undefined || actual === null) return undefined;
+    const percent = goal > 0 ? Math.round((actual / goal) * 100) : null;
+    return percent === null ? undefined : `${percent}% of the monthly goal`;
+  };
 
   const today = data?.todayRow;
   const todayGp = today?.gross_profit ?? null;
@@ -87,6 +98,7 @@ function Dashboard() {
 
       {data && (
         <div className="space-y-10">
+          {shows("today") && (
           <section>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-xl font-bold">Today</h2>
@@ -110,7 +122,9 @@ function Dashboard() {
               </p>
             )}
           </section>
+          )}
 
+          {shows("mtd") && (
           <section>
             <h2 className="mb-3 font-display text-xl font-bold">Month to date</h2>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -120,7 +134,7 @@ function Dashboard() {
                 hint={
                   data.mtd.coverage.gross_profit.days_missing_value > 0
                     ? `${data.mtd.coverage.gross_profit.days_missing_value} saved day(s) have no gross profit`
-                    : undefined
+                    : goalNote("gross_profit", data.mtd.gross_profit)
                 }
               />
               <MetricCard
@@ -129,7 +143,7 @@ function Dashboard() {
                 hint={
                   data.mtd.coverage.tires_sold.days_missing_value > 0
                     ? `${data.mtd.coverage.tires_sold.days_missing_value} saved day(s) have no tire count`
-                    : undefined
+                    : goalNote("tires_sold", data.mtd.tires_sold)
                 }
               />
               <MetricCard
@@ -138,13 +152,13 @@ function Dashboard() {
                 hint={
                   data.mtd.coverage.car_count.days_missing_value > 0
                     ? `${data.mtd.coverage.car_count.days_missing_value} saved day(s) have no car count`
-                    : undefined
+                    : goalNote("car_count", data.mtd.car_count)
                 }
               />
               <MetricCard
                 label="GP per car"
                 value={formatCurrency(data.mtd.gp_per_car)}
-                hint={data.mtd.gp_per_car_note ?? undefined}
+                hint={data.mtd.gp_per_car_note ?? goalNote("gp_per_car", data.mtd.gp_per_car)}
               />
             </div>
             <p className="mt-3 text-sm text-muted-foreground">
@@ -159,8 +173,11 @@ function Dashboard() {
                     }`}
             </p>
           </section>
+          )}
 
+          {(shows("monthly_chart") || shows("ytd")) && (
           <section className="grid gap-6 lg:grid-cols-3">
+            {shows("monthly_chart") && (
             <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle className="font-display">Monthly gross profit</CardTitle>
@@ -188,7 +205,9 @@ function Dashboard() {
                 </p>
               </CardContent>
             </Card>
+            )}
 
+            {shows("ytd") && (
             <Card>
               <CardHeader>
                 <CardTitle className="font-display">Year to date</CardTitle>
@@ -220,9 +239,12 @@ function Dashboard() {
                 </div>
               </CardContent>
             </Card>
+            )}
           </section>
+          )}
 
 
+          {shows("scorecards") && (
           <section>
             <h2 className="mb-3 font-display text-xl font-bold">Monthly scorecards</h2>
             {data.monthly.length === 0 ? (
@@ -251,6 +273,7 @@ function Dashboard() {
               </div>
             )}
           </section>
+          )}
         </div>
       )}
     </AppShell>

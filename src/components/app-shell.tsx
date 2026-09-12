@@ -1,24 +1,29 @@
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
+import { ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CedarLogo } from "@/components/cedar-logo";
 import { AssistantBar } from "@/components/assistant-bar";
 import { Button } from "@/components/ui/button";
 import { useShopContext } from "@/components/access-gate";
+import { usePermissions } from "@/components/use-permissions";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBell } from "@/components/notification-bell";
+import type { PermissionKey } from "@/lib/permissions";
 
 const NAV = [
-  { to: "/hub", label: "Dashboard" },
-  { to: "/entry", label: "Daily entry" },
-  { to: "/imports", label: "Imports" },
-  { to: "/history", label: "History" },
-  { to: "/inventory", label: "Inventory" },
-  { to: "/customers", label: "Customers" },
-  { to: "/board", label: "Jobs & appointments" },
-  { to: "/tv", label: "TV mode" },
-  { to: "/account", label: "My account" },
-  { to: "/settings", label: "Settings" },
-] as const;
+  { to: "/hub", label: "Dashboard", needs: "view_dashboard" },
+  { to: "/entry", label: "Daily entry", needs: "edit_dashboard_numbers" },
+  { to: "/history", label: "History", needs: undefined },
+  { to: "/inventory", label: "Inventory", needs: undefined },
+  { to: "/customers", label: "Customers", needs: undefined },
+  { to: "/board", label: "Jobs & appointments", needs: undefined },
+  { to: "/tv", label: "TV mode", needs: undefined },
+  { to: "/tools", label: "Tools", needs: "access_tools" },
+  { to: "/account", label: "My account", needs: undefined },
+  { to: "/settings", label: "Settings", needs: undefined },
+] as const satisfies readonly { to: string; label: string; needs: PermissionKey | undefined }[];
 
 export function AppShell({
   title,
@@ -33,7 +38,11 @@ export function AppShell({
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: shopContext } = useShopContext();
+  const { can, isLoading } = usePermissions();
   const pending = shopContext?.pendingCount ?? 0;
+
+  // Until permissions load, show the full list rather than flashing an empty menu.
+  const items = NAV.filter((item) => isLoading || !item.needs || can(item.needs));
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -44,12 +53,14 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-screen bg-background pb-28">
+    <div className="min-h-screen bg-background pb-32">
       <div className="flex">
         <aside className="hidden w-60 shrink-0 border-r border-border bg-sidebar px-4 py-6 md:block">
-          <CedarLogo className="mb-8 h-10 w-auto" />
+          <Link to="/hub" aria-label="Cedar Valley Hub dashboard">
+            <CedarLogo className="mb-8 h-10 w-auto" />
+          </Link>
           <nav className="space-y-1">
-            {NAV.map((item) => (
+            {items.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
@@ -68,20 +79,32 @@ export function AppShell({
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-card px-6 py-5">
-            <div>
-              <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">{title}</h1>
+          <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-card px-4 py-4 sm:px-6 sm:py-5">
+            <div className="min-w-0">
+              {title !== "Dashboard" && (
+                <Link
+                  to="/hub"
+                  className="mb-1 inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground md:hidden"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" /> Dashboard
+                </Link>
+              )}
+              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{title}</h1>
               {subtitle && <div className="mt-1 text-sm text-muted-foreground">{subtitle}</div>}
             </div>
-            <div className="flex items-center gap-2">
-              <CedarLogo className="h-9 w-auto md:hidden" />
+            <div className="flex flex-wrap items-center gap-2">
+              <Link to="/hub" className="md:hidden" aria-label="Cedar Valley Hub dashboard">
+                <CedarLogo className="h-9 w-auto" />
+              </Link>
+              <NotificationBell />
+              <ThemeToggle />
               <Button variant="outline" size="sm" onClick={signOut}>
                 Sign out
               </Button>
             </div>
           </header>
-          <nav className="flex gap-1 overflow-x-auto border-b border-border bg-card px-4 py-2 md:hidden">
-            {NAV.map((item) => (
+          <nav className="flex gap-1 overflow-x-auto border-b border-border bg-card px-3 py-2 md:hidden">
+            {items.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
@@ -93,7 +116,7 @@ export function AppShell({
               </Link>
             ))}
           </nav>
-          <main className="px-6 py-8">{children}</main>
+          <main className="px-4 py-6 sm:px-6 sm:py-8">{children}</main>
         </div>
       </div>
       <AssistantBar />

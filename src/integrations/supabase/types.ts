@@ -52,6 +52,47 @@ export type Database = {
           },
         ]
       }
+      audit_events: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          detail: Json
+          id: string
+          shop_id: string
+          target: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          shop_id: string
+          target?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json
+          id?: string
+          shop_id?: string
+          target?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_events_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           email: string | null
@@ -377,6 +418,101 @@ export type Database = {
           },
         ]
       }
+      notification_recipients: {
+        Row: {
+          created_at: string
+          id: string
+          notification_id: string
+          read_at: string | null
+          shop_id: string
+          target: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notification_id: string
+          read_at?: string | null
+          shop_id: string
+          target: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notification_id?: string
+          read_at?: string | null
+          shop_id?: string
+          target?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_recipients_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_recipients_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          audience: string
+          channels: Json
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          message: string
+          priority: string
+          published_at: string | null
+          shop_id: string
+          title: string
+        }
+        Insert: {
+          audience: string
+          channels?: Json
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          message: string
+          priority?: string
+          published_at?: string | null
+          shop_id: string
+          title: string
+        }
+        Update: {
+          audience?: string
+          channels?: Json
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          message?: string
+          priority?: string
+          published_at?: string | null
+          shop_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -397,6 +533,44 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          allowed: boolean
+          id: string
+          permission: string
+          role: string
+          shop_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          allowed: boolean
+          id?: string
+          permission: string
+          role: string
+          shop_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          allowed?: boolean
+          id?: string
+          permission?: string
+          role?: string
+          shop_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shop_jobs: {
         Row: {
@@ -533,6 +707,41 @@ export type Database = {
             foreignKeyName: "shop_members_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_settings: {
+        Row: {
+          hidden_widgets: Json
+          shop_id: string
+          targets: Json
+          technician_goals: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          hidden_widgets?: Json
+          shop_id: string
+          targets?: Json
+          technician_goals?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          hidden_widgets?: Json
+          shop_id?: string
+          targets?: Json
+          technician_goals?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_settings_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: true
             referencedRelation: "shops"
             referencedColumns: ["id"]
           },
@@ -702,6 +911,10 @@ export type Database = {
         Args: { _shop_id: string; _user_id?: string }
         Returns: boolean
       }
+      log_audit_event: {
+        Args: { p_action: string; p_detail?: Json; p_target?: string }
+        Returns: string
+      }
       request_shop_access: { Args: never; Returns: Json }
       save_metric_snapshot: {
         Args: {
@@ -728,7 +941,7 @@ export type Database = {
         | "failed"
         | "accepted"
         | "rejected"
-      member_role: "owner" | "manager" | "staff"
+      member_role: "owner" | "manager" | "staff" | "display"
       member_status: "pending" | "approved" | "revoked"
       metric_source: "manual" | "import" | "api"
       report_scope:
@@ -874,7 +1087,7 @@ export const Constants = {
         "accepted",
         "rejected",
       ],
-      member_role: ["owner", "manager", "staff"],
+      member_role: ["owner", "manager", "staff", "display"],
       member_status: ["pending", "approved", "revoked"],
       metric_source: ["manual", "import", "api"],
       report_scope: [
