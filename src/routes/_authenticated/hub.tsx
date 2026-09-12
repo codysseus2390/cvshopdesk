@@ -91,9 +91,15 @@ function Dashboard() {
           <section>
             <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
               <h2 className="flex min-w-0 items-center gap-2 font-display text-2xl font-bold"><CalendarDays className="h-6 w-6 shrink-0 text-primary" />Today</h2>
-              <Button asChild size="sm" className="h-11 rounded-xl px-4 text-sm shadow-md">
-                <Link to="/entry">Enter today's numbers</Link>
-              </Button>
+              {perms.can("edit_dashboard_numbers") ? (
+                <Button asChild size="sm" className="h-11 rounded-xl px-4 text-sm shadow-md">
+                  <Link to="/entry">Enter today's numbers</Link>
+                </Button>
+              ) : (
+                <Button size="sm" disabled className="h-11 rounded-xl px-4 text-sm" title="Disabled in Showcase Mode.">
+                  Enter today's numbers
+                </Button>
+              )}
             </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <MetricCard label="Gross profit" value={formatCurrency(todayGp)} />
