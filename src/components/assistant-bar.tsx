@@ -115,7 +115,7 @@ export function AssistantBar() {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-card/90 shadow-elevated backdrop-blur-xl">
+    <div className="fixed inset-x-0 bottom-0 z-40 bg-background/80 backdrop-blur-xl">
       {open && turns.length > 0 && (
         <div className="max-h-64 space-y-3 overflow-y-auto px-4 py-4 sm:px-6">
           {turns.map((turn, i) => (
@@ -136,9 +136,9 @@ export function AssistantBar() {
         </div>
       )}
 
-      <form onSubmit={submit} className="mx-auto max-w-5xl px-3 py-3 sm:px-6 sm:py-4">
+      <form onSubmit={submit} className="mx-auto my-3 w-[calc(100%-1.5rem)] max-w-4xl rounded-2xl border border-border/80 bg-card p-2 shadow-elevated sm:w-[calc(100%-3rem)] sm:p-2.5">
         {attachment && (
-          <div className="mb-2 flex max-w-full items-center gap-2 truncate rounded-full border border-border bg-muted px-3 py-1.5 text-xs shadow-sm">
+          <div className="mb-2 flex max-w-full items-center gap-2 truncate rounded-full border border-border bg-muted px-3 py-1.5 text-xs">
             <FileText className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">{attachment.name}</span>
             <button type="button" onClick={() => setAttachment(null)} aria-label="Remove attachment">
@@ -154,7 +154,7 @@ export function AssistantBar() {
                 type="button"
                 variant="outline"
                 size="icon"
-                className="h-11 w-11 shrink-0 rounded-full bg-card"
+                 className="h-11 w-11 shrink-0 rounded-full bg-muted"
                 aria-label="Add photo, file or create"
               >
                 <Plus className="h-5 w-5" />
@@ -188,13 +188,13 @@ export function AssistantBar() {
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="Ask about saved shop numbers…"
             aria-label="Ask the assistant"
-            className="h-11 min-w-0 flex-1 rounded-full border-border bg-background px-4 shadow-sm"
+             className="h-11 min-w-0 flex-1 rounded-full border-transparent bg-muted/70 px-4 shadow-none focus-visible:border-primary/40"
           />
 
           <Button
             type="submit"
             size="icon"
-            className="h-11 w-11 shrink-0 rounded-full shadow-md"
+             className="h-11 w-11 shrink-0 rounded-full shadow-md hover:shadow-lg"
             disabled={busy || (!attachment && question.trim().length < 2)}
             aria-label="Send"
           >

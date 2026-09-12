@@ -66,22 +66,22 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-screen pb-32">
+    <div className="min-h-screen pb-28">
       <div className="flex">
-        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-sidebar-border bg-sidebar/95 px-4 py-6 shadow-sm backdrop-blur md:block">
-          <Link to="/hub" aria-label="Cedar Valley Hub dashboard">
-            <CedarLogo className="mb-8 h-11 w-auto" />
+        <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-r border-sidebar-border bg-sidebar px-4 py-5 shadow-elevated md:block">
+          <Link to="/hub" className="block border-b border-sidebar-border px-2 pb-5" aria-label="Cedar Valley Hub dashboard">
+            <CedarLogo className="h-12 w-auto max-w-full object-contain" />
           </Link>
-          <nav className="space-y-1.5">
+          <nav className="mt-5 space-y-1">
             {items.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
-                className="group flex min-h-10 items-center justify-between gap-2 rounded-lg border border-transparent px-3 py-2 text-sm font-semibold text-sidebar-foreground transition-[background-color,border-color,box-shadow] duration-200 hover:border-sidebar-border hover:bg-sidebar-accent"
-                activeProps={{ className: "group flex min-h-10 items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary text-primary-foreground shadow-sm" }}
+                className="group flex min-h-11 items-center justify-between gap-2 rounded-lg border border-transparent px-3 py-2 text-sm font-semibold text-sidebar-foreground/80 transition-[background-color,border-color,box-shadow,color] duration-200 hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                activeProps={{ className: "group flex min-h-11 items-center justify-between gap-2 rounded-lg border border-sidebar-primary/70 bg-sidebar-primary text-sidebar-primary-foreground shadow-md" }}
               >
                 <span className="flex min-w-0 items-center gap-3">
-                  <item.icon className="h-4 w-4 shrink-0 opacity-75 transition-opacity group-hover:opacity-100" />
+                  <item.icon className="h-[18px] w-[18px] shrink-0 opacity-85 transition-opacity group-hover:opacity-100" />
                   <span className="truncate">{item.label}</span>
                 </span>
                 {item.to === "/settings" && pending > 0 && (
@@ -95,7 +95,7 @@ export function AppShell({
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 border-b border-border/80 bg-card/90 px-4 py-4 shadow-sm backdrop-blur-xl sm:px-6 sm:py-5">
+          <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 border-b border-border/80 bg-card/92 px-4 py-3 shadow-sm backdrop-blur-xl sm:px-6 sm:py-4">
             <div className="min-w-0">
               {title !== "Dashboard" && (
                 <Link
@@ -105,7 +105,7 @@ export function AppShell({
                   <ChevronLeft className="h-3.5 w-3.5" /> Dashboard
                 </Link>
               )}
-              <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">{title}</h1>
+              <h1 className="font-display text-2xl font-bold text-foreground sm:text-[1.75rem]">{title}</h1>
               {subtitle && <div className="mt-1 text-sm text-muted-foreground">{subtitle}</div>}
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -132,7 +132,7 @@ export function AppShell({
               </Link>
             ))}
           </nav>
-          <main className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">{children}</main>
+          <main className="mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 sm:py-6 lg:px-7">{children}</main>
         </div>
       </div>
       <AssistantBar />
