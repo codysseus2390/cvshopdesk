@@ -24,6 +24,7 @@ import { usePermissions } from "@/components/use-permissions";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationBell } from "@/components/notification-bell";
 import type { PermissionKey } from "@/lib/permissions";
+import { clearShowcase, useShowcaseMode } from "@/lib/showcase";
 
 const NAV = [
   { to: "/hub", label: "Dashboard", icon: LayoutDashboard, needs: "view_dashboard" },
@@ -53,11 +54,13 @@ export function AppShell({
   const { data: shopContext } = useShopContext();
   const { can, isLoading } = usePermissions();
   const pending = shopContext?.pendingCount ?? 0;
+  const showcase = useShowcaseMode();
 
   // Until permissions load, show the full list rather than flashing an empty menu.
   const items = NAV.filter((item) => isLoading || !item.needs || can(item.needs));
 
   async function signOut() {
+    clearShowcase();
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();
