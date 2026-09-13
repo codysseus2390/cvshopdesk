@@ -71,6 +71,13 @@
       "when": 1789172600485,
       "tag": "0009_settings_permissions_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789307575145,
+      "tag": "0010_restrict_security_definer_function_execute",
+      "breakpoints": true
     }
   ]
 }
