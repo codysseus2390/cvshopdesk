@@ -24,7 +24,7 @@ import { usePermissions } from "@/components/use-permissions";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationBell } from "@/components/notification-bell";
 import type { PermissionKey } from "@/lib/permissions";
-import { clearShowcase, useShowcaseMode } from "@/lib/showcase";
+
 
 const NAV = [
   { to: "/hub", label: "Dashboard", icon: LayoutDashboard, needs: "view_dashboard" },
@@ -54,13 +54,11 @@ export function AppShell({
   const { data: shopContext } = useShopContext();
   const { can, isLoading } = usePermissions();
   const pending = shopContext?.pendingCount ?? 0;
-  const showcase = useShowcaseMode();
 
   // Until permissions load, show the full list rather than flashing an empty menu.
   const items = NAV.filter((item) => isLoading || !item.needs || can(item.needs));
 
   async function signOut() {
-    clearShowcase();
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();
@@ -115,11 +113,6 @@ export function AppShell({
               <Link to="/hub" className="flex min-w-0 items-center md:hidden" aria-label="Cedar Valley Hub dashboard">
                 <CedarLogo className="h-12 w-full max-w-[13rem] object-contain object-left" />
               </Link>
-              {showcase && (
-                <span className="col-span-3 justify-self-start rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-foreground md:col-auto">
-                  Showcase Mode — look only
-                </span>
-              )}
               <NotificationBell />
               <ThemeToggle className="rounded-full" />
               <Button variant="outline" size="sm" onClick={signOut} className="col-span-3 mt-1 justify-self-start rounded-xl md:col-auto md:mt-0">

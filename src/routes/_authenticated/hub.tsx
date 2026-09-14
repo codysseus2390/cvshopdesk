@@ -96,7 +96,7 @@ function Dashboard() {
                   <Link to="/entry">Enter today's numbers</Link>
                 </Button>
               ) : (
-                <Button size="sm" disabled className="h-11 rounded-xl px-4 text-sm" title="Disabled in Showcase Mode.">
+                <Button size="sm" disabled className="h-11 rounded-xl px-4 text-sm" title="You don't have permission to enter numbers.">
                   Enter today's numbers
                 </Button>
               )}
