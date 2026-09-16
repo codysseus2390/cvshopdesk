@@ -38,21 +38,14 @@ export function weeklyGoalNote(actual: number | null, goal: number | null): stri
 }
 
 export function formatDashboardWeekRange(from: string, through: string): string {
-  const start = new Date(`${from}T00:00:00Z`);
-  const end = new Date(`${through}T00:00:00Z`);
+  const monthName = (date: string) =>
+    new Date(`${date.slice(0, 7)}-01T00:00:00Z`).toLocaleString("en-US", {
+      timeZone: "UTC",
+      month: "short",
+    });
   const sameYear = from.slice(0, 4) === through.slice(0, 4);
   const sameMonth = from.slice(0, 7) === through.slice(0, 7);
-  const startLabel = start.toLocaleDateString("en-US", {
-    timeZone: "UTC",
-    month: "short",
-    day: "numeric",
-    year: sameYear ? undefined : "numeric",
-  });
-  const endLabel = end.toLocaleDateString("en-US", {
-    timeZone: "UTC",
-    month: sameMonth ? undefined : "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  const startLabel = `${monthName(from)} ${Number(from.slice(8, 10))}${sameYear ? "" : `, ${from.slice(0, 4)}`}`;
+  const endLabel = `${sameMonth ? "" : `${monthName(through)} `}${Number(through.slice(8, 10))}, ${through.slice(0, 4)}`;
   return `${startLabel} – ${endLabel}`;
 }
