@@ -8,6 +8,7 @@ import { AppShell } from "@/components/app-shell";
 import { AccessGate, useShopContext } from "@/components/access-gate";
 import { usePermissions } from "@/components/use-permissions";
 import { NotificationComposer } from "@/components/notification-composer";
+import { HankSettings } from "@/components/hank-settings";
 import { useTheme } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,6 +88,7 @@ function SettingsPage() {
           <TabsTrigger value="permissions">Permissions</TabsTrigger>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="hank">Hank Settings</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
         </TabsList>
@@ -102,6 +104,9 @@ function SettingsPage() {
         </TabsContent>
         <TabsContent value="notifications">
           <NotificationComposer canSend={isAdmin} />
+        </TabsContent>
+        <TabsContent value="hank">
+          <HankSettings canEdit={isAdmin} />
         </TabsContent>
         <TabsContent value="security">
           <SecuritySection isOwner={isOwner} isAdmin={isAdmin} />
