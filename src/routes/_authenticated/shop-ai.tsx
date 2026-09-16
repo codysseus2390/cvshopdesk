@@ -193,22 +193,29 @@ function ShopAiPage() {
   }, [autoSpeak, lastId]);
 
   // Start at the bottom of the conversation and keep the latest message in view.
+  const lastMessageId = messages[messages.length - 1]?.id;
+  const scrollToBottom = (behavior: ScrollBehavior) => {
+    const el = messagesRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior });
+  };
+
   useEffect(() => {
-    if (!endRef.current) return undefined;
+    if (!messagesRef.current) return undefined;
     if (messages.length > 0 && !isLoading && !initialScrollDone.current) {
-      const id = requestAnimationFrame(() => {
-        endRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+      const id = window.setTimeout(() => {
+        scrollToBottom("auto");
         initialScrollDone.current = true;
-      });
-      return () => cancelAnimationFrame(id);
+      }, 80);
+      return () => window.clearTimeout(id);
     }
     return undefined;
   }, [messages.length, isLoading]);
 
   useEffect(() => {
-    if (!endRef.current || !initialScrollDone.current) return;
-    endRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages.length, mutation.isPending]);
+    if (!messagesRef.current || !initialScrollDone.current) return;
+    scrollToBottom("smooth");
+  }, [lastMessageId, mutation.isPending]);
 
   useEffect(() => {
     inputRef.current?.focus();
