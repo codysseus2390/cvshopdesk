@@ -36,6 +36,7 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
       properties: {
         business_date: { type: "string", description: "YYYY-MM-DD. Defaults to the shop's current business day." },
         scope: { type: "string", enum: ["daily", "mtd", "ytd"], description: "Defaults to daily." },
+        sales: { type: "number", description: "Total sales / order sales. Separate from gross profit." },
         gross_profit: { type: "number" },
         tires_sold: { type: "integer" },
         car_count: { type: "integer" },
@@ -49,6 +50,7 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
         .object({
           business_date: dateSchema.optional(),
           scope: z.enum(["daily", "mtd", "ytd"]).default("daily"),
+          sales: money,
           gross_profit: money,
           tires_sold: z.number().int().nullable().optional(),
           car_count: z.number().int().nullable().optional(),
