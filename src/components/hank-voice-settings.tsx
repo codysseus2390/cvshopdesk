@@ -34,6 +34,9 @@ import {
   HANK_VOICE_LIMITS,
   HANK_VOICE_TEST_PHRASE,
   HANK_VOICE_TUNING_DEFAULTS,
+  HANK_WAKE_DEFAULT_PHRASE,
+  HANK_WAKE_PHRASE_LIMITS,
+  HANK_WAKE_TIMEOUT_LIMITS,
   type HankVoiceOption,
   type HankVoiceSettings,
 } from "@/lib/ai/voice-config";
