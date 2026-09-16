@@ -9,6 +9,7 @@ import {
   findShopAiTool,
   shopAiToolDefinitions,
   toolSourceLabel,
+  type DetectedProposal,
   type ShopAiToolContext,
 } from "./tools.server";
 
