@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -104,7 +104,13 @@ function Dashboard() {
         row[year] =
           chartMetric === "gross_profit_per_car"
             ? (totals?.gp_per_car ?? null)
-            : (totals?.[chartMetric] ?? null);
+            : chartMetric === "sales"
+              ? (totals?.sales ?? null)
+              : chartMetric === "tires_sold"
+                ? (totals?.tires_sold ?? null)
+                : chartMetric === "car_count"
+                  ? (totals?.car_count ?? null)
+                  : (totals?.gross_profit ?? null);
       }
       return row;
     });
