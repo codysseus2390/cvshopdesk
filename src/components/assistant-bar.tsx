@@ -219,6 +219,18 @@ export function AssistantBar() {
             e.target.value = "";
           }}
         />
+
+        <input
+          ref={cameraInput}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            void pickFile(e.target.files?.[0] ?? null);
+            e.target.value = "";
+          }}
+        />
       </form>
 
       {voiceMode && (
