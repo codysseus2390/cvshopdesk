@@ -111,6 +111,34 @@ function newest(rows: NumbersRow[]): NumbersRow | undefined {
   )[0];
 }
 
+/** Newest `daily` record per business date. */
+function newestPerDate(rows: NumbersRow[]): NumbersRow[] {
+  const byDate = new Map<string, NumbersRow>();
+  for (const r of rows.filter((row) => row.scope === "daily")) {
+    const existing = byDate.get(r.business_date);
+    if (!existing || (r.created_at ?? "") >= (existing.created_at ?? "")) byDate.set(r.business_date, r);
+  }
+  return [...byDate.values()];
+}
+
+/** Sums each metric, keeping a metric null when no row reported it. */
+function sumFields(rows: NumbersRow[]): Record<(typeof SUMMED)[number], number | null> {
+  const sums: Record<(typeof SUMMED)[number], number | null> = {
+    sales: null,
+    gross_profit: null,
+    tires_sold: null,
+    car_count: null,
+  };
+  for (const row of rows) {
+    for (const field of SUMMED) {
+      const value = row[field];
+      if (value === null || value === undefined || !Number.isFinite(value)) continue;
+      sums[field] = (sums[field] ?? 0) + value;
+    }
+  }
+  return sums;
+}
+
 function withPercent(values: Omit<PeriodValues, "gp_percent">): PeriodValues {
   const { sales, gross_profit } = values;
   const gp_percent = sales !== null && gross_profit !== null && sales > 0 ? (gross_profit / sales) * 100 : null;
