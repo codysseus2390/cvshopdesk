@@ -275,28 +275,89 @@ function ShopAiPage() {
             e.preventDefault();
             submit();
           }}
-          className="mt-4 rounded-2xl border border-border/80 bg-card p-3 shadow-card"
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragging(false);
+            void addFiles(Array.from(e.dataTransfer.files));
+          }}
+          className={`mt-4 rounded-2xl border bg-card p-3 shadow-card transition-colors ${
+            dragging ? "border-primary bg-primary/5" : "border-border/80"
+          }`}
         >
+          <AttachmentStrip
+            items={attachments}
+            disabled={mutation.isPending}
+            onRemove={(id) => setAttachments((prev) => prev.filter((file) => file.id !== id))}
+          />
+
+          {attachError && (
+            <p className="mb-2 flex items-center gap-1.5 text-[11px] font-medium text-destructive">
+              <TriangleAlert className="h-3.5 w-3.5" /> {attachError}
+            </p>
+          )}
+
           <Textarea
             ref={inputRef}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            onPaste={(e) => {
+              const files = Array.from(e.clipboardData.files);
+              if (files.length > 0) {
+                e.preventDefault();
+                void addFiles(files);
+              }
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 submit();
               }
             }}
-            placeholder="Ask Shop AI… (Shift + Enter for a new line)"
+            placeholder="Ask Shop AI, or paste a screenshot with Ctrl + V… (Shift + Enter for a new line)"
             rows={3}
             aria-label="Message Shop AI"
             className="min-h-[76px] resize-none border-transparent bg-muted/60 focus-visible:border-primary/40"
           />
+
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            accept={ACCEPTED_ATTACHMENT_TYPES.join(",")}
+            className="hidden"
+            onChange={(e) => {
+              void addFiles(Array.from(e.target.files ?? []));
+              e.target.value = "";
+            }}
+          />
+
           <div className="mt-2 flex items-center justify-between gap-3">
-            <p className="text-[11px] text-muted-foreground">
-              Read-only assistant. It never changes shop records.
-            </p>
-            <Button type="submit" disabled={mutation.isPending || draft.trim().length === 0} className="rounded-xl">
+            <div className="flex min-w-0 items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="Attach an image or PDF"
+                disabled={mutation.isPending}
+                onClick={() => fileRef.current?.click()}
+                className="h-9 w-9 shrink-0 rounded-full"
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+              <p className="truncate text-[11px] text-muted-foreground">
+                Paste or attach screenshots. Shop AI asks before changing anything already saved.
+              </p>
+            </div>
+            <Button
+              type="submit"
+              disabled={mutation.isPending || (draft.trim().length === 0 && attachments.length === 0)}
+              className="rounded-xl"
+            >
               <Send className="mr-2 h-4 w-4" /> Send
             </Button>
           </div>
