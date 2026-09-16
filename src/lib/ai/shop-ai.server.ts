@@ -146,12 +146,13 @@ export async function runShopAiTurn(options: {
       const args = safeParseArgs(call["arguments"]);
       const outcome = await executeTool(options.toolContext, name, args);
       if (outcome.changed) dataChanged = true;
+      if (outcome.proposal) proposals.push(outcome.proposal);
       toolActivity.push({ name, sourceLabel: toolSourceLabel(name), ok: outcome.ok, changed: outcome.changed });
       input.push({ type: "function_call_output", call_id: callId, output: outcome.payload });
     }
   }
 
-  return { reply: "", model, toolActivity, dataChanged };
+  return { reply: "", model, toolActivity, dataChanged, proposals };
 }
 
 /**
