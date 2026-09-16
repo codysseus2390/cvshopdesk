@@ -12,8 +12,7 @@ const periodInput = z.object({
 type Supa = { from: (t: string) => any; rpc: (fn: string, args?: Record<string, unknown>) => any };
 
 async function requirePermission(supabase: unknown, userId: string, permission: PermissionKey) {
-  const { buildNumbersReport: _unused, resolveShop } = await import("./numbers.server");
-  void _unused;
+  const { resolveShop } = await import("./numbers.server");
   const shop = await resolveShop(supabase, userId);
   const { data: overrides } = await (supabase as Supa)
     .from("role_permissions")

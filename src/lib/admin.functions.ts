@@ -48,6 +48,7 @@ export const getAdminConfig = createServerFn({ method: "GET" })
       settings: {
         hidden_widgets: (settings?.hidden_widgets ?? []) as string[],
         targets: (settings?.targets ?? {}) as Record<string, number | null>,
+        goal_rules: (settings?.goal_rules ?? {}) as Record<string, unknown>,
         technician_goals: (settings?.technician_goals ?? []) as ShopSettingsPayload["technician_goals"],
         updated_at: (settings?.updated_at ?? null) as string | null,
       },
