@@ -327,10 +327,13 @@ function StaffAndRoles({ isAdmin, isOwner }: { isAdmin: boolean; isOwner: boolea
                         />
                       )}
                     </>
-                  )}
-                </div>
-              </div>
-            ))}
+                   )}
+                 </div>
+                 <div className="w-full">
+                   <SignInDetails memberId={m.id} email={m.email} isOwnerRow={m.role === "owner"} isOwner={isOwner} />
+                 </div>
+               </div>
+             ))}
           {isAdmin && !isOwner && (
             <p className="text-xs text-muted-foreground">
               Admins manage staff and TV screens. The owner account cannot be changed, removed or transferred here.
