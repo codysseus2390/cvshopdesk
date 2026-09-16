@@ -99,6 +99,13 @@
       "when": 1789573367002,
       "tag": "0013_ai_actions_source_type",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789574592697,
+      "tag": "0014_hank_ai_settings",
+      "breakpoints": true
     }
   ]
 }
