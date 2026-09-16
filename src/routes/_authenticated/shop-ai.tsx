@@ -6,7 +6,6 @@ import {
   Bot,
   ImageIcon,
   Loader2,
-  Paperclip,
   RotateCcw,
   Send,
   Square,
@@ -18,6 +17,7 @@ import {
 import { useHankSpeech } from "@/components/shop-ai/use-hank-speech";
 import { VoiceMode } from "@/components/shop-ai/voice-mode";
 import { TalkButton } from "@/components/shop-ai/talk-button";
+import { ComposerMenu, CREATE_IMAGE_PREFIX } from "@/components/shop-ai/composer-menu";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate } from "@/components/access-gate";
 import { Button } from "@/components/ui/button";
@@ -68,7 +68,7 @@ interface ChatMessage {
   content: string;
   tools?: ToolActivityItem[];
   failed?: boolean;
-  attachments?: { name: string; mimeType: string }[];
+  attachments?: { name: string; mimeType: string; url?: string | null }[];
   proposals?: DetectedProposalView[];
 }
 
@@ -319,6 +319,22 @@ function ShopAiPage() {
                     >
                       {message.content}
                     </div>
+                    {(message.attachments ?? [])
+                      .filter((file) => file.mimeType.startsWith("image/") && file.url)
+                      .map((file) => (
+                        <a
+                          key={file.url}
+                          href={file.url ?? "#"}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-2 block w-fit overflow-hidden rounded-xl border border-border"
+                        >
+                          <img src={file.url ?? ""} alt={file.name} className="max-h-80 w-auto" />
+                          <span className="block px-2 py-1 text-[11px] text-muted-foreground">
+                            {file.name} — open or save
+                          </span>
+                        </a>
+                      ))}
                     {voiceOn && !message.failed && message.content.trim().length > 0 && (
                       <div className="mt-1.5 flex items-center gap-2">
                         {speech.playingId === message.id ? (
@@ -456,17 +472,14 @@ function ShopAiPage() {
 
           <div className="mt-2 flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                aria-label="Attach an image or PDF"
+              <ComposerMenu
                 disabled={mutation.isPending}
-                onClick={() => fileRef.current?.click()}
-                className="h-9 w-9 shrink-0 rounded-full"
-              >
-                <Paperclip className="h-4 w-4" />
-              </Button>
+                onAttach={() => fileRef.current?.click()}
+                onCreateImage={() => {
+                  setDraft(CREATE_IMAGE_PREFIX);
+                  inputRef.current?.focus();
+                }}
+              />
               <p className="truncate text-[11px] text-muted-foreground">
                 Paste or attach screenshots. {assistantName} asks before changing anything already saved.
               </p>
