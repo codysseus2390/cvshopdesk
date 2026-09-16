@@ -33,6 +33,10 @@ export function resolveShopAiModel(input?: { question?: string; tier?: string | 
   return SHOP_AI_MODELS[SHOP_AI_DEFAULT_MODEL_KEY];
 }
 
+/** Image creation model and size. Change here only. */
+export const SHOP_AI_IMAGE_MODEL = "gpt-image-1";
+export const SHOP_AI_IMAGE_SIZE = "1024x1024";
+
 /** Hard cap on tool-call rounds per turn, so a bad loop cannot run away. */
 export const SHOP_AI_MAX_TOOL_ROUNDS = 4;
 
