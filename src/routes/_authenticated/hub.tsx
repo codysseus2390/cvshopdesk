@@ -204,21 +204,32 @@ function Dashboard() {
                 <CardTitle className="flex items-center gap-2 font-display"><BarChart3 className="h-5 w-5 text-secondary" />Monthly gross profit</CardTitle>
               </CardHeader>
               <CardContent className="h-64">
-                {data.monthly.length === 0 ? (
+                {!monthlyByYear ? (
                   <p className="text-sm text-muted-foreground">
                     No monthly totals yet. They appear as daily entries and reports are confirmed.
                   </p>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={data.monthly.map((m) => ({ month: m.month, gp: m.totals.gross_profit }))}
-                    >
+                    <LineChart data={monthlyByYear.rows}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} />
                       <ChartTooltip formatter={(v) => formatCurrency(typeof v === "number" ? v : null)} />
-                      <Bar dataKey="gp" fill="var(--color-primary)" radius={4} />
-                    </BarChart>
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      {monthlyByYear.years.map((year, i) => (
+                        <Line
+                          key={year}
+                          type="monotone"
+                          dataKey={year}
+                          name={year}
+                          stroke={YEAR_COLORS[i % YEAR_COLORS.length]}
+                          strokeWidth={2}
+                          dot={{ r: 3 }}
+                          activeDot={{ r: 5 }}
+                          connectNulls={false}
+                        />
+                      ))}
+                    </LineChart>
                   </ResponsiveContainer>
                 )}
                 <p className="mt-2 text-xs text-muted-foreground">
