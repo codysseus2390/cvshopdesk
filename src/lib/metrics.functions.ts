@@ -99,6 +99,11 @@ export const getDashboard = createServerFn({ method: "GET" })
     const current = all.filter((r) => r.business_date <= today);
     const todayRow =
       current.find((r) => r.business_date === today && r.scope === "daily") ?? null;
+    const prevDate = new Date(`${today}T00:00:00Z`);
+    prevDate.setUTCDate(prevDate.getUTCDate() - 1);
+    const previousDay = prevDate.toISOString().slice(0, 10);
+    const previousDayRow =
+      current.find((r) => r.business_date === previousDay && r.scope === "daily") ?? null;
     const mtd = monthToDate(current, monthPrefix, today);
 
     const monthly: { month: string; totals: PeriodTotals }[] = [];
