@@ -7,7 +7,13 @@ export interface ToolActivityItem {
 }
 
 /** Small chips showing which approved shop data sources a turn used. */
-export function ToolActivity({ items, running }: { items?: ToolActivityItem[]; running?: string | null }) {
+export function ToolActivity({
+  items,
+  running,
+}: {
+  items?: ToolActivityItem[] | undefined;
+  running?: string | null | undefined;
+}) {
   if (!running && (!items || items.length === 0)) return null;
 
   return (
