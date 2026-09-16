@@ -39,7 +39,7 @@ function failure(err: unknown) {
   const known = err instanceof Error && err.name === "VoiceServiceError";
   return {
     ok: false as const,
-    code: known ? ((err as { code: string }).code as "unavailable") : ("unavailable" as const),
+    code: known ? ((err as unknown as { code: string }).code as "unavailable") : ("unavailable" as const),
     message:
       err instanceof Error && err.message
         ? err.message
