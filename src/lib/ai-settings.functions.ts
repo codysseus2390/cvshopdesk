@@ -61,6 +61,20 @@ export const getAiSettings = createServerFn({ method: "GET" })
     const sb = context.supabase as unknown as Supa;
     const member = await membership(sb, context.userId);
     const settings = await loadAssistantSettings(context.supabase, member.shop_id);
+    const { data: voiceRow } = await sb.from("ai_settings").select("*").eq("shop_id", member.shop_id).maybeSingle();
+    const vr = (voiceRow ?? {}) as Record<string, unknown>;
+    const { HANK_TTS_MODEL, HANK_VOICE_DEFAULTS } = await import("@/lib/ai/voice-config");
+    const voice = {
+      enabled: Boolean(vr["voice_enabled"]),
+      autoSpeak: Boolean(vr["voice_auto_speak"]),
+      voiceId: (vr["voice_id"] as string | null) ?? null,
+      voiceName: (vr["voice_name"] as string | null) ?? null,
+      speed: Number(vr["voice_speed"] ?? HANK_VOICE_DEFAULTS.speed),
+      stability: Number(vr["voice_stability"] ?? HANK_VOICE_DEFAULTS.stability),
+      similarity: Number(vr["voice_similarity"] ?? HANK_VOICE_DEFAULTS.similarity),
+      style: Number(vr["voice_style"] ?? HANK_VOICE_DEFAULTS.style),
+      speakerBoost: vr["voice_speaker_boost"] !== false,
+    };
     const { shopAiToolCatalogue } = await import("@/lib/ai/tools.server");
     const { SHOP_AI_ACCEPTED_TYPES, SHOP_AI_MAX_FILE_BYTES, SHOP_AI_MAX_FILES } = await import(
       "@/lib/shop-ai.limits"
@@ -74,8 +88,11 @@ export const getAiSettings = createServerFn({ method: "GET" })
         maxFileBytes: SHOP_AI_MAX_FILE_BYTES,
         maxFiles: SHOP_AI_MAX_FILES,
       },
-      /** True when the OpenAI secret is present. The value itself is never returned. */
+      voice,
+      voiceModel: HANK_TTS_MODEL,
+      /** True when the secrets are present. The values themselves are never returned. */
       apiKeyConfigured: Boolean(process.env["OPENAI_API_KEY"]),
+      voiceConfigured: Boolean(process.env["ELEVENLABS_API_KEY"]),
     };
   });
 
