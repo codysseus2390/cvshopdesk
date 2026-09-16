@@ -250,7 +250,13 @@ function NumbersPage() {
                     </thead>
                     <tbody>
                       {report.rows.map((row) => (
-                        <MetricRow key={row.key} row={row} />
+                        <MetricRow
+                          key={row.key}
+                          row={row}
+                          editing={editing && row.key !== "gp_percent"}
+                          value={draft[row.key] ?? ""}
+                          onChange={(next) => setDraft((prev) => ({ ...prev, [row.key]: next }))}
+                        />
                       ))}
                     </tbody>
                   </table>
