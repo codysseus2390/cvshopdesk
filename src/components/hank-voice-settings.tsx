@@ -505,19 +505,20 @@ export function HankVoiceSettings({
         </Card>
       )}
 
-      <Card className="opacity-70">
+      <Card className="border-dashed">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Mic className="h-4 w-4" /> Microphone &amp; push-to-talk <Badge variant="outline">Coming soon</Badge>
+            <Mic className="h-4 w-4" /> Talking to Hank <Badge variant="outline">Voice Mode</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-xs text-muted-foreground">
-            Talking to Hank out loud — headsets in the bays, push-to-talk on a phone, spoken notes and lookups — builds
-            on the speaking side set up here.
+            With Hank Voice on, the voice button beside the message box opens Voice Mode. It works with a desktop or
+            phone microphone and with Bluetooth headsets — the browser and device choose the microphone as usual.
           </p>
         </CardContent>
       </Card>
+
 
       {status && (
         <p className={`flex items-center gap-2 text-sm ${status.ok ? "text-primary" : "font-medium text-destructive"}`}>
