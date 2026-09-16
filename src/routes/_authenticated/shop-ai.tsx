@@ -13,8 +13,10 @@ import {
   TriangleAlert,
   UserRound,
   Volume2,
+  AudioLines,
 } from "lucide-react";
 import { useHankSpeech } from "@/components/shop-ai/use-hank-speech";
+import { VoiceMode } from "@/components/shop-ai/voice-mode";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate } from "@/components/access-gate";
 import { Button } from "@/components/ui/button";
@@ -158,7 +160,9 @@ function ShopAiPage() {
   // Voice is a layer on top of the written answer: if it fails, the text stands.
   const speech = useHankSpeech();
   const voiceOn = Boolean(config?.voice?.enabled) && Boolean(config?.voiceConfigured);
-  const autoSpeak = voiceOn && Boolean(config?.voice?.autoSpeak);
+  const [voiceMode, setVoiceMode] = useState(false);
+  // In Voice Mode every answer is spoken, whatever the auto-speak setting says.
+  const autoSpeak = voiceOn && (Boolean(config?.voice?.autoSpeak) || voiceMode);
   const spokenRef = useRef<string | null>(null);
 
   useEffect(() => {
