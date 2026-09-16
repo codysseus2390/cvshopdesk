@@ -111,6 +111,7 @@ export async function runShopAiTurn(options: {
   const model = resolveShopAiModel({ question: options.question });
   const tools = shopAiToolDefinitions();
   const toolActivity: ShopAiToolActivity[] = [];
+  const proposals: DetectedProposal[] = [];
   let dataChanged = false;
 
   const input: ResponsesItem[] = [
