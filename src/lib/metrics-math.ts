@@ -301,6 +301,32 @@ export function yearToDate(rows: MetricRow[], year: string, today: string): Peri
     };
   }
 
+  // Accepted monthly totals are rolled up; months without one fall back to their
+  // daily records, so the current incomplete month is counted exactly once.
+  const months = Array.from(new Set(inYear.map((r) => r.business_date.slice(0, 7)))).sort();
+  const monthlyRows = months
+    .map((month) => latestCumulative(inYear.filter((r) => r.business_date.startsWith(month)), "mtd", boundary))
+    .filter((r): r is MetricRow => Boolean(r));
+  if (monthlyRows.length > 0) {
+    const covered = new Set(monthlyRows.map((r) => r.business_date.slice(0, 7)));
+    const dailyRest = inYear.filter((r) => r.scope === "daily" && !covered.has(r.business_date.slice(0, 7)));
+    const asDaily: MetricRow[] = [
+      ...monthlyRows.map((r) => ({ ...r, scope: "daily" as const })),
+      ...dailyRest,
+    ];
+    const rolled = sumDaily(asDaily, asDaily.length, boundary);
+    const dates = asDaily.map((r) => r.business_date).sort();
+    const asOfRolled = dates[dates.length - 1] ?? null;
+    const behindRolled = asOfRolled ? daysBetween(asOfRolled, boundary) : elapsed;
+    return {
+      ...rolled,
+      basis: "cumulative-snapshot",
+      as_of: asOfRolled,
+      stale: behindRolled > 0,
+      days_behind: behindRolled,
+    };
+  }
+
   const summed = sumDaily(inYear, elapsed, boundary);
   const dailyDates = inYear
     .filter((r) => r.scope === "daily" && r.business_date <= boundary)
