@@ -68,9 +68,16 @@ function Dashboard() {
     return percent === null ? undefined : `${percent}% of the monthly goal`;
   };
 
-  const today = data?.todayRow;
+  const today = data?.previousDayRow;
   const todayGp = today?.gross_profit ?? null;
   const todayCars = today?.car_count ?? null;
+  const prevDayLabel = data?.previousDay
+    ? new Date(`${data.previousDay}T00:00:00Z`).toLocaleDateString(undefined, {
+        timeZone: "UTC",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
 
   const monthlyByYear = useMemo(() => {
     if (!data?.monthly.length) return null;
@@ -116,7 +123,7 @@ function Dashboard() {
           {shows("today") && (
           <section>
             <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-              <h2 className="flex min-w-0 items-center gap-2 font-display text-2xl font-bold"><CalendarDays className="h-6 w-6 shrink-0 text-primary" />Today</h2>
+              <h2 className="flex min-w-0 items-center gap-2 font-display text-2xl font-bold"><CalendarDays className="h-6 w-6 shrink-0 text-primary" />Previous day{prevDayLabel ? <span className="text-base font-semibold text-muted-foreground">{prevDayLabel}</span> : null}</h2>
               {perms.can("edit_dashboard_numbers") ? (
                 <Button asChild size="sm" className="h-11 rounded-xl px-4 text-sm shadow-md">
                   <Link to="/entry">Enter today's numbers</Link>
@@ -139,7 +146,7 @@ function Dashboard() {
             </div>
             {!today && (
               <p className="mt-3 text-sm text-muted-foreground">
-                No confirmed entry for today yet. Nothing is assumed to be zero.
+                No confirmed entry for the previous day yet. Nothing is assumed to be zero.
               </p>
             )}
           </section>
