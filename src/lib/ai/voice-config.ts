@@ -50,7 +50,17 @@ export const HANK_STT_PROMPT =
   "names, percentages and dollar amounts.";
 
 /** How the microphone behaves in Voice Mode. */
-export type HankVoiceInputMode = "auto" | "push";
+export type HankVoiceInputMode = "auto" | "push" | "wake";
+
+/* ---------- Wake word ("Hey Hank") ---------- */
+
+export const HANK_WAKE_DEFAULT_PHRASE = "Hey Hank";
+export const HANK_WAKE_PHRASE_LIMITS = { min: 2, max: 40 } as const;
+export const HANK_WAKE_TIMEOUT_LIMITS = { min: 10, max: 300, step: 5 } as const;
+export const HANK_WAKE_TIMEOUT_DEFAULT = 30;
+
+/** Short spoken acknowledgements, used only when Activation Response is on. */
+export const HANK_WAKE_ACKS = ["Yeah?", "What's up?", "I'm listening."] as const;
 
 export interface HankVoiceSettings {
   enabled: boolean;
@@ -64,6 +74,11 @@ export interface HankVoiceSettings {
   speakerBoost: boolean;
   inputMode: HankVoiceInputMode;
   autoListen: boolean;
+  wakeEnabled: boolean;
+  wakePhrase: string;
+  wakeSound: boolean;
+  wakeResponse: boolean;
+  wakeTimeoutSeconds: number;
 }
 
 export const HANK_VOICE_DEFAULTS: HankVoiceSettings = {
@@ -78,6 +93,11 @@ export const HANK_VOICE_DEFAULTS: HankVoiceSettings = {
   speakerBoost: HANK_VOICE_TUNING_DEFAULTS.speakerBoost,
   inputMode: "auto",
   autoListen: true,
+  wakeEnabled: false,
+  wakePhrase: HANK_WAKE_DEFAULT_PHRASE,
+  wakeSound: true,
+  wakeResponse: false,
+  wakeTimeoutSeconds: HANK_WAKE_TIMEOUT_DEFAULT,
 };
 
 /** One voice as the settings screen shows it. Shape is provider-neutral. */

@@ -13,9 +13,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Mic, MicOff, Square, TriangleAlert, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { transcribeHankSpeech } from "@/lib/voice.functions";
-import type { HankVoiceInputMode } from "@/lib/ai/voice-config";
+import { HANK_WAKE_ACKS, type HankVoiceInputMode } from "@/lib/ai/voice-config";
+import { useWakeWord } from "./use-wake-word";
 
-type Phase = "starting" | "ready" | "listening" | "processing" | "working" | "speaking" | "error";
+type Phase = "starting" | "waiting" | "ready" | "listening" | "processing" | "working" | "speaking" | "error";
 
 interface Props {
   assistantName: string;
@@ -25,11 +26,38 @@ interface Props {
   speaking: boolean;
   inputMode: HankVoiceInputMode;
   autoListen: boolean;
+  wakePhrase: string;
+  wakeSound: boolean;
+  wakeResponse: boolean;
+  wakeTimeoutSeconds: number;
   /** The last thing Hank said, shown as a short caption. */
   caption: string;
   onSubmit: (text: string) => void;
+  /** Speaks a short acknowledgement in Hank's saved voice. */
+  onAcknowledge?: (text: string) => void;
   onStopSpeaking: () => void;
   onExit: () => void;
+}
+
+/** Short rising chime, made in the browser. No file, no request. */
+function chime(ctx: AudioContext | null) {
+  if (!ctx) return;
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(660, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(990, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.24);
+  } catch {
+    /* a missing chime never matters */
+  }
 }
 
 /** Loudness thresholds (0-1 RMS). Higher while Hank talks, to ignore his voice. */
@@ -74,6 +102,8 @@ export function VoiceMode(props: Props) {
 
   const busy = props.busy;
   const speaking = props.speaking;
+  const wakeMode = props.inputMode === "wake";
+
 
   /* ---------- recording ---------- */
 
@@ -270,11 +300,43 @@ export function VoiceMode(props: Props) {
 
   // The conversation loop: whenever nothing else is happening, listen again.
   useEffect(() => {
-    if (props.inputMode === "push" || !props.autoListen) return;
+    if (props.inputMode === "push") return;
+    if (!wakeMode && !props.autoListen) return;
     if (phase !== "ready" || muted || busy || speaking) return;
     const timer = setTimeout(() => startRecording(), 250);
     return () => clearTimeout(timer);
-  }, [phase, muted, busy, speaking, props.inputMode, props.autoListen, startRecording]);
+  }, [phase, muted, busy, speaking, props.inputMode, props.autoListen, wakeMode, startRecording]);
+
+  /* ---------- wake phrase ---------- */
+
+  // Only listens for the phrase while nothing else is going on, so Hank's own
+  // voice can never wake him and ordinary talk mid-conversation is not re-triggered.
+  const wake = useWakeWord({
+    active: wakeMode && phase === "waiting" && !muted,
+    phrase: props.wakePhrase,
+    onDetected: () => {
+      if (props.wakeSound) chime(ctxRef.current);
+      if (props.wakeResponse && props.onAcknowledge) {
+        props.onAcknowledge(HANK_WAKE_ACKS[Math.floor(Math.random() * HANK_WAKE_ACKS.length)]!);
+      }
+      setHeard("");
+      setPhase("ready");
+    },
+  });
+
+  // Wake mode starts out waiting rather than listening.
+  useEffect(() => {
+    if (wakeMode && phase === "ready" && heard === "" && startedAtRef.current === 0) setPhase("waiting");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wakeMode, phase]);
+
+  // After a quiet stretch the conversation ends and he waits for the phrase again.
+  useEffect(() => {
+    if (!wakeMode || phase !== "ready" || busy || speaking) return;
+    const timer = setTimeout(() => setPhase("waiting"), Math.max(10, props.wakeTimeoutSeconds) * 1_000);
+    return () => clearTimeout(timer);
+  }, [wakeMode, phase, busy, speaking, props.wakeTimeoutSeconds]);
+
 
   /* ---------- controls ---------- */
 
@@ -304,6 +366,7 @@ export function VoiceMode(props: Props) {
 
   const label: Record<Phase, string> = {
     starting: "Starting the microphone…",
+    waiting: muted ? "Microphone muted" : `Say “${props.wakePhrase}” when you need me`,
     ready: muted
       ? "Microphone muted"
       : props.inputMode === "push"
@@ -325,6 +388,23 @@ export function VoiceMode(props: Props) {
         <div>
           <p className="font-display text-lg font-bold">{props.assistantName}</p>
           <p className="text-xs text-muted-foreground">Voice Mode</p>
+          {wakeMode && (
+            <p className="mt-1 flex items-center gap-1.5 text-[11px] font-medium">
+              <span
+                aria-hidden
+                className={`inline-block h-2 w-2 rounded-full ${
+                  muted || phase === "error" ? "bg-muted-foreground" : "animate-pulse bg-primary"
+                }`}
+              />
+              <span className={muted ? "text-muted-foreground" : "text-primary"}>
+                {muted
+                  ? "Microphone off"
+                  : phase === "waiting"
+                    ? `Listening for “${props.wakePhrase}”`
+                    : "Microphone on"}
+              </span>
+            </p>
+          )}
         </div>
         <Button variant="ghost" size="icon" className="rounded-full" aria-label="Exit Voice Mode" onClick={props.onExit}>
           <X className="h-5 w-5" />
@@ -365,6 +445,17 @@ export function VoiceMode(props: Props) {
         {error && (
           <p className="flex items-center gap-2 text-center text-xs font-medium text-destructive">
             <TriangleAlert className="h-3.5 w-3.5" /> {error}
+          </p>
+        )}
+        {wakeMode && !wake.supported && (
+          <p className="flex items-center gap-2 text-center text-xs text-muted-foreground">
+            <TriangleAlert className="h-3.5 w-3.5" /> This browser cannot listen for a wake phrase. Use Chrome or Edge,
+            or just start talking here as usual.
+          </p>
+        )}
+        {wakeMode && wake.error && (
+          <p className="flex items-center gap-2 text-center text-xs font-medium text-destructive">
+            <TriangleAlert className="h-3.5 w-3.5" /> {wake.error}
           </p>
         )}
       </div>

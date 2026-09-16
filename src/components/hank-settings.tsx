@@ -299,7 +299,7 @@ export function HankSettings({ canEdit }: { canEdit: boolean }) {
         <CardContent>
           <HankVoiceSettings
             canEdit={canEdit}
-            saved={data?.voice ?? HANK_VOICE_DEFAULTS}
+            saved={{ ...HANK_VOICE_DEFAULTS, ...(data?.voice ?? {}) }}
             model={data?.voiceModel ?? ""}
             configured={Boolean(data?.voiceConfigured)}
           />

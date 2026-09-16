@@ -501,10 +501,17 @@ function ShopAiPage() {
           assistantName={assistantName}
           busy={mutation.isPending}
           speaking={speech.playingId !== null || speech.loadingId !== null}
-          inputMode={config?.voice?.inputMode ?? "auto"}
+          inputMode={
+            config?.voice?.wakeEnabled ? "wake" : (config?.voice?.inputMode === "wake" ? "auto" : config?.voice?.inputMode ?? "auto")
+          }
           autoListen={config?.voice?.autoListen !== false}
+          wakePhrase={config?.voice?.wakePhrase?.trim() || "Hey Hank"}
+          wakeSound={config?.voice?.wakeSound !== false}
+          wakeResponse={Boolean(config?.voice?.wakeResponse)}
+          wakeTimeoutSeconds={config?.voice?.wakeTimeoutSeconds ?? 30}
           caption={lastAssistantText}
           onSubmit={(text) => submit(text)}
+          onAcknowledge={(text) => void speech.play("hank-wake-ack", text)}
           onStopSpeaking={speech.stop}
           onExit={() => {
             speech.stop();

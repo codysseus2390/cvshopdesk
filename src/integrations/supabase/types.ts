@@ -108,6 +108,11 @@ export type Database = {
           voice_speed: number
           voice_stability: number
           voice_style: number
+          voice_wake_enabled: boolean
+          voice_wake_phrase: string
+          voice_wake_response: boolean
+          voice_wake_sound: boolean
+          voice_wake_timeout_seconds: number
         }
         Insert: {
           assistant_name?: string
@@ -137,6 +142,11 @@ export type Database = {
           voice_speed?: number
           voice_stability?: number
           voice_style?: number
+          voice_wake_enabled?: boolean
+          voice_wake_phrase?: string
+          voice_wake_response?: boolean
+          voice_wake_sound?: boolean
+          voice_wake_timeout_seconds?: number
         }
         Update: {
           assistant_name?: string
@@ -166,6 +176,11 @@ export type Database = {
           voice_speed?: number
           voice_stability?: number
           voice_style?: number
+          voice_wake_enabled?: boolean
+          voice_wake_phrase?: string
+          voice_wake_response?: boolean
+          voice_wake_sound?: boolean
+          voice_wake_timeout_seconds?: number
         }
         Relationships: [
           {

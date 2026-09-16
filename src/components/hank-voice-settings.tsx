@@ -34,6 +34,9 @@ import {
   HANK_VOICE_LIMITS,
   HANK_VOICE_TEST_PHRASE,
   HANK_VOICE_TUNING_DEFAULTS,
+  HANK_WAKE_DEFAULT_PHRASE,
+  HANK_WAKE_PHRASE_LIMITS,
+  HANK_WAKE_TIMEOUT_LIMITS,
   type HankVoiceOption,
   type HankVoiceSettings,
 } from "@/lib/ai/voice-config";
@@ -169,6 +172,11 @@ export function HankVoiceSettings({
           speakerBoost: form.speakerBoost,
           inputMode: form.inputMode,
           autoListen: form.autoListen,
+          wakeEnabled: form.wakeEnabled,
+          wakePhrase: form.wakePhrase.trim() || HANK_WAKE_DEFAULT_PHRASE,
+          wakeSound: form.wakeSound,
+          wakeResponse: form.wakeResponse,
+          wakeTimeoutSeconds: form.wakeTimeoutSeconds,
         },
       });
       await queryClient.invalidateQueries({ queryKey: ["ai-settings"] });
@@ -240,11 +248,12 @@ export function HankVoiceSettings({
                 How the microphone works when someone taps the voice button beside the message box.
               </p>
             </div>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-2 sm:grid-cols-3">
               {(
                 [
                   { key: "auto", label: "Automatic conversation", hint: "Hank listens whenever he is not talking." },
                   { key: "push", label: "Push-to-talk", hint: "Hold the microphone to speak. Better in a noisy bay." },
+                  { key: "wake", label: "Wake word", hint: "He waits quietly until he hears his phrase." },
                 ] as const
               ).map((option) => (
                 <button
@@ -272,12 +281,111 @@ export function HankVoiceSettings({
               </div>
               <Switch
                 checked={form.autoListen}
-                disabled={!canEdit || form.inputMode === "push"}
+                disabled={!canEdit || form.inputMode !== "auto"}
                 aria-label="Auto-start listening"
                 onCheckedChange={(value) => set("autoListen", value)}
               />
             </div>
           </div>
+
+          <div className="space-y-3 rounded-xl border border-border bg-muted/40 p-3">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="flex items-center gap-2 text-sm font-medium">
+                  <Mic className="h-3.5 w-3.5" /> Wake word
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Hands-free start. In Voice Mode he waits quietly, then perks up when he hears his phrase.
+                </p>
+              </div>
+              <Switch
+                checked={form.wakeEnabled}
+                disabled={!canEdit}
+                aria-label="Enable wake word"
+                onCheckedChange={(value) => {
+                  set("wakeEnabled", value);
+                  if (value) set("inputMode", "wake");
+                }}
+              />
+            </div>
+
+            {form.wakeEnabled && (
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="wake-phrase" className="text-xs">
+                    Wake phrase
+                  </Label>
+                  <Input
+                    id="wake-phrase"
+                    value={form.wakePhrase}
+                    disabled={!canEdit}
+                    maxLength={HANK_WAKE_PHRASE_LIMITS.max}
+                    placeholder={HANK_WAKE_DEFAULT_PHRASE}
+                    onChange={(event) => set("wakePhrase", event.target.value)}
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Two or three words work best — “Hey Hank”, “Okay Hank”. A single short word is triggered more often
+                    by ordinary shop talk.
+                  </p>
+                </div>
+
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium">Activation sound</p>
+                    <p className="text-xs text-muted-foreground">A short chime when he starts listening.</p>
+                  </div>
+                  <Switch
+                    checked={form.wakeSound}
+                    disabled={!canEdit}
+                    aria-label="Activation sound"
+                    onCheckedChange={(value) => set("wakeSound", value)}
+                  />
+                </div>
+
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium">Activation response</p>
+                    <p className="text-xs text-muted-foreground">
+                      He answers with a quick “Yeah?” in his own voice before you ask.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={form.wakeResponse}
+                    disabled={!canEdit}
+                    aria-label="Activation response"
+                    onCheckedChange={(value) => set("wakeResponse", value)}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Conversation timeout</Label>
+                    <span className="text-xs text-muted-foreground">{form.wakeTimeoutSeconds}s</span>
+                  </div>
+                  <Slider
+                    value={[form.wakeTimeoutSeconds]}
+                    min={HANK_WAKE_TIMEOUT_LIMITS.min}
+                    max={HANK_WAKE_TIMEOUT_LIMITS.max}
+                    step={HANK_WAKE_TIMEOUT_LIMITS.step}
+                    disabled={!canEdit}
+                    onValueChange={([value]) => set("wakeTimeoutSeconds", value ?? HANK_WAKE_TIMEOUT_LIMITS.min)}
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    After this much quiet he stops the conversation and waits for the phrase again.
+                  </p>
+                </div>
+
+                <p className="rounded-lg border border-border bg-card p-2.5 text-[11px] text-muted-foreground">
+                  Wake word listening happens on this device using the browser's own listening feature, so room audio is
+                  never sent to Hank's answering or speaking services just to catch his name. It works while Voice Mode
+                  is open in Chrome or Edge on a desktop, laptop or phone. A web page cannot listen in the background,
+                  after the tab is closed, or while the device is asleep — that needs a future installed Windows or phone
+                  version. He also ignores the phrase while he is talking, so his own voice cannot set him off.
+                </p>
+              </div>
+            )}
+          </div>
+
 
 
           <div className="rounded-xl border border-border bg-muted/40 p-3">
