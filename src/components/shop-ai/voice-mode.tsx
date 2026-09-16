@@ -366,6 +366,7 @@ export function VoiceMode(props: Props) {
 
   const label: Record<Phase, string> = {
     starting: "Starting the microphone…",
+    waiting: muted ? "Microphone muted" : `Say “${props.wakePhrase}” when you need me`,
     ready: muted
       ? "Microphone muted"
       : props.inputMode === "push"
