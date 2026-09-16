@@ -34,6 +34,8 @@ export interface ShopAiToolContext {
   today: string;
   /** Effective permissions of the signed-in staff member. */
   can: (permission: PermissionKey) => boolean;
+  /** Where this turn's information came from, recorded on every AI action. */
+  sourceType: "image" | "document" | "text";
 }
 
 export interface ShopAiToolOutcome {
