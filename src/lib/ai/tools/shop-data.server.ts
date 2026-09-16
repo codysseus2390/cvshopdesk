@@ -48,7 +48,7 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
     name: "get_dashboard_numbers",
     sourceLabel: "Dashboard numbers",
     description:
-      "Reads saved shop metrics for today plus month-to-date and year-to-date totals. For overall mechanic productivity today, yesterday, this week, or this month, use get_numbers_report with the matching period/date.",
+      "Reads saved shop metrics for today plus month-to-date and year-to-date totals, including overall mechanic productivity for today, yesterday, this week, and this month. Use get_numbers_report for detailed weekly, monthly, or yearly comparisons.",
     permission: "view_dashboard",
     parameters: { type: "object", properties: {}, additionalProperties: false },
     execute: async (ctx) => {
