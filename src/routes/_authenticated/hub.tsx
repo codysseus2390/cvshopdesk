@@ -146,7 +146,7 @@ function Dashboard() {
             </div>
             {!today && (
               <p className="mt-3 text-sm text-muted-foreground">
-                No confirmed entry for today yet. Nothing is assumed to be zero.
+                No confirmed entry for the previous day yet. Nothing is assumed to be zero.
               </p>
             )}
           </section>
