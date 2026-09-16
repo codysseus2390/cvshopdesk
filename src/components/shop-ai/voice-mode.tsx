@@ -388,6 +388,23 @@ export function VoiceMode(props: Props) {
         <div>
           <p className="font-display text-lg font-bold">{props.assistantName}</p>
           <p className="text-xs text-muted-foreground">Voice Mode</p>
+          {wakeMode && (
+            <p className="mt-1 flex items-center gap-1.5 text-[11px] font-medium">
+              <span
+                aria-hidden
+                className={`inline-block h-2 w-2 rounded-full ${
+                  muted || phase === "error" ? "bg-muted-foreground" : "animate-pulse bg-primary"
+                }`}
+              />
+              <span className={muted ? "text-muted-foreground" : "text-primary"}>
+                {muted
+                  ? "Microphone off"
+                  : phase === "waiting"
+                    ? `Listening for “${props.wakePhrase}”`
+                    : "Microphone on"}
+              </span>
+            </p>
+          )}
         </div>
         <Button variant="ghost" size="icon" className="rounded-full" aria-label="Exit Voice Mode" onClick={props.onExit}>
           <X className="h-5 w-5" />
