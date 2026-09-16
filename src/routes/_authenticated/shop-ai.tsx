@@ -70,6 +70,8 @@ interface ChatMessage {
   failed?: boolean;
   attachments?: { name: string; mimeType: string; url?: string | null }[];
   proposals?: DetectedProposalView[];
+  authorName?: string;
+  isMine?: boolean;
 }
 
 const SUGGESTIONS = [
@@ -97,6 +99,9 @@ function ShopAiPage() {
   const { data: saved, isLoading } = useQuery({
     queryKey: ["shop-ai-messages"],
     queryFn: () => fetchMessages(),
+    // The conversation is shared, so pick up what other staff ask Hank.
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
   });
 
   const loadSettings = useServerFn(getAiSettings);
