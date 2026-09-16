@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip as ChartTooltip,
   XAxis,
@@ -69,6 +71,30 @@ function Dashboard() {
   const today = data?.todayRow;
   const todayGp = today?.gross_profit ?? null;
   const todayCars = today?.car_count ?? null;
+
+  const monthlyByYear = useMemo(() => {
+    if (!data?.monthly.length) return null;
+    const years = Array.from(new Set(data.monthly.map((m) => m.month.slice(0, 4)))).sort();
+    const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+    const label = (mo: string) => new Date(`2000-${mo}-01`).toLocaleString(undefined, { month: "short" });
+    const rows = months.map((mo) => {
+      const row: Record<string, number | string | null> = { month: label(mo) };
+      for (const year of years) {
+        const found = data.monthly.find((m) => m.month === `${year}-${mo}`);
+        row[year] = found?.totals.gross_profit ?? null;
+      }
+      return row;
+    });
+    return { years, rows };
+  }, [data?.monthly]);
+
+  const YEAR_COLORS = [
+    "var(--color-chart-1)",
+    "var(--color-chart-2)",
+    "var(--color-chart-3)",
+    "var(--color-chart-4)",
+    "var(--color-chart-5)",
+  ];
 
   return (
     <AppShell title="Dashboard">
@@ -178,21 +204,32 @@ function Dashboard() {
                 <CardTitle className="flex items-center gap-2 font-display"><BarChart3 className="h-5 w-5 text-secondary" />Monthly gross profit</CardTitle>
               </CardHeader>
               <CardContent className="h-64">
-                {data.monthly.length === 0 ? (
+                {!monthlyByYear ? (
                   <p className="text-sm text-muted-foreground">
                     No monthly totals yet. They appear as daily entries and reports are confirmed.
                   </p>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={data.monthly.map((m) => ({ month: m.month, gp: m.totals.gross_profit }))}
-                    >
+                    <LineChart data={monthlyByYear.rows}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} />
                       <ChartTooltip formatter={(v) => formatCurrency(typeof v === "number" ? v : null)} />
-                      <Bar dataKey="gp" fill="var(--color-primary)" radius={4} />
-                    </BarChart>
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      {monthlyByYear.years.map((year, i) => (
+                        <Line
+                          key={year}
+                          type="monotone"
+                          dataKey={year}
+                          name={year}
+                          stroke={YEAR_COLORS[i % YEAR_COLORS.length]}
+                          strokeWidth={2}
+                          dot={{ r: 3 }}
+                          activeDot={{ r: 5 }}
+                          connectNulls={false}
+                        />
+                      ))}
+                    </LineChart>
                   </ResponsiveContainer>
                 )}
                 <p className="mt-2 text-xs text-muted-foreground">
