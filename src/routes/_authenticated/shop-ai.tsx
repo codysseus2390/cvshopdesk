@@ -280,15 +280,15 @@ function ShopAiPage() {
       title={assistantName}
       subtitle={`${subtitle} — automotive and shop-operations help. It says so when it cannot see a data source.`}
     >
-      <div className="mx-auto flex w-full max-w-3xl flex-col">
-        <div className="mb-3 flex items-center justify-end">
+      <div className="mx-auto flex h-[calc(100vh-180px)] w-full max-w-3xl flex-col">
+        <div className="mb-3 flex shrink-0 items-center justify-end">
           <Button variant="outline" size="sm" onClick={reset} disabled={mutation.isPending} className="rounded-xl">
             <RotateCcw className="mr-2 h-3.5 w-3.5" /> New conversation
           </Button>
         </div>
 
-        <Card className="min-h-[52vh]">
-          <CardContent className="space-y-5 p-4 sm:p-6">
+        <Card className="flex min-h-0 flex-1 flex-col">
+          <CardContent ref={messagesRef} className="flex-1 space-y-5 overflow-y-auto p-4 sm:p-6">
             {isLoading && <p className="text-sm text-muted-foreground">Loading your conversation…</p>}
 
             {!isLoading && messages.length === 0 && (
