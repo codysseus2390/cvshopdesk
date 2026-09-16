@@ -68,8 +68,12 @@ export function useHankSpeech() {
             analyser.fftSize = 512;
             analyserRef.current = analyser;
             samplesRef.current = new Float32Array(analyser.fftSize);
+            const gain = gainRef.current ?? ctx.createGain();
+            gain.gain.value = 1.8;
+            gainRef.current = gain;
             const source = ctx.createMediaElementSource(audio);
-            source.connect(analyser);
+            source.connect(gain);
+            gain.connect(analyser);
             analyser.connect(ctx.destination);
           }
         } catch {
