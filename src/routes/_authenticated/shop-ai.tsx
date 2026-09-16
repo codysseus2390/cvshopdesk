@@ -156,6 +156,8 @@ function ShopAiPage() {
   // Only the newest answer still offers Confirm / Edit / Cancel.
   const lastId = messages[messages.length - 1]?.id;
   const isLast = (message: ChatMessage) => message.id === lastId;
+  const lastMessage = messages[messages.length - 1];
+  const lastAssistantText = lastMessage?.role === "assistant" && !lastMessage.failed ? lastMessage.content : "";
 
   // Voice is a layer on top of the written answer: if it fails, the text stands.
   const speech = useHankSpeech();
