@@ -97,6 +97,15 @@ export type Database = {
           updated_at: string
           updated_by: string | null
           vision_enabled: boolean
+          voice_auto_speak: boolean
+          voice_enabled: boolean
+          voice_id: string | null
+          voice_name: string | null
+          voice_similarity: number
+          voice_speaker_boost: boolean
+          voice_speed: number
+          voice_stability: number
+          voice_style: number
         }
         Insert: {
           assistant_name?: string
@@ -115,6 +124,15 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           vision_enabled?: boolean
+          voice_auto_speak?: boolean
+          voice_enabled?: boolean
+          voice_id?: string | null
+          voice_name?: string | null
+          voice_similarity?: number
+          voice_speaker_boost?: boolean
+          voice_speed?: number
+          voice_stability?: number
+          voice_style?: number
         }
         Update: {
           assistant_name?: string
@@ -133,6 +151,15 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           vision_enabled?: boolean
+          voice_auto_speak?: boolean
+          voice_enabled?: boolean
+          voice_id?: string | null
+          voice_name?: string | null
+          voice_similarity?: number
+          voice_speaker_boost?: boolean
+          voice_speed?: number
+          voice_stability?: number
+          voice_style?: number
         }
         Relationships: [
           {

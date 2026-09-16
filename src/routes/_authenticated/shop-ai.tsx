@@ -2,7 +2,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Bot, ImageIcon, Paperclip, RotateCcw, Send, TriangleAlert, UserRound } from "lucide-react";
+import {
+  Bot,
+  ImageIcon,
+  Loader2,
+  Paperclip,
+  RotateCcw,
+  Send,
+  Square,
+  TriangleAlert,
+  UserRound,
+  Volume2,
+} from "lucide-react";
+import { useHankSpeech } from "@/components/shop-ai/use-hank-speech";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate } from "@/components/access-gate";
 import { Button } from "@/components/ui/button";
@@ -143,6 +155,27 @@ function ShopAiPage() {
   const lastId = messages[messages.length - 1]?.id;
   const isLast = (message: ChatMessage) => message.id === lastId;
 
+  // Voice is a layer on top of the written answer: if it fails, the text stands.
+  const speech = useHankSpeech();
+  const voiceOn = Boolean(config?.voice.enabled) && Boolean(config?.voiceConfigured);
+  const autoSpeak = voiceOn && Boolean(config?.voice.autoSpeak);
+  const spokenRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!autoSpeak) return;
+    const last = messages[messages.length - 1];
+    // New answers only — never read an old conversation back on open.
+    if (!last || last.role !== "assistant" || last.failed) return;
+    if (spokenRef.current === null) {
+      spokenRef.current = last.id;
+      return;
+    }
+    if (spokenRef.current === last.id) return;
+    spokenRef.current = last.id;
+    void speech.play(last.id, last.content);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSpeak, lastId]);
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages.length, mutation.isPending]);
@@ -279,6 +312,41 @@ function ShopAiPage() {
                     >
                       {message.content}
                     </div>
+                    {voiceOn && !message.failed && message.content.trim().length > 0 && (
+                      <div className="mt-1.5 flex items-center gap-2">
+                        {speech.playingId === message.id ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 rounded-full px-2 text-xs"
+                            onClick={speech.stop}
+                          >
+                            <Square className="mr-1.5 h-3 w-3" /> Stop
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 rounded-full px-2 text-xs text-muted-foreground"
+                            aria-label={`Read this answer out loud`}
+                            disabled={speech.loadingId === message.id}
+                            onClick={() => void speech.play(message.id, message.content)}
+                          >
+                            {speech.loadingId === message.id ? (
+                              <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+                            ) : (
+                              <Volume2 className="mr-1.5 h-3 w-3" />
+                            )}
+                            {speech.loadingId === message.id ? "Preparing…" : "Listen"}
+                          </Button>
+                        )}
+                        {speech.error && speech.playingId === null && speech.loadingId === null && isLast(message) && (
+                          <span className="text-[11px] text-muted-foreground">{speech.error}</span>
+                        )}
+                      </div>
+                    )}
                     {isLast(message) &&
                       (message.proposals ?? []).map((proposal) => (
                         <DetectedCard

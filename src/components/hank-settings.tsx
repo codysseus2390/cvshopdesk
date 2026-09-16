@@ -17,6 +17,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAiSettings, saveAiSettings } from "@/lib/ai-settings.functions";
 import { SHOP_AI_MAX_PERSONALITY_CHARS, SHOP_AI_MODEL_TIERS, SHOP_AI_MODELS } from "@/lib/ai/model-config";
 import { ASSISTANT_SETTINGS_DEFAULTS, type AssistantSettings } from "@/lib/ai/persona";
+import { HankVoiceSettings } from "@/components/hank-voice-settings";
+import { HANK_VOICE_DEFAULTS } from "@/lib/ai/voice-config";
 
 const BEHAVIOR: { key: keyof AssistantSettings; label: string; hint: string }[] = [
   { key: "casualLanguage", label: "Casual language", hint: "Talks like someone in the shop, not a manual." },
@@ -290,19 +292,21 @@ export function HankSettings({ canEdit }: { canEdit: boolean }) {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Voice</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <HankVoiceSettings
+            canEdit={canEdit}
+            saved={data?.voice ?? HANK_VOICE_DEFAULTS}
+            model={data?.voiceModel ?? ""}
+            configured={Boolean(data?.voiceConfigured)}
+          />
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4 sm:grid-cols-2">
-        <Card className="opacity-70">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              Hank Voice <Badge variant="outline">Coming soon</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              Voice selection, speaking speed, spoken answers and push-to-talk will live here.
-            </p>
-          </CardContent>
-        </Card>
         <Card className="opacity-70">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
