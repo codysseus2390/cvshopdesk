@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useHankSpeech } from "@/components/shop-ai/use-hank-speech";
 import { VoiceMode } from "@/components/shop-ai/voice-mode";
+import { TalkButton } from "@/components/shop-ai/talk-button";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate } from "@/components/access-gate";
 import { Button } from "@/components/ui/button";
