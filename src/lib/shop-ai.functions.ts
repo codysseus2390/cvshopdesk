@@ -90,16 +90,33 @@ async function loadThread(sb: Supa, userId: string) {
 export const listShopAiMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const rows = await loadThread(context.supabase as unknown as Supa, context.userId);
-    return rows.map((row) => ({
+    const sb = context.supabase as unknown as Supa;
+    const rows = await loadThread(sb, context.userId);
+    const mapped = rows.map((row) => ({
       id: row.id,
       role: row.role === "assistant" ? ("assistant" as const) : ("user" as const),
       content: row.content,
       createdAt: row.created_at,
       tools: row.sources?.tools ?? [],
       proposals: (row.sources?.proposals ?? []) as DetectedProposalView[],
-      attachments: (row.sources?.attachments ?? []).map((file) => ({ name: file.name, mimeType: file.mimeType })),
+      attachments: (row.sources?.attachments ?? []).map((file) => ({
+        name: file.name,
+        mimeType: file.mimeType,
+        path: file.path,
+        url: null as string | null,
+      })),
     }));
+
+    // Images Hank created (or the user attached) are private: hand the browser a
+    // short-lived signed link so it can show them inline.
+    for (const message of mapped) {
+      for (const file of message.attachments) {
+        if (!file.mimeType.startsWith("image/")) continue;
+        const { data: signed } = await sb.storage.from("shop-uploads").createSignedUrl(file.path, 60 * 60);
+        file.url = (signed?.signedUrl as string | undefined) ?? null;
+      }
+    }
+    return mapped;
   });
 
 const attachmentSchema = z.object({
@@ -238,6 +255,7 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
           model: result.model,
           tools: result.toolActivity,
           proposals: result.proposals,
+          attachments: result.images,
         },
       });
       if (replyError) throw new Error(`The answer could not be saved: ${replyError.message}`);
