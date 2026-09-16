@@ -228,7 +228,12 @@ async function executeTool(
       before: result.before,
       after: result.after,
     });
-    return { ok: true, changed: Boolean(tool.mutating), payload: JSON.stringify(result.data ?? null) };
+    return {
+      ok: true,
+      changed: Boolean(tool.mutating),
+      payload: JSON.stringify(result.data ?? null),
+      ...(result.proposal ? { proposal: result.proposal } : {}),
+    };
   } catch (err) {
     if (err instanceof ConfirmationRequiredError) {
       await log({ status: "confirmation_requested", error: err.message });
