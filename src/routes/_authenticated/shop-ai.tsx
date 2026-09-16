@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useHankSpeech } from "@/components/shop-ai/use-hank-speech";
 import { VoiceMode } from "@/components/shop-ai/voice-mode";
+import { TalkButton } from "@/components/shop-ai/talk-button";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate } from "@/components/access-gate";
 import { Button } from "@/components/ui/button";
@@ -471,19 +472,22 @@ function ShopAiPage() {
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              {voiceOn && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  aria-label={`Talk with ${assistantName} in Voice Mode`}
-                  title={`Talk with ${assistantName}`}
-                  onClick={() => setVoiceMode(true)}
-                  className="h-9 w-9 rounded-full"
-                >
-                  <AudioLines className="h-4 w-4" />
-                </Button>
-              )}
+              <TalkButton
+                disabled={mutation.isPending}
+                onResult={(text) => submit(text)}
+                onError={(message) => setAttachError(message)}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label={`Voice Mode — talk with ${assistantName}`}
+                title="Voice Mode"
+                onClick={() => setVoiceMode(true)}
+                className="h-9 w-9 rounded-full"
+              >
+                <AudioLines className="h-4 w-4" />
+              </Button>
               <Button
                 type="submit"
                 disabled={mutation.isPending || overLimit || (draft.trim().length === 0 && attachments.length === 0)}
