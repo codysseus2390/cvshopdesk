@@ -156,7 +156,6 @@ function Dashboard() {
               <MetricCard
                 label="Mechanic productivity"
                 value={formatProductivity(data.previousDayProductivity)}
-                hint={periodGoalNote(data.previousDayProductivity, data.previousDayProductivityGoal)}
               />
             </div>
             {!today && (

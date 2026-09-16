@@ -8,7 +8,7 @@ import {
   type MetricRow,
   type PeriodTotals,
 } from "./metrics-math";
-import { aggregatePeriod, goalFor, NUMBER_METRICS, resolvePeriod, type GoalRules, type NumbersRow, type PeriodValues } from "./numbers-math";
+import { aggregatePeriod, resolvePeriod, type NumbersRow, type PeriodValues } from "./numbers-math";
 import { buildNumbersReport } from "./numbers.server";
 import { dashboardWeekFromReport } from "./dashboard-week";
 import { overallProductivity, type ProductivityInput } from "./productivity-math";
@@ -92,7 +92,7 @@ export const getDashboard = createServerFn({ method: "GET" })
     const year = today.slice(0, 4);
     const monthPrefix = today.slice(0, 7);
 
-    const [{ data: rows, error }, { data: productivityRows, error: productivityError }, { data: settings }] = await Promise.all([
+    const [{ data: rows, error }, { data: productivityRows, error: productivityError }] = await Promise.all([
       supabase
         .from("metric_snapshots")
         .select("id, business_date, scope, sales, gross_profit, tires_sold, car_count, source, created_at, flags, note")
@@ -104,7 +104,6 @@ export const getDashboard = createServerFn({ method: "GET" })
         .select("business_date, technician, productivity_pct, hours_billed, hours_worked, period_scope, updated_at")
         .gte("business_date", `${Number(year) - 1}-01-01`)
         .lte("business_date", today),
-      supabase.from("shop_settings").select("goal_rules").eq("shop_id", shop.shopId).maybeSingle(),
     ]);
     if (error) throw new Error(error.message);
     if (productivityError) throw new Error(productivityError.message);
@@ -133,17 +132,6 @@ export const getDashboard = createServerFn({ method: "GET" })
       "daily",
       previousDay,
     );
-    const productivityDef = NUMBER_METRICS.find((metric) => metric.key === "mechanic_productivity");
-    const productivityRules = (settings?.goal_rules ?? {}) as unknown as GoalRules;
-    const productivityRule = productivityRules["mechanic_productivity"];
-    const previousDayProductivityGoal = productivityDef
-      ? goalFor(
-          productivityDef,
-          productivityRule,
-          resolvePeriod("monthly", previousDay),
-          null,
-        )
-      : null;
 
     // The chart and the Numbers page read the same accepted monthly records
     // through the shared reporting aggregation, so corrections flow to both.
@@ -183,7 +171,6 @@ export const getDashboard = createServerFn({ method: "GET" })
       previousDay,
       previousDayRow,
       previousDayProductivity,
-      previousDayProductivityGoal,
       week,
       mtd: {
         ...mtd,
