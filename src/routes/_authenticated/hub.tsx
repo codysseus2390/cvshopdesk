@@ -74,6 +74,10 @@ function Dashboard() {
     const percent = goal > 0 ? Math.round((actual / goal) * 100) : null;
     return percent === null ? undefined : `${percent}% of the monthly goal`;
   };
+  const periodGoalNote = (actual: number | null, goal: number | null, period: "daily" | "monthly") => {
+    if (goal === null || actual === null || goal <= 0) return undefined;
+    return `${Math.round((actual / goal) * 100)}% of ${period} goal`;
+  };
 
   const today = data?.previousDayRow;
   const todayGp = today?.gross_profit ?? null;
@@ -152,6 +156,7 @@ function Dashboard() {
               <MetricCard
                 label="Mechanic productivity"
                 value={formatProductivity(data.previousDayProductivity)}
+                hint={periodGoalNote(data.previousDayProductivity, data.previousDayProductivityGoal, "daily")}
               />
             </div>
             {!today && (
@@ -238,7 +243,11 @@ function Dashboard() {
               <MetricCard
                 label="Mechanic productivity"
                 value={formatProductivity(data.mtd.mechanic_productivity)}
-                hint={goalNote("mechanic_productivity", data.mtd.mechanic_productivity)}
+                hint={periodGoalNote(
+                  data.mtd.mechanic_productivity,
+                  data.mtd.mechanic_productivity_goal,
+                  "monthly",
+                )}
               />
             </div>
             <p className="mt-3 text-sm text-muted-foreground">

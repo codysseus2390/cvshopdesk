@@ -53,16 +53,36 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
     parameters: { type: "object", properties: {}, additionalProperties: false },
     execute: async (ctx) => {
       const year = ctx.today.slice(0, 4);
-      const { data, error } = await ctx.supabase
-        .from("metric_snapshots")
-        .select("id, business_date, scope, gross_profit, tires_sold, car_count, source, note, created_at")
-        .eq("is_current", true)
-        .gte("business_date", `${year}-01-01`)
-        .order("business_date", { ascending: true });
+      const [{ data, error }, { data: productivityRows, error: productivityError }] = await Promise.all([
+        ctx.supabase
+          .from("metric_snapshots")
+          .select("id, business_date, scope, gross_profit, tires_sold, car_count, source, note, created_at")
+          .eq("is_current", true)
+          .gte("business_date", `${year}-01-01`)
+          .order("business_date", { ascending: true }),
+        ctx.supabase
+          .from("technician_productivity")
+          .select("business_date, technician, productivity_pct, hours_billed, hours_worked, period_scope, updated_at")
+          .gte("business_date", `${Number(year) - 1}-01-01`)
+          .lte("business_date", ctx.today),
+      ]);
       if (error) throw new Error(error.message);
+      if (productivityError) throw new Error(productivityError.message);
       const rows = ((data ?? []) as (MetricRow & { created_at: string })[]).filter(
         (row) => row.business_date <= ctx.today,
       );
+      const { addDays, resolvePeriod } = await import("@/lib/numbers-math");
+      const { overallProductivity } = await import("@/lib/productivity-math");
+      const productivity = productivityRows ?? [];
+      const yesterday = addDays(ctx.today, -1);
+      const { buildNumbersReport } = await import("@/lib/numbers.server");
+      const shop = { shopId: ctx.shopId, role: "", timezone: ctx.timezone, name: "" };
+      const [weekReport, monthReport] = await Promise.all([
+        buildNumbersReport(ctx.supabase, shop, "weekly", ctx.today),
+        buildNumbersReport(ctx.supabase, shop, "monthly", ctx.today),
+      ]);
+      const reportProductivity = (report: typeof weekReport) =>
+        report.rows.find((row) => row.key === "mechanic_productivity")?.actual ?? null;
       return {
         data: {
           shopToday: ctx.today,
@@ -70,6 +90,12 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
           monthToDate: monthToDate(rows, ctx.today.slice(0, 7), ctx.today),
           yearToDate: yearToDate(rows, year, ctx.today),
           recentDaily: rows.filter((row) => row.scope === "daily").slice(-14),
+          mechanicProductivity: {
+            today: overallProductivity(productivity, { from: ctx.today, to: ctx.today }, "daily", ctx.today),
+            yesterday: overallProductivity(productivity, { from: yesterday, to: yesterday }, "daily", yesterday),
+            thisWeek: reportProductivity(weekReport),
+            thisMonth: reportProductivity(monthReport),
+          },
         },
       };
     },
