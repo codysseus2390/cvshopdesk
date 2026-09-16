@@ -68,7 +68,7 @@ export interface ShopAiTool {
   execute: (ctx: ShopAiToolContext, args: Record<string, unknown>) => Promise<ShopAiToolOutcome>;
 }
 
-export const SHOP_AI_TOOLS: ShopAiTool[] = [...SHOP_DATA_TOOLS, ...SHOP_ACTION_TOOLS];
+export const SHOP_AI_TOOLS: ShopAiTool[] = [...VISION_TOOLS, ...SHOP_DATA_TOOLS, ...SHOP_ACTION_TOOLS];
 
 export function findShopAiTool(name: string): ShopAiTool | undefined {
   return SHOP_AI_TOOLS.find((tool) => tool.name === name);
