@@ -16,7 +16,13 @@ import {
   validateAttachment,
   type DraftAttachment,
 } from "@/components/shop-ai/attachments";
-import { clearShopAiConversation, listShopAiMessages, sendShopAiMessage } from "@/lib/shop-ai.functions";
+import { DetectedCard } from "@/components/shop-ai/detected-card";
+import {
+  clearShopAiConversation,
+  listShopAiMessages,
+  sendShopAiMessage,
+  type DetectedProposalView,
+} from "@/lib/shop-ai.functions";
 
 export const Route = createFileRoute("/_authenticated/shop-ai")({
   head: () => ({
@@ -46,6 +52,7 @@ interface ChatMessage {
   tools?: ToolActivityItem[];
   failed?: boolean;
   attachments?: { name: string; mimeType: string }[];
+  proposals?: DetectedProposalView[];
 }
 
 const SUGGESTIONS = [
@@ -81,6 +88,7 @@ function ShopAiPage() {
       content: row.content,
       tools: row.tools as ToolActivityItem[],
       attachments: row.attachments,
+      proposals: row.proposals as DetectedProposalView[],
     })),
     ...pending,
   ];
@@ -122,6 +130,10 @@ function ShopAiPage() {
       ]);
     },
   });
+
+  // Only the newest answer still offers Confirm / Edit / Cancel.
+  const lastId = messages[messages.length - 1]?.id;
+  const isLast = (message: ChatMessage) => message.id === lastId;
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -253,6 +265,15 @@ function ShopAiPage() {
                     >
                       {message.content}
                     </div>
+                    {isLast(message) &&
+                      (message.proposals ?? []).map((proposal) => (
+                        <DetectedCard
+                          key={proposal.id}
+                          proposal={proposal}
+                          disabled={mutation.isPending}
+                          onRespond={(text) => submit(text)}
+                        />
+                      ))}
                   </div>
                 </div>
               ),
