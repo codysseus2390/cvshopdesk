@@ -76,6 +76,8 @@ export interface ShopAiResult {
   dataChanged: boolean;
   /** Detected-information cards awaiting the user's Confirm / Edit / Cancel. */
   proposals: DetectedProposal[];
+  /** Pictures Hank created this turn, already stored privately. */
+  images: { name: string; path: string; mimeType: string }[];
 }
 
 type ResponsesItem = Record<string, unknown>;
@@ -117,6 +119,7 @@ export async function runShopAiTurn(options: {
   const tools = shopAiToolDefinitions(settings.disabledTools);
   const toolActivity: ShopAiToolActivity[] = [];
   const proposals: DetectedProposal[] = [];
+  const images: { name: string; path: string; mimeType: string }[] = [];
   let dataChanged = false;
 
   const input: ResponsesItem[] = [
@@ -140,7 +143,7 @@ export async function runShopAiTurn(options: {
 
     const calls = output.filter((item) => item["type"] === "function_call");
     if (calls.length === 0 || round === SHOP_AI_MAX_TOOL_ROUNDS) {
-      return { reply: text.trim(), model, toolActivity, dataChanged, proposals };
+      return { reply: text.trim(), model, toolActivity, dataChanged, proposals, images };
     }
 
     // Resend the model's items, then append each tool result beside its call.
@@ -152,12 +155,13 @@ export async function runShopAiTurn(options: {
       const outcome = await executeTool(options.toolContext, name, args);
       if (outcome.changed) dataChanged = true;
       if (outcome.proposal) proposals.push(outcome.proposal);
+      if (outcome.image) images.push(outcome.image);
       toolActivity.push({ name, sourceLabel: toolSourceLabel(name), ok: outcome.ok, changed: outcome.changed });
       input.push({ type: "function_call_output", call_id: callId, output: outcome.payload });
     }
   }
 
-  return { reply: "", model, toolActivity, dataChanged, proposals };
+  return { reply: "", model, toolActivity, dataChanged, proposals, images };
 }
 
 /**
@@ -168,7 +172,13 @@ async function executeTool(
   ctx: ShopAiToolContext,
   name: string,
   args: Record<string, unknown>,
-): Promise<{ ok: boolean; changed: boolean; payload: string; proposal?: DetectedProposal }> {
+): Promise<{
+  ok: boolean;
+  changed: boolean;
+  payload: string;
+  proposal?: DetectedProposal;
+  image?: { name: string; path: string; mimeType: string };
+}> {
   const tool = findShopAiTool(name);
   if (!tool) {
     return { ok: false, changed: false, payload: JSON.stringify({ error: `Tool ${name} is not connected.` }) };
@@ -238,6 +248,7 @@ async function executeTool(
       changed: Boolean(tool.mutating),
       payload: JSON.stringify(result.data ?? null),
       ...(result.proposal ? { proposal: result.proposal } : {}),
+      ...(result.image ? { image: result.image } : {}),
     };
   } catch (err) {
     if (err instanceof ConfirmationRequiredError) {
