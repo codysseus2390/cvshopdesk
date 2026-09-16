@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { transcribeHankSpeech } from "@/lib/voice.functions";
 import { HANK_WAKE_ACKS, type HankVoiceInputMode } from "@/lib/ai/voice-config";
 import { useWakeWord } from "./use-wake-word";
+import { SoundBar, type SoundBarMode } from "./sound-bar";
 
 type Phase = "starting" | "waiting" | "ready" | "listening" | "processing" | "working" | "speaking" | "error";
 
@@ -35,6 +36,8 @@ interface Props {
   onSubmit: (text: string) => void;
   /** Speaks a short acknowledgement in Hank's saved voice. */
   onAcknowledge?: (text: string) => void;
+  /** Live loudness of Hank's own voice, 0-1, for the voice bar. */
+  getOutputLevel?: () => number;
   onStopSpeaking: () => void;
   onExit: () => void;
 }
@@ -379,8 +382,21 @@ export function VoiceMode(props: Props) {
     error: "Voice Mode had a problem",
   };
 
-  const active = phase === "listening" || phase === "speaking";
-  const ring = 1 + (phase === "speaking" ? 0.14 : level * 0.5);
+  const barMode: SoundBarMode =
+    phase === "speaking"
+      ? "speaking"
+      : phase === "listening" && !muted
+        ? "listening"
+        : phase === "processing" || phase === "working" || phase === "starting"
+          ? "thinking"
+          : "idle";
+
+  // Hank's own audio while he talks, the microphone while someone talks to him.
+  const barLevel = useCallback(
+    () => (phaseRef.current === "speaking" ? (props.getOutputLevel?.() ?? 0) : micRef.current),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-background/98 p-6 backdrop-blur-sm">
