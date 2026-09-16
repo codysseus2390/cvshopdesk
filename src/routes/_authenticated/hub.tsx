@@ -72,6 +72,30 @@ function Dashboard() {
   const todayGp = today?.gross_profit ?? null;
   const todayCars = today?.car_count ?? null;
 
+  const monthlyByYear = useMemo(() => {
+    if (!data?.monthly.length) return null;
+    const years = Array.from(new Set(data.monthly.map((m) => m.month.slice(0, 4)))).sort();
+    const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+    const label = (mo: string) => new Date(`2000-${mo}-01`).toLocaleString(undefined, { month: "short" });
+    const rows = months.map((mo) => {
+      const row: Record<string, number | string | null> = { month: label(mo) };
+      for (const year of years) {
+        const found = data.monthly.find((m) => m.month === `${year}-${mo}`);
+        row[year] = found?.totals.gross_profit ?? null;
+      }
+      return row;
+    });
+    return { years, rows };
+  }, [data?.monthly]);
+
+  const YEAR_COLORS = [
+    "var(--color-chart-1)",
+    "var(--color-chart-2)",
+    "var(--color-chart-3)",
+    "var(--color-chart-4)",
+    "var(--color-chart-5)",
+  ];
+
   return (
     <AppShell title="Dashboard">
       {pending > 0 && (
