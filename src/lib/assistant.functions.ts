@@ -6,7 +6,17 @@ type Supa = { from: (t: string) => any };
 
 export const askAssistant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ question: z.string().min(2).max(1000) }).parse(input))
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        question: z
+          .string()
+          .trim()
+          .min(2, { message: "Please type a question first." })
+          .max(8000, { message: "That message is too long — please shorten it." }),
+      })
+      .parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { AiUnavailableError, UNTRUSTED_NOTICE, callGateway } = await import("./ai.server");
