@@ -411,28 +411,14 @@ export function VoiceMode(props: Props) {
         </Button>
       </div>
 
-      <div className="flex w-full max-w-md flex-1 flex-col items-center justify-center gap-6">
-        <div className="relative flex h-44 w-44 items-center justify-center">
-          <span
-            aria-hidden
-            className={`absolute inset-0 rounded-full bg-primary/15 transition-transform duration-150 ${
-              active ? "animate-pulse" : ""
-            }`}
-            style={{ transform: `scale(${ring})` }}
-          />
-          <span className="absolute inset-6 rounded-full bg-primary/25" />
-          <span className="relative flex h-20 w-20 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg">
-            {phase === "processing" || phase === "working" || phase === "starting" ? (
-              <Loader2 className="h-8 w-8 animate-spin" />
-            ) : muted ? (
-              <MicOff className="h-8 w-8" />
-            ) : (
-              <Mic className="h-8 w-8" />
-            )}
-          </span>
-        </div>
+      <div className="flex w-full max-w-md flex-1 flex-col items-center justify-center gap-5">
+        <SoundBar mode={barMode} getLevel={barLevel} className="h-28 w-full max-w-sm" />
 
-        <p aria-live="polite" className="text-center text-sm font-medium text-foreground">
+        <p aria-live="polite" className="flex items-center gap-2 text-center text-sm font-medium text-foreground">
+          {(phase === "processing" || phase === "working" || phase === "starting") && (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          )}
+          {muted && phase !== "starting" && <MicOff className="h-3.5 w-3.5 text-muted-foreground" />}
           {label[phase]}
         </p>
 
