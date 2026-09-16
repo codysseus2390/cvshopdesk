@@ -142,11 +142,29 @@ export function aggregatePeriod(rows: NumbersRow[], range: PeriodRange, upTo?: s
     }
   }
 
-  const byDate = new Map<string, NumbersRow>();
-  for (const r of inRange.filter((r) => r.scope === "daily")) {
-    const existing = byDate.get(r.business_date);
-    if (!existing || (r.created_at ?? "") >= (existing.created_at ?? "")) byDate.set(r.business_date, r);
+  // A year with accepted monthly totals is rolled up from those months. Months
+  // without a monthly record fall back to their daily records, so the current
+  // (incomplete) month is included once and never counted twice.
+  if (range.kind === "yearly") {
+    const months = Array.from(new Set(inRange.map((r) => r.business_date.slice(0, 7)))).sort();
+    const monthSnapshots = months
+      .map((month) => newest(inRange.filter((r) => r.business_date.startsWith(month) && r.scope === "mtd")))
+      .filter((r): r is NumbersRow => Boolean(r));
+    if (monthSnapshots.length > 0) {
+      const covered = new Set(monthSnapshots.map((r) => r.business_date.slice(0, 7)));
+      const dailyRows = newestPerDate(inRange.filter((r) => !covered.has(r.business_date.slice(0, 7))));
+      const used = [...monthSnapshots, ...dailyRows];
+      const dates = used.map((r) => r.business_date).sort();
+      return withPercent({
+        ...sumFields(used),
+        basis: "monthly-rollup",
+        as_of: dates[dates.length - 1] ?? null,
+        covered_days: used.length,
+      });
+    }
   }
+
+  const byDate = new Map<string, NumbersRow>(newestPerDate(inRange).map((r) => [r.business_date, r]));
   if (byDate.size === 0) {
     return withPercent({
       sales: null,
