@@ -137,6 +137,51 @@ export const testHankVoice = createServerFn({ method: "POST" })
   });
 
 /**
+ * Voice Mode's listening step: a recorded clip in, written words out.
+ *
+ * Available to any approved staff member, because it only writes down what was
+ * said. The transcript is then sent through the ordinary Hank chat function, so
+ * personality, tools, permissions, confirmations and audit logging all apply
+ * exactly as they do when the same words are typed.
+ */
+export const transcribeHankSpeech = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        mimeType: z.string().trim().min(3).max(80),
+        audioBase64: z.string().min(16),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await membership(context.supabase as unknown as Supa, context.userId);
+    const { HANK_STT_MAX_BYTES } = await import("@/lib/ai/voice-config");
+    const audio = Buffer.from(data.audioBase64, "base64");
+    if (audio.byteLength < 1_200) {
+      return { ok: false as const, code: "audio" as const, message: "That recording was empty. Try speaking again." };
+    }
+    if (audio.byteLength > HANK_STT_MAX_BYTES) {
+      return {
+        ok: false as const,
+        code: "audio" as const,
+        message: "That recording is too long. Say it in a shorter stretch.",
+      };
+    }
+    const { transcribeAudio } = await import("@/lib/ai/transcribe.server");
+    try {
+      const text = await transcribeAudio({ audio: new Uint8Array(audio), mimeType: data.mimeType });
+      return { ok: true as const, text };
+    } catch (err) {
+      return {
+        ok: false as const,
+        code: "unavailable" as const,
+        message: err instanceof Error ? err.message : "That could not be understood just now.",
+      };
+    }
+  });
+
+/**
  * Saves the shop's voice configuration. Owner and admins only — the same
  * permission that guards the rest of Hank Settings.
  */
@@ -154,6 +199,8 @@ export const saveHankVoiceSettings = createServerFn({ method: "POST" })
         similarity: z.number().min(0).max(1),
         style: z.number().min(0).max(1),
         speakerBoost: z.boolean(),
+        inputMode: z.enum(["auto", "push"]).default("auto"),
+        autoListen: z.boolean().default(true),
       })
       .parse(input),
   )
@@ -176,6 +223,8 @@ export const saveHankVoiceSettings = createServerFn({ method: "POST" })
         voice_similarity: data.similarity,
         voice_style: data.style,
         voice_speaker_boost: data.speakerBoost,
+        voice_input_mode: data.inputMode,
+        voice_auto_listen: data.autoListen,
         updated_by: context.userId,
         updated_at: new Date().toISOString(),
       },

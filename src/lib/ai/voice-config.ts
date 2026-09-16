@@ -31,6 +31,27 @@ export const HANK_VOICE_LIMITS = {
 
 export const HANK_VOICE_TEST_PHRASE = "Well, I'll be damned. They finally gave me a voice.";
 
+/* ---------- Listening (Voice Mode) ---------- */
+
+/** Speech-to-text model. Runs on the same OpenAI account as Hank's answers. */
+export const HANK_STT_MODEL = "gpt-4o-mini-transcribe";
+
+/** Longest single recorded clip accepted, in bytes (~2 minutes of speech). */
+export const HANK_STT_MAX_BYTES = 8 * 1024 * 1024;
+
+/**
+ * Spelling hints for shop language. This only steers how spoken words are
+ * written down; it never adds anything that was not said.
+ */
+export const HANK_STT_PROMPT =
+  "Automotive service shop conversation. Expect tire sizes like 275/65R18 and P225/60R17, brands such as Cooper, " +
+  "Michelin, BFGoodrich, Goodyear; vehicle years, makes and models such as Silverado, F-150, RAV4, Tahoe; VIN " +
+  "characters, mileage, alignment, brake rotors, TPMS, gross profit, car count, work order, technician and customer " +
+  "names, percentages and dollar amounts.";
+
+/** How the microphone behaves in Voice Mode. */
+export type HankVoiceInputMode = "auto" | "push";
+
 export interface HankVoiceSettings {
   enabled: boolean;
   autoSpeak: boolean;
@@ -41,6 +62,8 @@ export interface HankVoiceSettings {
   similarity: number;
   style: number;
   speakerBoost: boolean;
+  inputMode: HankVoiceInputMode;
+  autoListen: boolean;
 }
 
 export const HANK_VOICE_DEFAULTS: HankVoiceSettings = {
@@ -53,6 +76,8 @@ export const HANK_VOICE_DEFAULTS: HankVoiceSettings = {
   similarity: HANK_VOICE_TUNING_DEFAULTS.similarity,
   style: HANK_VOICE_TUNING_DEFAULTS.style,
   speakerBoost: HANK_VOICE_TUNING_DEFAULTS.speakerBoost,
+  inputMode: "auto",
+  autoListen: true,
 };
 
 /** One voice as the settings screen shows it. Shape is provider-neutral. */

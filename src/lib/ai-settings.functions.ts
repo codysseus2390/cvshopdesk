@@ -74,6 +74,8 @@ export const getAiSettings = createServerFn({ method: "GET" })
       similarity: Number(vr["voice_similarity"] ?? HANK_VOICE_DEFAULTS.similarity),
       style: Number(vr["voice_style"] ?? HANK_VOICE_DEFAULTS.style),
       speakerBoost: vr["voice_speaker_boost"] !== false,
+      inputMode: (vr["voice_input_mode"] === "push" ? "push" : "auto") as "auto" | "push",
+      autoListen: vr["voice_auto_listen"] !== false,
     };
     const { shopAiToolCatalogue } = await import("@/lib/ai/tools.server");
     const { SHOP_AI_ACCEPTED_TYPES, SHOP_AI_MAX_FILE_BYTES, SHOP_AI_MAX_FILES } = await import(

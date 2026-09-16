@@ -97,9 +97,11 @@ export type Database = {
           updated_at: string
           updated_by: string | null
           vision_enabled: boolean
+          voice_auto_listen: boolean
           voice_auto_speak: boolean
           voice_enabled: boolean
           voice_id: string | null
+          voice_input_mode: string
           voice_name: string | null
           voice_similarity: number
           voice_speaker_boost: boolean
@@ -124,9 +126,11 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           vision_enabled?: boolean
+          voice_auto_listen?: boolean
           voice_auto_speak?: boolean
           voice_enabled?: boolean
           voice_id?: string | null
+          voice_input_mode?: string
           voice_name?: string | null
           voice_similarity?: number
           voice_speaker_boost?: boolean
@@ -151,9 +155,11 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           vision_enabled?: boolean
+          voice_auto_listen?: boolean
           voice_auto_speak?: boolean
           voice_enabled?: boolean
           voice_id?: string | null
+          voice_input_mode?: string
           voice_name?: string | null
           voice_similarity?: number
           voice_speaker_boost?: boolean
