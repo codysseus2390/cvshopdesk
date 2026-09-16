@@ -4,10 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   CartesianGrid,
+  ComposedChart,
   Legend,
   Line,
-  LineChart,
   ResponsiveContainer,
+  Scatter,
   Tooltip as ChartTooltip,
   XAxis,
   YAxis,
@@ -232,7 +233,7 @@ function Dashboard() {
                   </p>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={monthlyByYear.rows}>
+                    <ComposedChart data={monthlyByYear.rows}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                       <YAxis
@@ -257,20 +258,16 @@ function Dashboard() {
                         />
                       ))}
                       {monthlyByYear.years.map((year, i) => (
-                        <Line
+                        <Scatter
                           key={`${year}-mtd`}
-                          type="linear"
                           dataKey={`${year}__mtd`}
                           name={`${year} MTD`}
-                          stroke="none"
-                          strokeWidth={0}
-                          dot={{ r: 5, fill: YEAR_COLORS[i % YEAR_COLORS.length], strokeWidth: 2 }}
-                          activeDot={{ r: 7, fill: YEAR_COLORS[i % YEAR_COLORS.length], strokeWidth: 2 }}
-                          connectNulls={false}
+                          fill={YEAR_COLORS[i % YEAR_COLORS.length]}
+                          stroke={YEAR_COLORS[i % YEAR_COLORS.length]}
                           legendType="none"
                         />
                       ))}
-                    </LineChart>
+                    </ComposedChart>
                   </ResponsiveContainer>
                 )}
                 <p className="mt-2 text-xs text-muted-foreground">
