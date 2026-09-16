@@ -79,21 +79,37 @@ function Dashboard() {
       })
     : null;
 
+  const CHART_METRICS = [
+    { key: "gross_profit", label: "Gross profit", currency: true },
+    { key: "sales", label: "Sales", currency: true },
+    { key: "gross_profit_per_car", label: "GP per car", currency: true },
+    { key: "tires_sold", label: "Tires sold", currency: false },
+    { key: "car_count", label: "Car count", currency: false },
+  ] as const;
+  const [chartMetric, setChartMetric] = useState<(typeof CHART_METRICS)[number]["key"]>("gross_profit");
+  const chartMetricDef = CHART_METRICS.find((m) => m.key === chartMetric)!;
+
   const monthlyByYear = useMemo(() => {
     if (!data?.monthly.length) return null;
     const years = Array.from(new Set(data.monthly.map((m) => m.month.slice(0, 4)))).sort();
     const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-    const label = (mo: string) => new Date(`2000-${mo}-01`).toLocaleString(undefined, { month: "short" });
+    // Label from a fixed UTC date so the axis always runs January → December.
+    const label = (mo: string) =>
+      new Date(`2000-${mo}-01T00:00:00Z`).toLocaleString(undefined, { timeZone: "UTC", month: "short" });
     const rows = months.map((mo) => {
       const row: Record<string, number | string | null> = { month: label(mo) };
       for (const year of years) {
         const found = data.monthly.find((m) => m.month === `${year}-${mo}`);
-        row[year] = found?.totals.gross_profit ?? null;
+        const totals = found?.totals;
+        row[year] =
+          chartMetric === "gross_profit_per_car"
+            ? (totals?.gp_per_car ?? null)
+            : (totals?.[chartMetric] ?? null);
       }
       return row;
     });
     return { years, rows };
-  }, [data?.monthly]);
+  }, [data?.monthly, chartMetric]);
 
   const YEAR_COLORS = [
     "var(--color-chart-1)",
