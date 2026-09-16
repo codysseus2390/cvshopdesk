@@ -86,7 +86,7 @@ function NumbersPage() {
   }
 
   const summary = useMemo(
-    () => (report?.rows ?? []).filter((r) => ["gross_profit", "car_count", "tires_sold"].includes(r.key)),
+    () => (report?.rows ?? []).filter((r) => ["gross_profit", "car_count", "tires_sold", "mechanic_productivity"].includes(r.key)),
     [report?.rows],
   );
 

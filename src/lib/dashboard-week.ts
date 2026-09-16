@@ -7,7 +7,8 @@ export interface DashboardWeek {
   tires_sold: number | null;
   car_count: number | null;
   gp_per_car: number | null;
-  goals: Record<"gross_profit" | "tires_sold" | "car_count", number | null>;
+  mechanic_productivity: number | null;
+  goals: Record<"gross_profit" | "tires_sold" | "car_count" | "mechanic_productivity", number | null>;
 }
 
 /** Projects the shared weekly Numbers report into the four dashboard cards. */
@@ -16,6 +17,7 @@ export function dashboardWeekFromReport(report: NumbersReport): DashboardWeek {
   const grossProfit = row("gross_profit")?.actual ?? null;
   const tiresSold = row("tires_sold")?.actual ?? null;
   const carCount = row("car_count")?.actual ?? null;
+  const mechanicProductivity = row("mechanic_productivity")?.actual ?? null;
 
   return {
     from: report.range.from,
@@ -24,10 +26,12 @@ export function dashboardWeekFromReport(report: NumbersReport): DashboardWeek {
     tires_sold: tiresSold,
     car_count: carCount,
     gp_per_car: grossProfit !== null && carCount !== null && carCount > 0 ? grossProfit / carCount : null,
+    mechanic_productivity: mechanicProductivity,
     goals: {
       gross_profit: row("gross_profit")?.goal ?? null,
       tires_sold: row("tires_sold")?.goal ?? null,
       car_count: row("car_count")?.goal ?? null,
+      mechanic_productivity: row("mechanic_productivity")?.goal ?? null,
     },
   };
 }

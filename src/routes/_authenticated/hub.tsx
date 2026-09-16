@@ -27,6 +27,7 @@ import {
   type DashboardChartMetric,
 } from "@/lib/dashboard-chart";
 import { formatDashboardWeekRange, weeklyGoalNote } from "@/lib/dashboard-week";
+import { formatProductivity } from "@/lib/productivity-math";
 
 export const Route = createFileRoute("/_authenticated/hub")({
   head: () => ({
@@ -139,7 +140,7 @@ function Dashboard() {
                 </Button>
               )}
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
               <MetricCard label="Gross profit" value={formatCurrency(todayGp)} />
               <MetricCard label="Tires sold" value={formatCount(today?.tires_sold ?? null)} />
               <MetricCard label="Car count" value={formatCount(todayCars)} />
@@ -147,6 +148,10 @@ function Dashboard() {
                 label="GP per car"
                 value={formatCurrency(gpPerCar(todayGp, todayCars))}
                 hint={gpPerCar(todayGp, todayCars) === null ? "Needs gross profit and car count" : undefined}
+              />
+              <MetricCard
+                label="Mechanic productivity"
+                value={formatProductivity(data.previousDayProductivity)}
               />
             </div>
             {!today && (
@@ -165,7 +170,7 @@ function Dashboard() {
                 {formatDashboardWeekRange(data.week.from, data.week.through)}
               </span>
             </h2>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
               <MetricCard
                 label="Gross profit"
                 value={formatCurrency(data.week.gross_profit)}
@@ -186,13 +191,18 @@ function Dashboard() {
                 value={formatCurrency(data.week.gp_per_car)}
                 hint={data.week.gp_per_car === null ? "Needs weekly gross profit and car count" : undefined}
               />
+              <MetricCard
+                label="Mechanic productivity"
+                value={formatProductivity(data.week.mechanic_productivity)}
+                hint={weeklyGoalNote(data.week.mechanic_productivity, data.week.goals.mechanic_productivity)}
+              />
             </div>
           </section>
 
           {shows("mtd") && (
           <section>
             <h2 className="mb-3 flex items-center gap-2 font-display text-xl font-bold"><CalendarRange className="h-5 w-5 text-secondary" />Month to date</h2>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
               <MetricCard
                 label="Gross profit"
                 value={formatCurrency(data.mtd.gross_profit)}
@@ -224,6 +234,11 @@ function Dashboard() {
                 label="GP per car"
                 value={formatCurrency(data.mtd.gp_per_car)}
                 hint={data.mtd.gp_per_car_note ?? goalNote("gp_per_car", data.mtd.gp_per_car)}
+              />
+              <MetricCard
+                label="Mechanic productivity"
+                value={formatProductivity(data.mtd.mechanic_productivity)}
+                hint={goalNote("mechanic_productivity", data.mtd.mechanic_productivity)}
               />
             </div>
             <p className="mt-3 text-sm text-muted-foreground">

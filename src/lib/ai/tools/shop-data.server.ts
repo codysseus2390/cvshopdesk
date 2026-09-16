@@ -17,7 +17,7 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
     name: "get_numbers_report",
     sourceLabel: "Numbers report",
     description:
-      "Reads the Numbers report for a week, month or year: sales, gross profit, gross profit %, cars, tires and technician productivity with each metric's goal, variance, the same period last year and the year-over-year change. Use this for goal progress, period comparisons and year-over-year questions.",
+      "Reads the Numbers report for a week, month or year: sales, gross profit, gross profit %, cars, tires, overall mechanic productivity, and technician productivity with each metric's goal, variance, the same period last year and the year-over-year change. Overall mechanic productivity uses accepted period values or total billed hours divided by total worked hours, never an average of percentages. Use this for goal progress, period comparisons and year-over-year questions.",
     permission: "view_dashboard",
     parameters: {
       type: "object",
@@ -48,7 +48,7 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
     name: "get_dashboard_numbers",
     sourceLabel: "Dashboard numbers",
     description:
-      "Reads saved shop metrics: today's daily numbers plus month-to-date and year-to-date gross profit, tires sold, car count and gross profit per car. Use this for any question about shop performance figures.",
+      "Reads saved shop metrics for today plus month-to-date and year-to-date totals. For overall mechanic productivity today, yesterday, this week, or this month, use get_numbers_report with the matching period/date.",
     permission: "view_dashboard",
     parameters: { type: "object", properties: {}, additionalProperties: false },
     execute: async (ctx) => {

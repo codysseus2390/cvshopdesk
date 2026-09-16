@@ -15,6 +15,7 @@ function report(cars: number | null): NumbersReport {
       { key: "gross_profit", label: "Gross profit", format: "currency", actual: 12_000, goal: 15_000, variance: -3_000, variance_pct: -20, previous: null, yoy_diff: null, yoy_pct: null, adjusted: false },
       { key: "tires_sold", label: "Tires", format: "count", actual: 42, goal: 50, variance: -8, variance_pct: -16, previous: null, yoy_diff: null, yoy_pct: null, adjusted: false },
       { key: "car_count", label: "Cars", format: "count", actual: cars, goal: null, variance: null, variance_pct: null, previous: null, yoy_diff: null, yoy_pct: null, adjusted: false },
+      { key: "mechanic_productivity", label: "Mechanic productivity", format: "percent", actual: 92.4, goal: 95, variance: -2.6, variance_pct: null, previous: null, yoy_diff: null, yoy_pct: null, adjusted: false },
     ],
     technicians: [],
     goal_rules: {},
@@ -31,7 +32,8 @@ describe("dashboard weekly cards", () => {
       tires_sold: 42,
       car_count: 60,
       gp_per_car: 200,
-      goals: { gross_profit: 15_000, tires_sold: 50, car_count: null },
+      mechanic_productivity: 92.4,
+      goals: { gross_profit: 15_000, tires_sold: 50, car_count: null, mechanic_productivity: 95 },
     });
   });
 

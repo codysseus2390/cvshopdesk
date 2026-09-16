@@ -12,7 +12,7 @@ export function MetricCard({
   hint?: string | undefined;
   size?: "normal" | "tv";
 }) {
-  const notUpdated = value === "Not updated" || value === "Unavailable";
+  const notUpdated = value === "Not updated" || value === "Unavailable" || value === "—";
   const Icon = label.toLowerCase().includes("productivity")
     ? Wrench
     : label.toLowerCase().includes("profit")

@@ -11,6 +11,7 @@ import {
 import { aggregatePeriod, resolvePeriod, type NumbersRow, type PeriodValues } from "./numbers-math";
 import { buildNumbersReport } from "./numbers.server";
 import { dashboardWeekFromReport } from "./dashboard-week";
+import { overallProductivity, type ProductivityInput } from "./productivity-math";
 
 type MonthTotals = PeriodValues & { gp_per_car: number | null };
 
@@ -91,13 +92,21 @@ export const getDashboard = createServerFn({ method: "GET" })
     const year = today.slice(0, 4);
     const monthPrefix = today.slice(0, 7);
 
-    const { data: rows, error } = await supabase
-      .from("metric_snapshots")
-      .select("id, business_date, scope, sales, gross_profit, tires_sold, car_count, source, created_at, flags, note")
-      .eq("is_current", true)
-      .gte("business_date", `${Number(year) - 1}-01-01`)
-      .order("business_date", { ascending: true });
+    const [{ data: rows, error }, { data: productivityRows, error: productivityError }] = await Promise.all([
+      supabase
+        .from("metric_snapshots")
+        .select("id, business_date, scope, sales, gross_profit, tires_sold, car_count, source, created_at, flags, note")
+        .eq("is_current", true)
+        .gte("business_date", `${Number(year) - 1}-01-01`)
+        .order("business_date", { ascending: true }),
+      supabase
+        .from("technician_productivity")
+        .select("business_date, technician, productivity_pct, hours_billed, hours_worked, period_scope, updated_at")
+        .gte("business_date", `${Number(year) - 1}-01-01`)
+        .lte("business_date", today),
+    ]);
     if (error) throw new Error(error.message);
+    if (productivityError) throw new Error(productivityError.message);
 
     const all = (rows ?? []) as (MetricRow & { created_at: string; source: string })[];
     // Nothing dated after the shop's current business day counts toward current results.
@@ -110,8 +119,18 @@ export const getDashboard = createServerFn({ method: "GET" })
     const previousDayRow =
       current.find((r) => r.business_date === previousDay && r.scope === "daily") ?? null;
     const mtd = monthToDate(current, monthPrefix, today);
-    const week = dashboardWeekFromReport(
-      await buildNumbersReport(supabase, shop, "weekly", today),
+    const productivity = (productivityRows ?? []) as ProductivityInput[];
+    const [weekReport, monthReport] = await Promise.all([
+      buildNumbersReport(supabase, shop, "weekly", today),
+      buildNumbersReport(supabase, shop, "monthly", today),
+    ]);
+    const week = dashboardWeekFromReport(weekReport);
+    const mtdProductivity = monthReport.rows.find((row) => row.key === "mechanic_productivity") ?? null;
+    const previousDayProductivity = overallProductivity(
+      productivity,
+      { from: previousDay, to: previousDay },
+      "daily",
+      previousDay,
     );
 
     // The chart and the Numbers page read the same accepted monthly records
@@ -151,8 +170,13 @@ export const getDashboard = createServerFn({ method: "GET" })
       todayRow,
       previousDay,
       previousDayRow,
+      previousDayProductivity,
       week,
-      mtd,
+      mtd: {
+        ...mtd,
+        mechanic_productivity: mtdProductivity?.actual ?? null,
+        mechanic_productivity_goal: mtdProductivity?.goal ?? null,
+      },
       ytd,
       ytdLastYear,
       monthly,
