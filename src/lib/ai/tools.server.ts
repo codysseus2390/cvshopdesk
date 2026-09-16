@@ -1,42 +1,60 @@
 /**
  * Shop AI tool registry (server-only).
  *
- * Every future shop data source — AutoFlow, TireShop, the tire-order database,
- * technician productivity, Google Workspace — is added here as a READ-ONLY tool.
- * The model never touches the database directly; it can only call functions
- * registered in this file, which run under the signed-in staff member's own
- * authenticated client (so RLS still applies).
+ * The model never touches the database directly and never writes SQL. It can
+ * only call the functions registered here. Every tool:
+ *  - runs on the authenticated Supabase client of the signed-in staff member,
+ *    so row level security and shop membership still apply,
+ *  - validates its arguments with a schema before touching data,
+ *  - declares the app permission it needs, checked server-side,
+ *  - declares whether it changes data and whether a change is consequential
+ *    enough to need the user's explicit confirmation first.
  *
- * Rules for anything added here:
- *  - read-only: no insert, update, delete or external write calls
- *  - scoped to ctx.shopId and the caller's membership
- *  - returns plain JSON-serialisable data, never raw credentials
+ * Future sources (AutoFlow, TireShop, Google Workspace) are added the same way.
  */
+import type { PermissionKey } from "@/lib/permissions";
+import { SHOP_DATA_TOOLS } from "./tools/shop-data.server";
+import { SHOP_ACTION_TOOLS } from "./tools/shop-actions.server";
 
 export interface ShopAiToolContext {
   /** Authenticated Supabase client for the signed-in staff member (RLS applies). */
-  supabase: unknown;
+  supabase: any;
   shopId: string;
   userId: string;
+  timezone: string;
+  /** The shop's current business date (America/Chicago by default). */
+  today: string;
+  /** Effective permissions of the signed-in staff member. */
+  can: (permission: PermissionKey) => boolean;
+}
+
+export interface ShopAiToolOutcome {
+  /** JSON-serialisable payload handed back to the model. */
+  data: unknown;
+  /** Record the action touched, for the AI action log. */
+  targetTable?: string;
+  targetId?: string;
+  before?: unknown;
+  after?: unknown;
 }
 
 export interface ShopAiTool {
-  /** Function name exposed to the model. */
   name: string;
-  /** Short label shown in the UI while the tool runs, e.g. "AutoFlow appointments". */
+  /** Short label shown in the UI while the tool runs. */
   sourceLabel: string;
   description: string;
-  /** JSON Schema for the arguments. Keep every property required and strict-compatible. */
+  /** JSON Schema for the arguments. */
   parameters: Record<string, unknown>;
-  /** Read-only execution. Throw to report an unavailable source. */
-  execute: (ctx: ShopAiToolContext, args: Record<string, unknown>) => Promise<unknown>;
+  /** True when the tool writes data. Read tools are the default. */
+  mutating?: boolean;
+  /** True when the tool must be confirmed by the user before it runs. */
+  requiresConfirmation?: boolean;
+  /** App permission the signed-in user must hold. */
+  permission?: PermissionKey;
+  execute: (ctx: ShopAiToolContext, args: Record<string, unknown>) => Promise<ShopAiToolOutcome>;
 }
 
-/**
- * No shop data tools are connected yet. Shop AI answers general automotive and
- * shop-operations questions and says plainly when it cannot reach shop data.
- */
-export const SHOP_AI_TOOLS: ShopAiTool[] = [];
+export const SHOP_AI_TOOLS: ShopAiTool[] = [...SHOP_DATA_TOOLS, ...SHOP_ACTION_TOOLS];
 
 export function findShopAiTool(name: string): ShopAiTool | undefined {
   return SHOP_AI_TOOLS.find((tool) => tool.name === name);
@@ -51,7 +69,9 @@ export function shopAiToolDefinitions() {
   return SHOP_AI_TOOLS.map((tool) => ({
     type: "function" as const,
     name: tool.name,
-    description: tool.description,
+    description: tool.requiresConfirmation
+      ? `${tool.description} Consequential: call it with confirmed=true only after the user has agreed to the exact change you described.`
+      : tool.description,
     parameters: tool.parameters,
     strict: false,
   }));
