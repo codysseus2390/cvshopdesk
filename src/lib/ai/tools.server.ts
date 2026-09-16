@@ -16,6 +16,13 @@ import type { PermissionKey } from "@/lib/permissions";
 import { SHOP_DATA_TOOLS } from "./tools/shop-data.server";
 import { SHOP_ACTION_TOOLS } from "./tools/shop-actions.server";
 
+/**
+ * Thrown by an action tool when the change turned out to be consequential
+ * (an overwrite, a cancellation, a bulk edit). Nothing is written; the model is
+ * told to describe the change and ask the user to confirm it first.
+ */
+export class ConfirmationRequiredError extends Error {}
+
 export interface ShopAiToolContext {
   /** Authenticated Supabase client for the signed-in staff member (RLS applies). */
   supabase: any;
