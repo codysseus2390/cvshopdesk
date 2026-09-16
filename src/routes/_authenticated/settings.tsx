@@ -2,7 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { addStaffMember, decideMember, listInvites, listMembers, setMemberRole } from "@/lib/shop.functions";
+import {
+  addStaffMember,
+  decideMember,
+  listInvites,
+  listMembers,
+  setMemberCredentials,
+  setMemberRole,
+} from "@/lib/shop.functions";
 import { listAuditEvents, saveShopSettings, setRolePermission } from "@/lib/admin.functions";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate, useShopContext } from "@/components/access-gate";
