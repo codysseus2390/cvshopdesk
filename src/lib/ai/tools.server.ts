@@ -46,7 +46,11 @@ export interface ShopAiToolOutcome {
   targetId?: string;
   before?: unknown;
   after?: unknown;
+  /** Detected-information card the UI should show before anything is written. */
+  proposal?: DetectedProposal;
 }
+
+export type { DetectedProposal };
 
 export interface ShopAiTool {
   name: string;
