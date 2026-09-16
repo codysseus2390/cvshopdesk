@@ -74,6 +74,11 @@ export interface HankVoiceSettings {
   speakerBoost: boolean;
   inputMode: HankVoiceInputMode;
   autoListen: boolean;
+  wakeEnabled: boolean;
+  wakePhrase: string;
+  wakeSound: boolean;
+  wakeResponse: boolean;
+  wakeTimeoutSeconds: number;
 }
 
 export const HANK_VOICE_DEFAULTS: HankVoiceSettings = {
@@ -88,6 +93,11 @@ export const HANK_VOICE_DEFAULTS: HankVoiceSettings = {
   speakerBoost: HANK_VOICE_TUNING_DEFAULTS.speakerBoost,
   inputMode: "auto",
   autoListen: true,
+  wakeEnabled: false,
+  wakePhrase: HANK_WAKE_DEFAULT_PHRASE,
+  wakeSound: true,
+  wakeResponse: false,
+  wakeTimeoutSeconds: HANK_WAKE_TIMEOUT_DEFAULT,
 };
 
 /** One voice as the settings screen shows it. Shape is provider-neutral. */
