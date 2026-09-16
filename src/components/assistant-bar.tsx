@@ -181,7 +181,14 @@ export function AssistantBar() {
             ref={inputRef}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            placeholder={`Ask ${assistantName}…`}
+            onPaste={(e) => {
+              const file = Array.from(e.clipboardData.files)[0];
+              if (file) {
+                e.preventDefault();
+                void pickFile(file);
+              }
+            }}
+            placeholder={`Ask ${assistantName}, or paste a screenshot…`}
             aria-label={`Ask ${assistantName}`}
             className="h-12 min-w-0 flex-1 rounded-full border-transparent bg-muted/70 px-4 shadow-none focus-visible:border-primary/40"
           />
