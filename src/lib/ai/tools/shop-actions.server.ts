@@ -28,7 +28,7 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
     name: "save_shop_numbers",
     sourceLabel: "Dashboard numbers",
     description:
-      "Saves or corrects the shop's numbers for one business date and scope (daily, mtd or ytd): gross profit, tires sold and car count. Leave a field out to keep it unknown. Correcting a date that already has numbers is a consequential change.",
+      "Saves or corrects the shop's numbers for one business date and scope (daily, mtd or ytd): sales, gross profit, tires sold and car count. Sales and gross profit are separate values — never use one for the other. Leave a field out to keep it unknown. Use save_monthly_numbers for completed past months instead of this tool. Correcting a date that already has numbers is a consequential change.",
     permission: "edit_dashboard_numbers",
     mutating: true,
     parameters: {
@@ -36,6 +36,7 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
       properties: {
         business_date: { type: "string", description: "YYYY-MM-DD. Defaults to the shop's current business day." },
         scope: { type: "string", enum: ["daily", "mtd", "ytd"], description: "Defaults to daily." },
+        sales: { type: "number", description: "Total sales / order sales. Separate from gross profit." },
         gross_profit: { type: "number" },
         tires_sold: { type: "integer" },
         car_count: { type: "integer" },
@@ -49,6 +50,7 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
         .object({
           business_date: dateSchema.optional(),
           scope: z.enum(["daily", "mtd", "ytd"]).default("daily"),
+          sales: money,
           gross_profit: money,
           tires_sold: z.number().int().nullable().optional(),
           car_count: z.number().int().nullable().optional(),
@@ -61,7 +63,7 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
 
       const { data: existing } = await ctx.supabase
         .from("metric_snapshots")
-        .select("id, gross_profit, tires_sold, car_count")
+        .select("id, sales, gross_profit, tires_sold, car_count")
         .eq("business_date", businessDate)
         .eq("scope", input.scope)
         .eq("is_current", true)
@@ -76,15 +78,18 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
       const gross = input.gross_profit ?? existing?.gross_profit ?? null;
       const tires = input.tires_sold ?? existing?.tires_sold ?? null;
       const cars = input.car_count ?? existing?.car_count ?? null;
+      const sales = input.sales ?? existing?.sales ?? null;
       const flags: string[] = [];
+      if (sales === null) flags.push("sales missing");
       if (gross === null) flags.push("gross_profit missing");
       if (tires === null) flags.push("tires_sold missing");
       if (cars === null) flags.push("car_count missing");
 
-      const { data: id, error } = await ctx.supabase.rpc("save_metric_snapshot", {
+      const { data: id, error } = await ctx.supabase.rpc("save_shop_metrics", {
         p_shop_id: ctx.shopId,
         p_business_date: businessDate,
         p_scope: input.scope,
+        p_sales: sales,
         p_gross_profit: gross,
         p_tires_sold: tires,
         p_car_count: cars,
@@ -101,6 +106,7 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
           saved: true,
           business_date: businessDate,
           scope: input.scope,
+          sales,
           gross_profit: gross,
           tires_sold: tires,
           car_count: cars,

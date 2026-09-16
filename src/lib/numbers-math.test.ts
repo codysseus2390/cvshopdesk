@@ -118,3 +118,23 @@ describe("buildReportRow", () => {
     expect(buildReportRow(salesDef, null, 100, null).variance).toBeNull();
   });
 });
+
+describe("yearly monthly rollup", () => {
+  const year = resolvePeriod("yearly", "2026-03-10");
+
+  it("adds accepted monthly totals and uses daily rows only for months without one", () => {
+    const rows = [
+      { business_date: "2026-01-31", scope: "mtd", sales: 90_000, gross_profit: 40_000, tires_sold: 100, car_count: 200, created_at: "2026-02-01" },
+      { business_date: "2026-02-28", scope: "mtd", sales: 80_000, gross_profit: 30_000, tires_sold: 90, car_count: 180, created_at: "2026-03-01" },
+      { business_date: "2026-03-02", scope: "daily", sales: 5_000, gross_profit: 2_000, tires_sold: 4, car_count: 9, created_at: "2026-03-02" },
+      // Superseded January daily rows must not be added on top of the monthly total.
+      { business_date: "2026-01-05", scope: "daily", sales: 3_000, gross_profit: 1_000, tires_sold: 3, car_count: 6, created_at: "2026-01-05" },
+    ] as any;
+    const totals = aggregatePeriod(rows, year, "2026-03-10");
+    expect(totals.basis).toBe("monthly-rollup");
+    expect(totals.sales).toBe(175_000);
+    expect(totals.gross_profit).toBe(72_000);
+    expect(totals.car_count).toBe(389);
+    expect(totals.as_of).toBe("2026-03-02");
+  });
+});

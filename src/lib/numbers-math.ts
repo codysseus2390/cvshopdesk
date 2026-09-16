@@ -92,7 +92,7 @@ export interface PeriodValues {
   tires_sold: number | null;
   car_count: number | null;
   gp_percent: number | null;
-  basis: "cumulative-snapshot" | "daily-sum" | "none";
+  basis: "cumulative-snapshot" | "monthly-rollup" | "daily-sum" | "none";
   as_of: string | null;
   covered_days: number;
 }
@@ -109,6 +109,34 @@ function newest(rows: NumbersRow[]): NumbersRow | undefined {
         ? 1
         : -1,
   )[0];
+}
+
+/** Newest `daily` record per business date. */
+function newestPerDate(rows: NumbersRow[]): NumbersRow[] {
+  const byDate = new Map<string, NumbersRow>();
+  for (const r of rows.filter((row) => row.scope === "daily")) {
+    const existing = byDate.get(r.business_date);
+    if (!existing || (r.created_at ?? "") >= (existing.created_at ?? "")) byDate.set(r.business_date, r);
+  }
+  return [...byDate.values()];
+}
+
+/** Sums each metric, keeping a metric null when no row reported it. */
+function sumFields(rows: NumbersRow[]): Record<(typeof SUMMED)[number], number | null> {
+  const sums: Record<(typeof SUMMED)[number], number | null> = {
+    sales: null,
+    gross_profit: null,
+    tires_sold: null,
+    car_count: null,
+  };
+  for (const row of rows) {
+    for (const field of SUMMED) {
+      const value = row[field];
+      if (value === null || value === undefined || !Number.isFinite(value)) continue;
+      sums[field] = (sums[field] ?? 0) + value;
+    }
+  }
+  return sums;
 }
 
 function withPercent(values: Omit<PeriodValues, "gp_percent">): PeriodValues {
@@ -142,11 +170,29 @@ export function aggregatePeriod(rows: NumbersRow[], range: PeriodRange, upTo?: s
     }
   }
 
-  const byDate = new Map<string, NumbersRow>();
-  for (const r of inRange.filter((r) => r.scope === "daily")) {
-    const existing = byDate.get(r.business_date);
-    if (!existing || (r.created_at ?? "") >= (existing.created_at ?? "")) byDate.set(r.business_date, r);
+  // A year with accepted monthly totals is rolled up from those months. Months
+  // without a monthly record fall back to their daily records, so the current
+  // (incomplete) month is included once and never counted twice.
+  if (range.kind === "yearly") {
+    const months = Array.from(new Set(inRange.map((r) => r.business_date.slice(0, 7)))).sort();
+    const monthSnapshots = months
+      .map((month) => newest(inRange.filter((r) => r.business_date.startsWith(month) && r.scope === "mtd")))
+      .filter((r): r is NumbersRow => Boolean(r));
+    if (monthSnapshots.length > 0) {
+      const covered = new Set(monthSnapshots.map((r) => r.business_date.slice(0, 7)));
+      const dailyRows = newestPerDate(inRange.filter((r) => !covered.has(r.business_date.slice(0, 7))));
+      const used = [...monthSnapshots, ...dailyRows];
+      const dates = used.map((r) => r.business_date).sort();
+      return withPercent({
+        ...sumFields(used),
+        basis: "monthly-rollup",
+        as_of: dates[dates.length - 1] ?? null,
+        covered_days: used.length,
+      });
+    }
   }
+
+  const byDate = new Map<string, NumbersRow>(newestPerDate(inRange).map((r) => [r.business_date, r]));
   if (byDate.size === 0) {
     return withPercent({
       sales: null,
@@ -159,22 +205,9 @@ export function aggregatePeriod(rows: NumbersRow[], range: PeriodRange, upTo?: s
     });
   }
 
-  const sums: Record<(typeof SUMMED)[number], number | null> = {
-    sales: null,
-    gross_profit: null,
-    tires_sold: null,
-    car_count: null,
-  };
-  for (const row of byDate.values()) {
-    for (const field of SUMMED) {
-      const value = row[field];
-      if (value === null || value === undefined || !Number.isFinite(value)) continue;
-      sums[field] = (sums[field] ?? 0) + value;
-    }
-  }
   const dates = [...byDate.keys()].sort();
   return withPercent({
-    ...sums,
+    ...sumFields([...byDate.values()]),
     basis: "daily-sum",
     as_of: dates[dates.length - 1] ?? null,
     covered_days: byDate.size,

@@ -264,7 +264,9 @@ function NumbersPage() {
                 <p className="text-xs text-muted-foreground">
                   {report.basis === "cumulative-snapshot"
                     ? `From the accepted ${kind === "yearly" ? "year" : "month"}-to-date record as of ${report.as_of}.`
-                    : report.basis === "daily-sum"
+                    : report.basis === "monthly-rollup"
+                      ? `Rolled up from the accepted monthly totals through ${report.as_of}.`
+                      : report.basis === "daily-sum"
                       ? `Sum of ${report.covered_days} confirmed day(s) through ${report.as_of}.`
                       : "No confirmed records for this period yet. Nothing is assumed to be zero."}{" "}
                   A dash means the number is not available — never treated as zero.
