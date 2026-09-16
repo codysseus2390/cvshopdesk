@@ -15,6 +15,7 @@
 import type { PermissionKey } from "@/lib/permissions";
 import { SHOP_DATA_TOOLS } from "./tools/shop-data.server";
 import { SHOP_ACTION_TOOLS } from "./tools/shop-actions.server";
+import { VISION_TOOLS, type DetectedProposal } from "./tools/vision.server";
 
 /**
  * Thrown by an action tool when the change turned out to be consequential
