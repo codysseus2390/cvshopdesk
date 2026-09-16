@@ -72,11 +72,12 @@ interface StoredMessage {
   } | null;
 }
 
-async function loadThread(sb: Supa, userId: string) {
+/** The Hank thread is shared: every approved member of the shop sees it. */
+async function loadThread(sb: Supa, shopId: string) {
   const { data, error } = await sb
     .from("assistant_messages")
-    .select("id, role, content, created_at, sources")
-    .eq("user_id", userId)
+    .select("id, role, content, created_at, sources, user_id")
+    .eq("shop_id", shopId)
     .order("created_at", { ascending: false })
     .limit(SHOP_AI_HISTORY_LIMIT * 2);
   if (error) throw new Error(error.message);
