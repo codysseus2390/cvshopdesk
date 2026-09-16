@@ -2,7 +2,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Bot, ImageIcon, Paperclip, RotateCcw, Send, TriangleAlert, UserRound } from "lucide-react";
+import {
+  Bot,
+  ImageIcon,
+  Loader2,
+  Paperclip,
+  RotateCcw,
+  Send,
+  Square,
+  TriangleAlert,
+  UserRound,
+  Volume2,
+} from "lucide-react";
+import { useHankSpeech } from "@/components/shop-ai/use-hank-speech";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate } from "@/components/access-gate";
 import { Button } from "@/components/ui/button";
@@ -142,6 +154,27 @@ function ShopAiPage() {
   // Only the newest answer still offers Confirm / Edit / Cancel.
   const lastId = messages[messages.length - 1]?.id;
   const isLast = (message: ChatMessage) => message.id === lastId;
+
+  // Voice is a layer on top of the written answer: if it fails, the text stands.
+  const speech = useHankSpeech();
+  const voiceOn = Boolean(config?.voice.enabled) && Boolean(config?.voiceConfigured);
+  const autoSpeak = voiceOn && Boolean(config?.voice.autoSpeak);
+  const spokenRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!autoSpeak) return;
+    const last = messages[messages.length - 1];
+    // New answers only — never read an old conversation back on open.
+    if (!last || last.role !== "assistant" || last.failed) return;
+    if (spokenRef.current === null) {
+      spokenRef.current = last.id;
+      return;
+    }
+    if (spokenRef.current === last.id) return;
+    spokenRef.current = last.id;
+    void speech.play(last.id, last.content);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSpeak, lastId]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
