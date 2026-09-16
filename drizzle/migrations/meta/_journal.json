@@ -127,6 +127,13 @@
       "when": 1789577809507,
       "tag": "0017_hank_wake_word_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789580611749,
+      "tag": "0018_shared_hank_conversation_reads",
+      "breakpoints": true
     }
   ]
 }

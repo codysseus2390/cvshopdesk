@@ -64,6 +64,7 @@ interface StoredMessage {
   role: string;
   content: string;
   created_at: string;
+  user_id: string;
   sources: {
     thread?: string;
     tools?: { name: string; sourceLabel: string; ok: boolean; changed?: boolean }[];
@@ -72,11 +73,12 @@ interface StoredMessage {
   } | null;
 }
 
-async function loadThread(sb: Supa, userId: string) {
+/** The Hank thread is shared: every approved member of the shop sees it. */
+async function loadThread(sb: Supa, shopId: string) {
   const { data, error } = await sb
     .from("assistant_messages")
-    .select("id, role, content, created_at, sources")
-    .eq("user_id", userId)
+    .select("id, role, content, created_at, sources, user_id")
+    .eq("shop_id", shopId)
     .order("created_at", { ascending: false })
     .limit(SHOP_AI_HISTORY_LIMIT * 2);
   if (error) throw new Error(error.message);
@@ -86,17 +88,31 @@ async function loadThread(sb: Supa, userId: string) {
   return rows.slice(-SHOP_AI_HISTORY_LIMIT);
 }
 
-/** Full Shop AI conversation for the signed-in staff member. */
+/** The shop's shared Hank conversation, visible to every approved member. */
 export const listShopAiMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const sb = context.supabase as unknown as Supa;
-    const rows = await loadThread(sb, context.userId);
+    const membership = await requireMembership(sb, context.userId);
+    const rows = await loadThread(sb, membership.shopId);
+
+    // Label each staff message with who asked it.
+    const { data: members } = await sb
+      .from("shop_members")
+      .select("user_id, email")
+      .eq("shop_id", membership.shopId);
+    const names = new Map<string, string>(
+      ((members ?? []) as { user_id: string; email: string | null }[]).map((m) => [m.user_id, m.email ?? "Staff"]),
+    );
+
     const mapped = rows.map((row) => ({
       id: row.id,
       role: row.role === "assistant" ? ("assistant" as const) : ("user" as const),
       content: row.content,
       createdAt: row.created_at,
+      authorId: row.user_id,
+      authorName: names.get(row.user_id) ?? "Staff",
+      isMine: row.user_id === context.userId,
       tools: row.sources?.tools ?? [],
       proposals: (row.sources?.proposals ?? []) as DetectedProposalView[],
       attachments: (row.sources?.attachments ?? []).map((file) => ({
@@ -184,7 +200,7 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
       stored.push({ name: file.name, mimeType: file.mimeType, path });
     }
 
-    const rows = await loadThread(sb, userId);
+    const rows = await loadThread(sb, membership.shopId);
     const replayPaths = new Set(
       rows
         .flatMap((row) => row.sources?.attachments ?? [])
@@ -305,12 +321,13 @@ export const listAiActions = createServerFn({ method: "GET" })
     }[];
   });
 
-/** Starts a fresh conversation by removing this user's Shop AI thread. */
+/** Starts a fresh conversation by clearing the shop's shared Hank thread. */
 export const clearShopAiConversation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const sb = context.supabase as unknown as Supa;
-    const rows = await loadThread(sb, context.userId);
+    const membership = await requireMembership(sb, context.userId);
+    const rows = await loadThread(sb, membership.shopId);
     const ids = rows.map((row) => row.id);
     if (ids.length > 0) {
       const { error } = await sb.from("assistant_messages").delete().in("id", ids);
