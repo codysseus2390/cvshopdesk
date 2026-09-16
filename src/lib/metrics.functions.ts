@@ -8,6 +8,9 @@ import {
   type MetricRow,
   type PeriodTotals,
 } from "./metrics-math";
+import { aggregatePeriod, resolvePeriod, type NumbersRow, type PeriodValues } from "./numbers-math";
+
+type MonthTotals = PeriodValues & { gp_per_car: number | null };
 
 
 type Supa = { from: (t: string) => any; rpc: (f: string, a?: unknown) => any };
@@ -88,7 +91,7 @@ export const getDashboard = createServerFn({ method: "GET" })
 
     const { data: rows, error } = await supabase
       .from("metric_snapshots")
-      .select("id, business_date, scope, gross_profit, tires_sold, car_count, source, created_at, flags, note")
+      .select("id, business_date, scope, sales, gross_profit, tires_sold, car_count, source, created_at, flags, note")
       .eq("is_current", true)
       .gte("business_date", `${Number(year) - 1}-01-01`)
       .order("business_date", { ascending: true });
@@ -106,12 +109,26 @@ export const getDashboard = createServerFn({ method: "GET" })
       current.find((r) => r.business_date === previousDay && r.scope === "daily") ?? null;
     const mtd = monthToDate(current, monthPrefix, today);
 
-    const monthly: { month: string; totals: PeriodTotals }[] = [];
+    // The chart and the Numbers page read the same accepted monthly records
+    // through the shared reporting aggregation, so corrections flow to both.
+    const numbersRows = current as unknown as NumbersRow[];
+    const monthly: { month: string; totals: MonthTotals }[] = [];
     for (const y of [String(Number(year) - 1), year]) {
       for (let m = 1; m <= 12; m++) {
         const key = `${y}-${String(m).padStart(2, "0")}`;
         if (!current.some((r) => r.business_date.startsWith(key))) continue;
-        monthly.push({ month: key, totals: monthToDate(current, key, today) });
+        const values = aggregatePeriod(numbersRows, resolvePeriod("monthly", `${key}-01`), today);
+        monthly.push({
+          month: key,
+          totals: {
+            ...values,
+            gross_profit: values.gross_profit,
+            gp_per_car:
+              values.gross_profit !== null && values.car_count !== null && values.car_count > 0
+                ? values.gross_profit / values.car_count
+                : null,
+          },
+        });
       }
     }
 
