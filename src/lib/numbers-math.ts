@@ -205,22 +205,9 @@ export function aggregatePeriod(rows: NumbersRow[], range: PeriodRange, upTo?: s
     });
   }
 
-  const sums: Record<(typeof SUMMED)[number], number | null> = {
-    sales: null,
-    gross_profit: null,
-    tires_sold: null,
-    car_count: null,
-  };
-  for (const row of byDate.values()) {
-    for (const field of SUMMED) {
-      const value = row[field];
-      if (value === null || value === undefined || !Number.isFinite(value)) continue;
-      sums[field] = (sums[field] ?? 0) + value;
-    }
-  }
   const dates = [...byDate.keys()].sort();
   return withPercent({
-    ...sums,
+    ...sumFields([...byDate.values()]),
     basis: "daily-sum",
     as_of: dates[dates.length - 1] ?? null,
     covered_days: byDate.size,
