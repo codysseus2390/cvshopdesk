@@ -88,17 +88,31 @@ async function loadThread(sb: Supa, shopId: string) {
   return rows.slice(-SHOP_AI_HISTORY_LIMIT);
 }
 
-/** Full Shop AI conversation for the signed-in staff member. */
+/** The shop's shared Hank conversation, visible to every approved member. */
 export const listShopAiMessages = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const sb = context.supabase as unknown as Supa;
-    const rows = await loadThread(sb, context.userId);
+    const membership = await requireMembership(sb, context.userId);
+    const rows = await loadThread(sb, membership.shopId);
+
+    // Label each staff message with who asked it.
+    const { data: members } = await sb
+      .from("shop_members")
+      .select("user_id, email")
+      .eq("shop_id", membership.shopId);
+    const names = new Map<string, string>(
+      ((members ?? []) as { user_id: string; email: string | null }[]).map((m) => [m.user_id, m.email ?? "Staff"]),
+    );
+
     const mapped = rows.map((row) => ({
       id: row.id,
       role: row.role === "assistant" ? ("assistant" as const) : ("user" as const),
       content: row.content,
       createdAt: row.created_at,
+      authorId: row.user_id,
+      authorName: names.get(row.user_id) ?? "Staff",
+      isMine: row.user_id === context.userId,
       tools: row.sources?.tools ?? [],
       proposals: (row.sources?.proposals ?? []) as DetectedProposalView[],
       attachments: (row.sources?.attachments ?? []).map((file) => ({
