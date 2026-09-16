@@ -512,6 +512,7 @@ function ShopAiPage() {
           caption={lastAssistantText}
           onSubmit={(text) => submit(text)}
           onAcknowledge={(text) => void speech.play("hank-wake-ack", text)}
+          getOutputLevel={speech.getOutputLevel}
           onStopSpeaking={speech.stop}
           onExit={() => {
             speech.stop();
