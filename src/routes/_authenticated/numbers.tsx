@@ -286,25 +286,9 @@ function NumbersPage() {
                   <CardTitle className="font-display">Correct {report.range.label}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    {report.rows
-                      .filter((row) => row.key !== "gp_percent")
-                      .map((row) => (
-                        <div key={row.key} className="space-y-1">
-                          <Label htmlFor={`edit-${row.key}`}>{row.label}</Label>
-                          <Input
-                            id={`edit-${row.key}`}
-                            inputMode="decimal"
-                            placeholder="Leave blank for not updated"
-                            value={draft[row.key] ?? ""}
-                            onChange={(e) => setDraft((prev) => ({ ...prev, [row.key]: e.target.value }))}
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Saved: {formatMetric(row.actual, row.format)}
-                          </p>
-                        </div>
-                      ))}
-                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Type directly into the Actual column above. Leave a box blank for “Not updated”.
+                  </p>
                   <div className="space-y-1">
                     <Label htmlFor="correction-note">Correction note (optional)</Label>
                     <Input
