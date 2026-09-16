@@ -10,6 +10,7 @@ import {
   previousYearPeriod,
   productivityMetric,
   resolvePeriod,
+  type GoalRule,
   type GoalRules,
   type NumbersRow,
   type PeriodKind,
@@ -123,7 +124,7 @@ export async function buildNumbersReport(
 
   const rows = (metricRows ?? []) as NumbersRow[];
   const productivity = (prodRows ?? []) as ProductivityRow[];
-  const goalRules = ((settings?.goal_rules ?? {}) as GoalRules) ?? {};
+  const goalRules = (settings?.goal_rules ?? {}) as GoalRules;
   const legacyTargets = (settings?.targets ?? {}) as Record<string, number | null>;
 
   const actuals = aggregatePeriod(rows, range, today);
@@ -132,7 +133,7 @@ export async function buildNumbersReport(
 
   const technicians = Array.from(
     new Set([
-      ...(((settings?.technician_goals ?? []) as { technician: string }[]) ?? []).map((g) => g.technician),
+      ...((settings?.technician_goals ?? []) as { technician: string }[]).map((g) => g.technician),
       ...productivity.map((p) => p.technician),
     ]),
   )
@@ -143,11 +144,9 @@ export async function buildNumbersReport(
   for (const def of NUMBER_METRICS) {
     const actual = actuals[def.key as keyof typeof actuals] as number | null;
     const previousValue = previous[def.key as keyof typeof previous] as number | null;
-    const rule =
-      goalRules[def.key] ??
-      (legacyTargets[def.key] === null || legacyTargets[def.key] === undefined
-        ? undefined
-        : { method: "fixed" as const, monthly: legacyTargets[def.key] });
+    const legacy = legacyTargets[def.key];
+    const rule: GoalRule | undefined =
+      goalRules[def.key] ?? (legacy === null || legacy === undefined ? undefined : { method: "fixed", monthly: legacy });
     report.push(
       buildReportRow(def, actual, goalFor(def, rule, range, previousValue), previousValue, changedFields.has(def.key)),
     );
