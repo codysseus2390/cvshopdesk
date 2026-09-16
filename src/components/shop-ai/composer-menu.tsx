@@ -2,7 +2,7 @@
  * The "+" menu shared by Hank's main composer and the bottom Hank bar, so both
  * always offer the same things.
  */
-import { ImageIcon, Palette, Paperclip, Plus } from "lucide-react";
+import { ImageIcon, Palette, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -31,11 +31,11 @@ export function ComposerMenu({ disabled, onAttach, onCreateImage, size = "sm" }:
           variant="outline"
           size="icon"
           disabled={disabled}
-          aria-label="Attach a file or create an image"
+          aria-label="More options: attach a file or create an image"
           title="Attach or create"
           className={`${box} shrink-0 rounded-full`}
         >
-          {size === "lg" ? <Plus className="h-5 w-5" /> : <Paperclip className="h-4 w-4" />}
+          {size === "lg" ? <Plus className="h-5 w-5" /> : <Plus className="h-4 w-4" />}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="top" className="w-56">
