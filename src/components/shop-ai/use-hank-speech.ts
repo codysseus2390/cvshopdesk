@@ -18,6 +18,11 @@ type Result = { ok: boolean; mimeType?: string; audioBase64?: string; message?: 
 export function useHankSpeech() {
   const speak = useServerFn(speakHankText);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Listens in on the audio as it plays so the voice bar can follow it. The
+  // sound still goes to the speakers untouched.
+  const ctxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const samplesRef = useRef<Float32Array | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
