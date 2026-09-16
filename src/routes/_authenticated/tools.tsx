@@ -248,9 +248,6 @@ function ToolsPage() {
           <Button asChild variant="outline" size="sm">
             <Link to="/history">Review saved history</Link>
           </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/settings">Settings</Link>
-          </Button>
         </div>
 
         <Card>
