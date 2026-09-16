@@ -18,6 +18,11 @@ type Result = { ok: boolean; mimeType?: string; audioBase64?: string; message?: 
 export function useHankSpeech() {
   const speak = useServerFn(speakHankText);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Listens in on the audio as it plays so the voice bar can follow it. The
+  // sound still goes to the speakers untouched.
+  const ctxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const samplesRef = useRef<Float32Array<ArrayBuffer> | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +55,23 @@ export function useHankSpeech() {
         }
         const audio = new Audio(`data:${result.mimeType ?? "audio/mpeg"};base64,${result.audioBase64}`);
         audioRef.current = audio;
+        try {
+          const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+          if (Ctx) {
+            const ctx = ctxRef.current ?? new Ctx();
+            ctxRef.current = ctx;
+            if (ctx.state === "suspended") void ctx.resume().catch(() => {});
+            const analyser = analyserRef.current ?? ctx.createAnalyser();
+            analyser.fftSize = 512;
+            analyserRef.current = analyser;
+            samplesRef.current = new Float32Array(analyser.fftSize);
+            const source = ctx.createMediaElementSource(audio);
+            source.connect(analyser);
+            analyser.connect(ctx.destination);
+          }
+        } catch {
+          /* the bar just falls back to gentle movement */
+        }
         audio.onended = () => {
           setPlayingId(null);
           audioRef.current = null;
@@ -71,5 +93,17 @@ export function useHankSpeech() {
     [speak, stop],
   );
 
-  return { play, stop, loadingId, playingId, error, clearError: () => setError(null) };
+  /** How loud Hank is right now, 0-1. Zero when he is not talking. */
+  const getOutputLevel = useCallback(() => {
+    const analyser = analyserRef.current;
+    const samples = samplesRef.current;
+    const audio = audioRef.current;
+    if (!analyser || !samples || !audio || audio.paused) return 0;
+    analyser.getFloatTimeDomainData(samples);
+    let sum = 0;
+    for (const sample of samples) sum += sample * sample;
+    return Math.min(1, Math.sqrt(sum / samples.length) * 4.5);
+  }, []);
+
+  return { play, stop, loadingId, playingId, error, getOutputLevel, clearError: () => setError(null) };
 }

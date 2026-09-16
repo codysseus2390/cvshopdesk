@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { transcribeHankSpeech } from "@/lib/voice.functions";
 import { HANK_WAKE_ACKS, type HankVoiceInputMode } from "@/lib/ai/voice-config";
 import { useWakeWord } from "./use-wake-word";
+import { SoundBar, type SoundBarMode } from "./sound-bar";
 
 type Phase = "starting" | "waiting" | "ready" | "listening" | "processing" | "working" | "speaking" | "error";
 
@@ -35,6 +36,8 @@ interface Props {
   onSubmit: (text: string) => void;
   /** Speaks a short acknowledgement in Hank's saved voice. */
   onAcknowledge?: (text: string) => void;
+  /** Live loudness of Hank's own voice, 0-1, for the voice bar. */
+  getOutputLevel?: () => number;
   onStopSpeaking: () => void;
   onExit: () => void;
 }
@@ -96,6 +99,7 @@ export function VoiceMode(props: Props) {
   const phaseRef = useRef<Phase>("starting");
   const mutedRef = useRef(false);
   const holdRef = useRef(false);
+  const micRef = useRef(0);
 
   phaseRef.current = phase;
   mutedRef.current = muted;
@@ -234,7 +238,9 @@ export function VoiceMode(props: Props) {
         let sum = 0;
         for (const sample of buffer) sum += sample * sample;
         const rms = Math.sqrt(sum / buffer.length);
-        setLevel(mutedRef.current ? 0 : Math.min(1, rms * 6));
+        const shown = mutedRef.current ? 0 : Math.min(1, rms * 6);
+        micRef.current = shown;
+        setLevel(shown);
         if (mutedRef.current) return;
         const now = Date.now();
         const current = phaseRef.current;
@@ -379,8 +385,21 @@ export function VoiceMode(props: Props) {
     error: "Voice Mode had a problem",
   };
 
-  const active = phase === "listening" || phase === "speaking";
-  const ring = 1 + (phase === "speaking" ? 0.14 : level * 0.5);
+  const barMode: SoundBarMode =
+    phase === "speaking"
+      ? "speaking"
+      : phase === "listening" && !muted
+        ? "listening"
+        : phase === "processing" || phase === "working" || phase === "starting"
+          ? "thinking"
+          : "idle";
+
+  // Hank's own audio while he talks, the microphone while someone talks to him.
+  const barLevel = useCallback(
+    () => (phaseRef.current === "speaking" ? (props.getOutputLevel?.() ?? 0) : micRef.current),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-background/98 p-6 backdrop-blur-sm">
@@ -411,28 +430,14 @@ export function VoiceMode(props: Props) {
         </Button>
       </div>
 
-      <div className="flex w-full max-w-md flex-1 flex-col items-center justify-center gap-6">
-        <div className="relative flex h-44 w-44 items-center justify-center">
-          <span
-            aria-hidden
-            className={`absolute inset-0 rounded-full bg-primary/15 transition-transform duration-150 ${
-              active ? "animate-pulse" : ""
-            }`}
-            style={{ transform: `scale(${ring})` }}
-          />
-          <span className="absolute inset-6 rounded-full bg-primary/25" />
-          <span className="relative flex h-20 w-20 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg">
-            {phase === "processing" || phase === "working" || phase === "starting" ? (
-              <Loader2 className="h-8 w-8 animate-spin" />
-            ) : muted ? (
-              <MicOff className="h-8 w-8" />
-            ) : (
-              <Mic className="h-8 w-8" />
-            )}
-          </span>
-        </div>
+      <div className="flex w-full max-w-md flex-1 flex-col items-center justify-center gap-5">
+        <SoundBar mode={barMode} getLevel={barLevel} className="h-28 w-full max-w-sm" />
 
-        <p aria-live="polite" className="text-center text-sm font-medium text-foreground">
+        <p aria-live="polite" className="flex items-center gap-2 text-center text-sm font-medium text-foreground">
+          {(phase === "processing" || phase === "working" || phase === "starting") && (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          )}
+          {muted && phase !== "starting" && <MicOff className="h-3.5 w-3.5 text-muted-foreground" />}
           {label[phase]}
         </p>
 
