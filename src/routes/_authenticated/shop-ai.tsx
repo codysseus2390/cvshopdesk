@@ -118,6 +118,8 @@ function ShopAiPage() {
       tools: row.tools as ToolActivityItem[],
       attachments: row.attachments,
       proposals: row.proposals as DetectedProposalView[],
+      authorName: row.authorName,
+      isMine: row.isMine,
     })),
     ...pending,
   ];
@@ -295,6 +297,11 @@ function ShopAiPage() {
               message.role === "user" ? (
                 <div key={message.id} className="flex justify-end gap-2">
                   <div className="max-w-[85%] space-y-1.5">
+                    {message.authorName && (
+                      <p className="text-right text-[11px] font-semibold text-muted-foreground">
+                        {message.isMine ? "You" : message.authorName}
+                      </p>
+                    )}
                     <div className="whitespace-pre-wrap rounded-2xl bg-primary px-4 py-2.5 text-sm text-primary-foreground shadow-sm">
                       {message.content}
                     </div>
