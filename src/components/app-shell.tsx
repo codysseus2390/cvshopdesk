@@ -2,6 +2,7 @@ import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import {
+  Bot,
   CalendarClock,
   ChevronLeft,
   ClipboardPenLine,
@@ -28,6 +29,7 @@ import type { PermissionKey } from "@/lib/permissions";
 
 const NAV = [
   { to: "/hub", label: "Dashboard", icon: LayoutDashboard, needs: "view_dashboard" },
+  { to: "/shop-ai", label: "Shop AI", icon: Bot, needs: undefined },
   { to: "/entry", label: "Daily entry", icon: ClipboardPenLine, needs: "edit_dashboard_numbers" },
   { to: "/history", label: "History", icon: History, needs: undefined },
   { to: "/inventory", label: "Inventory", icon: PackageSearch, needs: undefined },

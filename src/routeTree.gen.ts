@@ -21,6 +21,7 @@ import { Route as AuthenticatedHubRouteImport } from './routes/_authenticated/hu
 import { Route as AuthenticatedImportsRouteImport } from './routes/_authenticated/imports'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedShopAiRouteImport } from './routes/_authenticated/shop-ai'
 import { Route as AuthenticatedToolsRouteImport } from './routes/_authenticated/tools'
 import { Route as AuthenticatedTvRouteImport } from './routes/_authenticated/tv'
 
@@ -83,6 +84,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedShopAiRoute = AuthenticatedShopAiRouteImport.update({
+  id: '/shop-ai',
+  path: '/shop-ai',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedToolsRoute = AuthenticatedToolsRouteImport.update({
   id: '/tools',
   path: '/tools',
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/imports': typeof AuthenticatedImportsRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/shop-ai': typeof AuthenticatedShopAiRoute
   '/tools': typeof AuthenticatedToolsRoute
   '/tv': typeof AuthenticatedTvRoute
 }
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/imports': typeof AuthenticatedImportsRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/shop-ai': typeof AuthenticatedShopAiRoute
   '/tools': typeof AuthenticatedToolsRoute
   '/tv': typeof AuthenticatedTvRoute
 }
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/_authenticated/imports': typeof AuthenticatedImportsRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/shop-ai': typeof AuthenticatedShopAiRoute
   '/_authenticated/tools': typeof AuthenticatedToolsRoute
   '/_authenticated/tv': typeof AuthenticatedTvRoute
 }
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
     | '/imports'
     | '/inventory'
     | '/settings'
+    | '/shop-ai'
     | '/tools'
     | '/tv'
   fileRoutesByTo: FileRoutesByTo
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/imports'
     | '/inventory'
     | '/settings'
+    | '/shop-ai'
     | '/tools'
     | '/tv'
   id:
@@ -186,6 +197,7 @@ export interface FileRouteTypes {
     | '/_authenticated/imports'
     | '/_authenticated/inventory'
     | '/_authenticated/settings'
+    | '/_authenticated/shop-ai'
     | '/_authenticated/tools'
     | '/_authenticated/tv'
   fileRoutesById: FileRoutesById
@@ -282,6 +294,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/shop-ai': {
+      id: '/_authenticated/shop-ai'
+      path: '/shop-ai'
+      fullPath: '/shop-ai'
+      preLoaderRoute: typeof AuthenticatedShopAiRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/tools': {
       id: '/_authenticated/tools'
       path: '/tools'
@@ -309,6 +328,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedImportsRoute: typeof AuthenticatedImportsRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedShopAiRoute: typeof AuthenticatedShopAiRoute
   AuthenticatedToolsRoute: typeof AuthenticatedToolsRoute
   AuthenticatedTvRoute: typeof AuthenticatedTvRoute
 }
@@ -323,6 +343,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedImportsRoute: AuthenticatedImportsRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedShopAiRoute: AuthenticatedShopAiRoute,
   AuthenticatedToolsRoute: AuthenticatedToolsRoute,
   AuthenticatedTvRoute: AuthenticatedTvRoute,
 }
