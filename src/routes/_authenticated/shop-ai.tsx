@@ -157,8 +157,8 @@ function ShopAiPage() {
 
   // Voice is a layer on top of the written answer: if it fails, the text stands.
   const speech = useHankSpeech();
-  const voiceOn = Boolean(config?.voice.enabled) && Boolean(config?.voiceConfigured);
-  const autoSpeak = voiceOn && Boolean(config?.voice.autoSpeak);
+  const voiceOn = Boolean(config?.voice?.enabled) && Boolean(config?.voiceConfigured);
+  const autoSpeak = voiceOn && Boolean(config?.voice?.autoSpeak);
   const spokenRef = useRef<string | null>(null);
 
   useEffect(() => {
