@@ -135,3 +135,58 @@ export const testHankVoice = createServerFn({ method: "POST" })
       return failure(err);
     }
   });
+
+/**
+ * Saves the shop's voice configuration. Owner and admins only — the same
+ * permission that guards the rest of Hank Settings.
+ */
+export const saveHankVoiceSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        enabled: z.boolean(),
+        autoSpeak: z.boolean(),
+        voiceId: z.string().trim().max(120).nullable().default(null),
+        voiceName: z.string().trim().max(120).nullable().default(null),
+        speed: z.number().min(0.5).max(1.5),
+        stability: z.number().min(0).max(1),
+        similarity: z.number().min(0).max(1),
+        style: z.number().min(0).max(1),
+        speakerBoost: z.boolean(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as unknown as Supa & {
+      rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ error: { message: string } | null }>;
+    };
+    const member = await membership(sb, context.userId);
+    requireManager(member.role);
+
+    const { error } = await sb.from("ai_settings").upsert(
+      {
+        shop_id: member.shop_id,
+        voice_enabled: data.enabled,
+        voice_auto_speak: data.autoSpeak,
+        voice_id: data.voiceId,
+        voice_name: data.voiceName,
+        voice_speed: data.speed,
+        voice_stability: data.stability,
+        voice_similarity: data.similarity,
+        voice_style: data.style,
+        voice_speaker_boost: data.speakerBoost,
+        updated_by: context.userId,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "shop_id" },
+    );
+    if (error) throw new Error(error.message);
+
+    await sb.rpc("log_audit_event", {
+      p_action: "hank_voice_settings_saved",
+      p_target: "ai_settings",
+      p_detail: { enabled: data.enabled, auto_speak: data.autoSpeak, voice_name: data.voiceName },
+    });
+    return { ok: true as const };
+  });
