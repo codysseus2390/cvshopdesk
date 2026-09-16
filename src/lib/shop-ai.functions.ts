@@ -200,7 +200,7 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
       stored.push({ name: file.name, mimeType: file.mimeType, path });
     }
 
-    const rows = await loadThread(sb, userId);
+    const rows = await loadThread(sb, membership.shopId);
     const replayPaths = new Set(
       rows
         .flatMap((row) => row.sources?.attachments ?? [])
@@ -321,12 +321,13 @@ export const listAiActions = createServerFn({ method: "GET" })
     }[];
   });
 
-/** Starts a fresh conversation by removing this user's Shop AI thread. */
+/** Starts a fresh conversation by clearing the shop's shared Hank thread. */
 export const clearShopAiConversation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const sb = context.supabase as unknown as Supa;
-    const rows = await loadThread(sb, context.userId);
+    const membership = await requireMembership(sb, context.userId);
+    const rows = await loadThread(sb, membership.shopId);
     const ids = rows.map((row) => row.id);
     if (ids.length > 0) {
       const { error } = await sb.from("assistant_messages").delete().in("id", ids);
