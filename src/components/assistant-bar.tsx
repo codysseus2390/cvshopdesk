@@ -47,6 +47,7 @@ export function AssistantBar() {
 
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const cameraInput = useRef<HTMLInputElement>(null);
 
   const { data: config } = useQuery({ queryKey: ["ai-settings"], queryFn: () => loadSettings() });
   const assistantName = config?.settings.assistantName || ASSISTANT_DEFAULTS.name;
@@ -169,6 +170,7 @@ export function AssistantBar() {
             size="lg"
             disabled={busy}
             onAttach={() => fileInput.current?.click()}
+            onTakePhoto={() => cameraInput.current?.click()}
             onCreateImage={() => {
               setQuestion(CREATE_IMAGE_PREFIX);
               inputRef.current?.focus();
