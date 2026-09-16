@@ -28,7 +28,7 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
     name: "save_shop_numbers",
     sourceLabel: "Dashboard numbers",
     description:
-      "Saves or corrects the shop's numbers for one business date and scope (daily, mtd or ytd): gross profit, tires sold and car count. Leave a field out to keep it unknown. Correcting a date that already has numbers is a consequential change.",
+      "Saves or corrects the shop's numbers for one business date and scope (daily, mtd or ytd): sales, gross profit, tires sold and car count. Sales and gross profit are separate values — never use one for the other. Leave a field out to keep it unknown. Use save_monthly_numbers for completed past months instead of this tool. Correcting a date that already has numbers is a consequential change.",
     permission: "edit_dashboard_numbers",
     mutating: true,
     parameters: {
