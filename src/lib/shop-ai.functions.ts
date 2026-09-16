@@ -64,6 +64,7 @@ interface StoredMessage {
   role: string;
   content: string;
   created_at: string;
+  user_id: string;
   sources: {
     thread?: string;
     tools?: { name: string; sourceLabel: string; ok: boolean; changed?: boolean }[];
