@@ -16,6 +16,7 @@ import { AccessGate, useShopContext } from "@/components/access-gate";
 import { usePermissions } from "@/components/use-permissions";
 import { NotificationComposer } from "@/components/notification-composer";
 import { HankSettings } from "@/components/hank-settings";
+import { NumbersGoals } from "@/components/numbers-goals";
 import { useTheme } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,6 +95,7 @@ function SettingsPage() {
           <TabsTrigger value="staff">Staff &amp; Roles</TabsTrigger>
           <TabsTrigger value="permissions">Permissions</TabsTrigger>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="numbers">Numbers &amp; Goals</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="hank">Hank Settings</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
@@ -108,6 +110,9 @@ function SettingsPage() {
         </TabsContent>
         <TabsContent value="dashboard">
           <DashboardSettings isAdmin={isAdmin} />
+        </TabsContent>
+        <TabsContent value="numbers">
+          <NumbersGoals canEdit={isAdmin} />
         </TabsContent>
         <TabsContent value="notifications">
           <NotificationComposer canSend={isAdmin} />
