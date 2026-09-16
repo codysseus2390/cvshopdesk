@@ -50,7 +50,17 @@ export const HANK_STT_PROMPT =
   "names, percentages and dollar amounts.";
 
 /** How the microphone behaves in Voice Mode. */
-export type HankVoiceInputMode = "auto" | "push";
+export type HankVoiceInputMode = "auto" | "push" | "wake";
+
+/* ---------- Wake word ("Hey Hank") ---------- */
+
+export const HANK_WAKE_DEFAULT_PHRASE = "Hey Hank";
+export const HANK_WAKE_PHRASE_LIMITS = { min: 2, max: 40 } as const;
+export const HANK_WAKE_TIMEOUT_LIMITS = { min: 10, max: 300, step: 5 } as const;
+export const HANK_WAKE_TIMEOUT_DEFAULT = 30;
+
+/** Short spoken acknowledgements, used only when Activation Response is on. */
+export const HANK_WAKE_ACKS = ["Yeah?", "What's up?", "I'm listening."] as const;
 
 export interface HankVoiceSettings {
   enabled: boolean;
