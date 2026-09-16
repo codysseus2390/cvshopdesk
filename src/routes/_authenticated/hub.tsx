@@ -240,22 +240,7 @@ function Dashboard() {
                         tickFormatter={(v) => (chartMetricDef.currency ? `$${v}` : `${v}`)}
                       />
                       <ChartTooltip
-                        formatter={(v, name) => {
-                          const formatted =
-                            typeof v !== "number"
-                              ? "Not updated"
-                              : chartMetricDef.currency
-                                ? formatCurrency(v)
-                                : formatCount(v);
-                          const seriesName = String(name);
-                          return seriesName.endsWith(" MTD")
-                            ? [`${formatted} · Month to date`, seriesName.replace(" MTD", "")]
-                            : [formatted, seriesName];
-                        }}
-                        labelFormatter={(label, payload) => {
-                          const isMtd = payload?.some((entry) => String(entry.name).endsWith(" MTD"));
-                          return isMtd ? `${label} ${monthlyByYear.currentYear} — Month to date` : label;
-                        }}
+                        content={<MonthlyChartTooltip currency={chartMetricDef.currency} />}
                       />
                       <Legend wrapperStyle={{ fontSize: 12 }} />
                       {monthlyByYear.years.map((year, i) => (
@@ -344,6 +329,41 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between gap-4">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-semibold">{value}</span>
+    </div>
+  );
+}
+
+function MonthlyChartTooltip({
+  active,
+  label,
+  payload,
+  currency,
+}: {
+  active?: boolean;
+  label?: string | number;
+  payload?: ReadonlyArray<{ name?: string | number; value?: string | number; color?: string }>;
+  currency: boolean;
+}) {
+  const visible = payload?.filter((entry) => typeof entry.value === "number") ?? [];
+  if (!active || visible.length === 0) return null;
+  const mtd = visible.find((entry) => String(entry.name).endsWith(" MTD"));
+  const title = mtd
+    ? `${label} ${String(mtd.name).replace(" MTD", "")} — Month to date`
+    : String(label ?? "");
+
+  return (
+    <div className="rounded-md border border-border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-elevated">
+      <p className="mb-1 font-semibold">{title}</p>
+      {visible.map((entry) => {
+        const name = String(entry.name).replace(" MTD", "");
+        const value = typeof entry.value === "number" ? entry.value : null;
+        return (
+          <p key={String(entry.name)}>
+            {name}: {currency ? formatCurrency(value) : formatCount(value)}
+            {String(entry.name).endsWith(" MTD") ? " · Month to date" : ""}
+          </p>
+        );
+      })}
     </div>
   );
 }
