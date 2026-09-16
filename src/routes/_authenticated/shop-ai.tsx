@@ -2,13 +2,20 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Bot, RotateCcw, Send, UserRound } from "lucide-react";
+import { Bot, ImageIcon, Paperclip, RotateCcw, Send, TriangleAlert, UserRound } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate } from "@/components/access-gate";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { ThinkingIndicator, ToolActivity, type ToolActivityItem } from "@/components/shop-ai/tool-activity";
+import {
+  ACCEPTED_ATTACHMENT_TYPES,
+  AttachmentStrip,
+  readAttachment,
+  validateAttachment,
+  type DraftAttachment,
+} from "@/components/shop-ai/attachments";
 import { clearShopAiConversation, listShopAiMessages, sendShopAiMessage } from "@/lib/shop-ai.functions";
 
 export const Route = createFileRoute("/_authenticated/shop-ai")({
@@ -38,11 +45,12 @@ interface ChatMessage {
   content: string;
   tools?: ToolActivityItem[];
   failed?: boolean;
+  attachments?: { name: string; mimeType: string }[];
 }
 
 const SUGGESTIONS = [
   "Explain a P0171 lean code to a customer in plain language",
-  "What tire rotation interval should we recommend for an AWD crossover?",
+  "Enter today's numbers: gross profit 4,106.22 and 14 cars",
   "Draft a polite text telling a customer their parts are delayed",
 ];
 
@@ -53,8 +61,12 @@ function ShopAiPage() {
   const queryClient = useQueryClient();
 
   const [draft, setDraft] = useState("");
+  const [attachments, setAttachments] = useState<DraftAttachment[]>([]);
+  const [attachError, setAttachError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const [pending, setPending] = useState<ChatMessage[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const { data: saved, isLoading } = useQuery({
@@ -68,16 +80,29 @@ function ShopAiPage() {
       role: row.role,
       content: row.content,
       tools: row.tools as ToolActivityItem[],
+      attachments: row.attachments,
     })),
     ...pending,
   ];
 
   const mutation = useMutation({
-    mutationFn: (message: string) => send({ data: { message } }),
+    mutationFn: (payload: { message: string; attachments: DraftAttachment[] }) =>
+      send({
+        data: {
+          message: payload.message,
+          attachments: payload.attachments.map((file) => ({
+            name: file.name,
+            mimeType: file.mimeType as never,
+            dataUrl: file.dataUrl,
+          })),
+        },
+      }),
     onSuccess: async (result) => {
       if (result.ok) {
         setPending([]);
         await queryClient.invalidateQueries({ queryKey: ["shop-ai-messages"] });
+        // A tool changed shop data, so refresh every screen that reads it.
+        if (result.dataChanged) await queryClient.invalidateQueries();
       } else {
         setPending((prev) => [
           ...prev,
@@ -106,18 +131,48 @@ function ShopAiPage() {
     inputRef.current?.focus();
   }, []);
 
+  async function addFiles(files: File[]) {
+    setAttachError(null);
+    let accepted = [...attachments];
+    for (const file of files) {
+      const problem = validateAttachment(file, accepted.length);
+      if (problem) {
+        setAttachError(problem);
+        continue;
+      }
+      try {
+        accepted = [...accepted, await readAttachment(file)];
+      } catch (err) {
+        setAttachError(err instanceof Error ? err.message : "That file could not be read.");
+      }
+    }
+    setAttachments(accepted);
+  }
+
   function submit(text?: string) {
     const message = (text ?? draft).trim();
-    if (!message || mutation.isPending) return;
+    if ((!message && attachments.length === 0) || mutation.isPending) return;
+    const outgoing = attachments;
     setDraft("");
-    setPending([{ id: `u-${Date.now()}`, role: "user", content: message }]);
-    mutation.mutate(message);
+    setAttachments([]);
+    setAttachError(null);
+    setPending([
+      {
+        id: `u-${Date.now()}`,
+        role: "user",
+        content: message,
+        attachments: outgoing.map((file) => ({ name: file.name, mimeType: file.mimeType })),
+      },
+    ]);
+    mutation.mutate({ message, attachments: outgoing });
     inputRef.current?.focus();
   }
 
   async function reset() {
     if (mutation.isPending) return;
     setPending([]);
+    setAttachments([]);
+    setAttachError(null);
     await clear();
     await queryClient.invalidateQueries({ queryKey: ["shop-ai-messages"] });
     inputRef.current?.focus();
@@ -167,8 +222,16 @@ function ShopAiPage() {
             {messages.map((message) =>
               message.role === "user" ? (
                 <div key={message.id} className="flex justify-end gap-2">
-                  <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-primary px-4 py-2.5 text-sm text-primary-foreground shadow-sm">
-                    {message.content}
+                  <div className="max-w-[85%] space-y-1.5">
+                    <div className="whitespace-pre-wrap rounded-2xl bg-primary px-4 py-2.5 text-sm text-primary-foreground shadow-sm">
+                      {message.content}
+                    </div>
+                    {(message.attachments ?? []).length > 0 && (
+                      <p className="flex items-center justify-end gap-1 text-[11px] text-muted-foreground">
+                        <ImageIcon className="h-3 w-3" />
+                        {(message.attachments ?? []).map((file) => file.name).join(", ")}
+                      </p>
+                    )}
                   </div>
                   <span className="mt-1 hidden h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground sm:flex">
                     <UserRound className="h-3.5 w-3.5" />
@@ -212,28 +275,89 @@ function ShopAiPage() {
             e.preventDefault();
             submit();
           }}
-          className="mt-4 rounded-2xl border border-border/80 bg-card p-3 shadow-card"
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragging(false);
+            void addFiles(Array.from(e.dataTransfer.files));
+          }}
+          className={`mt-4 rounded-2xl border bg-card p-3 shadow-card transition-colors ${
+            dragging ? "border-primary bg-primary/5" : "border-border/80"
+          }`}
         >
+          <AttachmentStrip
+            items={attachments}
+            disabled={mutation.isPending}
+            onRemove={(id) => setAttachments((prev) => prev.filter((file) => file.id !== id))}
+          />
+
+          {attachError && (
+            <p className="mb-2 flex items-center gap-1.5 text-[11px] font-medium text-destructive">
+              <TriangleAlert className="h-3.5 w-3.5" /> {attachError}
+            </p>
+          )}
+
           <Textarea
             ref={inputRef}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            onPaste={(e) => {
+              const files = Array.from(e.clipboardData.files);
+              if (files.length > 0) {
+                e.preventDefault();
+                void addFiles(files);
+              }
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 submit();
               }
             }}
-            placeholder="Ask Shop AI… (Shift + Enter for a new line)"
+            placeholder="Ask Shop AI, or paste a screenshot with Ctrl + V… (Shift + Enter for a new line)"
             rows={3}
             aria-label="Message Shop AI"
             className="min-h-[76px] resize-none border-transparent bg-muted/60 focus-visible:border-primary/40"
           />
+
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            accept={ACCEPTED_ATTACHMENT_TYPES.join(",")}
+            className="hidden"
+            onChange={(e) => {
+              void addFiles(Array.from(e.target.files ?? []));
+              e.target.value = "";
+            }}
+          />
+
           <div className="mt-2 flex items-center justify-between gap-3">
-            <p className="text-[11px] text-muted-foreground">
-              Read-only assistant. It never changes shop records.
-            </p>
-            <Button type="submit" disabled={mutation.isPending || draft.trim().length === 0} className="rounded-xl">
+            <div className="flex min-w-0 items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label="Attach an image or PDF"
+                disabled={mutation.isPending}
+                onClick={() => fileRef.current?.click()}
+                className="h-9 w-9 shrink-0 rounded-full"
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+              <p className="truncate text-[11px] text-muted-foreground">
+                Paste or attach screenshots. Shop AI asks before changing anything already saved.
+              </p>
+            </div>
+            <Button
+              type="submit"
+              disabled={mutation.isPending || (draft.trim().length === 0 && attachments.length === 0)}
+              className="rounded-xl"
+            >
               <Send className="mr-2 h-4 w-4" /> Send
             </Button>
           </div>

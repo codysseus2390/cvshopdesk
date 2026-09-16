@@ -85,6 +85,13 @@
       "when": 1789572142505,
       "tag": "0011_harden_definer_function_execute",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789572732401,
+      "tag": "0012_shop_ai_actions_tire_orders_productivity",
+      "breakpoints": true
     }
   ]
 }
