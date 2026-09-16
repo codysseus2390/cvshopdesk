@@ -1,22 +1,31 @@
+/**
+ * The bottom Hank bar, available on every screen.
+ *
+ * It is a compact door into the SAME Hank as the main Hank screen: the same
+ * conversation, server function, personality, tools, permissions, attachments,
+ * speech-to-text and Voice Mode. Long answers, pictures and confirmations are
+ * shown on the Hank screen, which this bar links to.
+ */
 import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQueryClient } from "@tanstack/react-query";
-import { ArrowUp, FileText, ImageIcon, Plus, Sparkles, X } from "lucide-react";
-import { askAssistant } from "@/lib/assistant.functions";
-import { registerImport } from "@/lib/imports.functions";
-import { supabase } from "@/integrations/supabase/client";
-import { useShopContext } from "@/components/access-gate";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowUp, AudioLines, FileText, TriangleAlert, X } from "lucide-react";
+import { sendShopAiMessage } from "@/lib/shop-ai.functions";
+import { getAiSettings } from "@/lib/ai-settings.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ComposerMenu, CREATE_IMAGE_PREFIX } from "@/components/shop-ai/composer-menu";
+import { TalkButton } from "@/components/shop-ai/talk-button";
+import { VoiceMode } from "@/components/shop-ai/voice-mode";
+import { useHankSpeech } from "@/components/shop-ai/use-hank-speech";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  ACCEPTED_ATTACHMENT_TYPES,
+  readAttachment,
+  validateAttachment,
+  type DraftAttachment,
+} from "@/components/shop-ai/attachments";
+import { ASSISTANT_DEFAULTS } from "@/lib/ai/model-config";
 
 interface Turn {
   role: "user" | "assistant";
@@ -24,94 +33,84 @@ interface Turn {
   ok?: boolean;
 }
 
-async function sha256(file: File) {
-  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
 export function AssistantBar() {
-  const ask = useServerFn(askAssistant);
-  const register = useServerFn(registerImport);
+  const send = useServerFn(sendShopAiMessage);
+  const loadSettings = useServerFn(getAiSettings);
   const queryClient = useQueryClient();
-  const { data: shopContext } = useShopContext();
-  const shopId = shopContext?.shop?.id;
 
   const [question, setQuestion] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
-  const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
-  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachment, setAttachment] = useState<DraftAttachment | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [voiceMode, setVoiceMode] = useState(false);
 
-  const photoInput = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  async function sendAttachment(file: File) {
-    if (!shopId) throw new Error("Your shop access is still loading — try again in a moment.");
-    const hash = await sha256(file);
-    const path = `${shopId}/${crypto.randomUUID()}/${file.name.replace(/[^\w.\-]+/g, "_")}`;
-    const { error: upErr } = await supabase.storage
-      .from("shop-uploads")
-      .upload(path, file, { contentType: file.type || "application/octet-stream", upsert: false });
-    if (upErr) throw new Error(`The file could not be stored: ${upErr.message}`);
-    await register({
-      data: {
-        file_name: file.name,
-        storage_path: path,
-        mime_type: file.type || "application/octet-stream",
-        file_hash: hash,
-        file_size: file.size,
-        report_scope: "other",
-        period_start: null,
-        period_end: null,
-        captured_at: null,
-      },
-    });
-    await queryClient.invalidateQueries({ queryKey: ["imports"] });
-  }
+  const { data: config } = useQuery({ queryKey: ["ai-settings"], queryFn: () => loadSettings() });
+  const assistantName = config?.settings.assistantName || ASSISTANT_DEFAULTS.name;
+  const speech = useHankSpeech();
+  const voiceOn = Boolean(config?.voice?.enabled) && Boolean(config?.voiceConfigured);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    const q = question.trim();
-    if (busy) return;
-    if (!attachment && q.length < 2) return;
-
-    const pending = attachment;
-    setQuestion("");
-    setAttachment(null);
-    setOpen(true);
-    setBusy(true);
-    setTurns((t) => [...t, { role: "user", text: pending ? `${pending.name}${q ? ` — ${q}` : ""}` : q }]);
-
-    try {
-      if (pending) {
-        await sendAttachment(pending);
-        setTurns((t) => [
-          ...t,
-          {
-            role: "assistant",
-            text: `Saved “${pending.name}”. Open Tools to read it and confirm the numbers before they count.`,
-            ok: true,
-          },
-        ]);
-      }
-      if (q.length >= 2) {
-        const result = await ask({ data: { question: q } });
-        setTurns((t) => [...t, { role: "assistant", text: result.reply, ok: result.ok }]);
-      }
-    } catch (err) {
+  const mutation = useMutation({
+    mutationFn: (payload: { message: string; attachment: DraftAttachment | null }) =>
+      send({
+        data: {
+          message: payload.message,
+          attachments: payload.attachment
+            ? [
+                {
+                  name: payload.attachment.name,
+                  mimeType: payload.attachment.mimeType as never,
+                  dataUrl: payload.attachment.dataUrl,
+                },
+              ]
+            : [],
+        },
+      }),
+    onSuccess: async (result) => {
+      setTurns((t) => [...t, { role: "assistant", text: result.reply, ok: result.ok }]);
+      await queryClient.invalidateQueries({ queryKey: ["shop-ai-messages"] });
+      if (result.dataChanged) await queryClient.invalidateQueries();
+      if (voiceOn && result.ok) void speech.play(`bar-${Date.now()}`, result.reply);
+    },
+    onError: (err) => {
       setTurns((t) => [
         ...t,
-        {
-          role: "assistant",
-          text: err instanceof Error ? err.message : "That did not work just now.",
-          ok: false,
-        },
+        { role: "assistant", text: err instanceof Error ? err.message : "That did not work just now.", ok: false },
       ]);
-    } finally {
-      setBusy(false);
+    },
+  });
+
+  const busy = mutation.isPending;
+
+  async function pickFile(file: File | null) {
+    if (!file) return;
+    setProblem(null);
+    const issue = validateAttachment(file, 0);
+    if (issue) {
+      setProblem(issue);
+      return;
     }
+    try {
+      setAttachment(await readAttachment(file));
+    } catch (err) {
+      setProblem(err instanceof Error ? err.message : "That file could not be read.");
+    }
+  }
+
+  function submit(text?: string) {
+    const q = (text ?? question).trim();
+    if (busy) return;
+    if (!attachment && q.length < 2) return;
+    const outgoing = attachment;
+    setQuestion("");
+    setAttachment(null);
+    setProblem(null);
+    setOpen(true);
+    setTurns((t) => [...t, { role: "user", text: outgoing ? `${outgoing.name}${q ? ` — ${q}` : ""}` : q }]);
+    mutation.mutate({ message: q, attachment: outgoing });
   }
 
   return (
@@ -133,10 +132,22 @@ export function AssistantBar() {
             </div>
           ))}
           {busy && <p className="text-sm text-muted-foreground">Working on that…</p>}
+          <p className="text-[11px] text-muted-foreground">
+            <Link to="/shop-ai" className="underline underline-offset-2">
+              Open {assistantName}
+            </Link>{" "}
+            for pictures, attachments and the full conversation.
+          </p>
         </div>
       )}
 
-      <form onSubmit={submit} className="mx-auto my-3 w-[calc(100%-1.25rem)] max-w-4xl rounded-3xl border border-border/80 bg-card p-2.5 shadow-elevated sm:w-[calc(100%-3rem)]">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit();
+        }}
+        className="mx-auto my-3 w-[calc(100%-1.25rem)] max-w-4xl rounded-3xl border border-border/80 bg-card p-2.5 shadow-elevated sm:w-[calc(100%-3rem)]"
+      >
         {attachment && (
           <div className="mb-2 flex max-w-full items-center gap-2 truncate rounded-full border border-border bg-muted px-3 py-1.5 text-xs">
             <FileText className="h-3.5 w-3.5 shrink-0" />
@@ -147,54 +158,50 @@ export function AssistantBar() {
           </div>
         )}
 
+        {problem && (
+          <p className="mb-2 flex items-center gap-1.5 text-[11px] font-medium text-destructive">
+            <TriangleAlert className="h-3.5 w-3.5" /> {problem}
+          </p>
+        )}
+
         <div className="flex w-full min-w-0 items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="h-12 w-12 shrink-0 rounded-full bg-muted"
-                aria-label="Add photo, file or create"
-              >
-                <Plus className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" side="top" className="w-52">
-              <DropdownMenuItem onSelect={() => photoInput.current?.click()}>
-                <ImageIcon className="mr-2 h-4 w-4" /> Add photo
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => fileInput.current?.click()}>
-                <FileText className="mr-2 h-4 w-4" /> Add file
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
-                <Sparkles className="h-3.5 w-3.5" /> Create
-              </DropdownMenuLabel>
-              <DropdownMenuItem asChild>
-                <Link to="/entry">Today's numbers entry</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/tools">Report import</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/settings">Announcement</Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <ComposerMenu
+            size="lg"
+            disabled={busy}
+            onAttach={() => fileInput.current?.click()}
+            onCreateImage={() => {
+              setQuestion(CREATE_IMAGE_PREFIX);
+              inputRef.current?.focus();
+            }}
+          />
 
           <Input
+            ref={inputRef}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            placeholder="Ask about saved shop numbers…"
-            aria-label="Ask the assistant"
-             className="h-12 min-w-0 flex-1 rounded-full border-transparent bg-muted/70 px-4 shadow-none focus-visible:border-primary/40"
+            placeholder={`Ask ${assistantName}…`}
+            aria-label={`Ask ${assistantName}`}
+            className="h-12 min-w-0 flex-1 rounded-full border-transparent bg-muted/70 px-4 shadow-none focus-visible:border-primary/40"
           />
+
+          <TalkButton disabled={busy} onResult={(text) => submit(text)} onError={(message) => setProblem(message)} />
+
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label={`Voice Mode — talk with ${assistantName}`}
+            title="Voice Mode"
+            onClick={() => setVoiceMode(true)}
+            className="h-9 w-9 shrink-0 rounded-full"
+          >
+            <AudioLines className="h-4 w-4" />
+          </Button>
 
           <Button
             type="submit"
             size="icon"
-             className="h-12 w-12 shrink-0 rounded-full shadow-md hover:shadow-lg"
+            className="h-12 w-12 shrink-0 rounded-full shadow-md hover:shadow-lg"
             disabled={busy || (!attachment && question.trim().length < 2)}
             aria-label="Send"
           >
@@ -203,20 +210,45 @@ export function AssistantBar() {
         </div>
 
         <input
-          ref={photoInput}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => setAttachment(e.target.files?.[0] ?? null)}
-        />
-        <input
           ref={fileInput}
           type="file"
-          accept=".csv,.xlsx,.xls,.pdf,image/*"
+          accept={ACCEPTED_ATTACHMENT_TYPES.join(",")}
           className="hidden"
-          onChange={(e) => setAttachment(e.target.files?.[0] ?? null)}
+          onChange={(e) => {
+            void pickFile(e.target.files?.[0] ?? null);
+            e.target.value = "";
+          }}
         />
       </form>
+
+      {voiceMode && (
+        <VoiceMode
+          assistantName={assistantName}
+          busy={busy}
+          speaking={speech.playingId !== null || speech.loadingId !== null}
+          inputMode={
+            config?.voice?.wakeEnabled
+              ? "wake"
+              : config?.voice?.inputMode === "wake"
+                ? "auto"
+                : config?.voice?.inputMode ?? "auto"
+          }
+          autoListen={config?.voice?.autoListen !== false}
+          wakePhrase={config?.voice?.wakePhrase?.trim() || "Hey Hank"}
+          wakeSound={config?.voice?.wakeSound !== false}
+          wakeResponse={Boolean(config?.voice?.wakeResponse)}
+          wakeTimeoutSeconds={config?.voice?.wakeTimeoutSeconds ?? 30}
+          caption={[...turns].reverse().find((turn) => turn.role === "assistant")?.text ?? ""}
+          onSubmit={(text) => submit(text)}
+          onAcknowledge={(text) => void speech.play("hank-wake-ack", text)}
+          getOutputLevel={speech.getOutputLevel}
+          onStopSpeaking={speech.stop}
+          onExit={() => {
+            speech.stop();
+            setVoiceMode(false);
+          }}
+        />
+      )}
     </div>
   );
 }
