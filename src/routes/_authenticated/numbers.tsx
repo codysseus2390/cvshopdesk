@@ -345,7 +345,17 @@ function NumbersPage() {
   );
 }
 
-function MetricRow({ row }: { row: ReportRow }) {
+function MetricRow({
+  row,
+  editing = false,
+  value = "",
+  onChange,
+}: {
+  row: ReportRow;
+  editing?: boolean;
+  value?: string;
+  onChange?: (next: string) => void;
+}) {
   const up = (row.yoy_diff ?? 0) > 0;
   const down = (row.yoy_diff ?? 0) < 0;
   return (
