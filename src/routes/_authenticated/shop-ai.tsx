@@ -95,6 +95,7 @@ function ShopAiPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const initialScrollDone = useRef(false);
 
   const { data: saved, isLoading } = useQuery({
     queryKey: ["shop-ai-messages"],
