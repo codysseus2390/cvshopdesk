@@ -92,7 +92,7 @@ export interface PeriodValues {
   tires_sold: number | null;
   car_count: number | null;
   gp_percent: number | null;
-  basis: "cumulative-snapshot" | "daily-sum" | "none";
+  basis: "cumulative-snapshot" | "monthly-rollup" | "daily-sum" | "none";
   as_of: string | null;
   covered_days: number;
 }
