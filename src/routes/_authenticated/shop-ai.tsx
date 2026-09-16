@@ -468,16 +468,48 @@ function ShopAiPage() {
                 Paste or attach screenshots. {assistantName} asks before changing anything already saved.
               </p>
             </div>
-            <Button
-              type="submit"
-              disabled={mutation.isPending || overLimit || (draft.trim().length === 0 && attachments.length === 0)}
-              className="rounded-xl"
-            >
-              <Send className="mr-2 h-4 w-4" /> Send
-            </Button>
+            <div className="flex shrink-0 items-center gap-2">
+              {voiceOn && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label={`Talk with ${assistantName} in Voice Mode`}
+                  title={`Talk with ${assistantName}`}
+                  onClick={() => setVoiceMode(true)}
+                  className="h-9 w-9 rounded-full"
+                >
+                  <AudioLines className="h-4 w-4" />
+                </Button>
+              )}
+              <Button
+                type="submit"
+                disabled={mutation.isPending || overLimit || (draft.trim().length === 0 && attachments.length === 0)}
+                className="rounded-xl"
+              >
+                <Send className="mr-2 h-4 w-4" /> Send
+              </Button>
+            </div>
           </div>
         </form>
       </div>
+
+      {voiceMode && (
+        <VoiceMode
+          assistantName={assistantName}
+          busy={mutation.isPending}
+          speaking={speech.playingId !== null || speech.loadingId !== null}
+          inputMode={config?.voice?.inputMode ?? "auto"}
+          autoListen={config?.voice?.autoListen !== false}
+          caption={lastAssistantText}
+          onSubmit={(text) => submit(text)}
+          onStopSpeaking={speech.stop}
+          onExit={() => {
+            speech.stop();
+            setVoiceMode(false);
+          }}
+        />
+      )}
     </AppShell>
   );
 }
