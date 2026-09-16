@@ -71,7 +71,7 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
       const rows = ((data ?? []) as (MetricRow & { created_at: string })[]).filter(
         (row) => row.business_date <= ctx.today,
       );
-      const { addDays, resolvePeriod } = await import("@/lib/numbers-math");
+      const { addDays } = await import("@/lib/numbers-math");
       const { overallProductivity } = await import("@/lib/productivity-math");
       const productivity = productivityRows ?? [];
       const yesterday = addDays(ctx.today, -1);

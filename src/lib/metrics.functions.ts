@@ -134,7 +134,8 @@ export const getDashboard = createServerFn({ method: "GET" })
       previousDay,
     );
     const productivityDef = NUMBER_METRICS.find((metric) => metric.key === "mechanic_productivity");
-    const productivityRule = ((settings?.goal_rules ?? {}) as GoalRules).mechanic_productivity;
+    const productivityRules = (settings?.goal_rules ?? {}) as unknown as GoalRules;
+    const productivityRule = productivityRules["mechanic_productivity"];
     const previousDayProductivityGoal = productivityDef
       ? goalFor(
           productivityDef,
