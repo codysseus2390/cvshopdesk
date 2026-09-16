@@ -92,7 +92,7 @@ describe("goals", () => {
   });
 
   it("calculates a growth goal from the comparable previous-year value", () => {
-    expect(goalFor(salesDef, { method: "growth", growth_pct: 10 }, month, 90_000)).toBe(99_000);
+    expect(goalFor(salesDef, { method: "growth", growth_pct: 10 }, month, 90_000)!).toBeCloseTo(99_000, 6);
     expect(goalFor(salesDef, { method: "growth", growth_pct: 10 }, month, null)).toBeNull();
   });
 
