@@ -1,0 +1,66 @@
+export type DashboardChartMetric =
+  | "gross_profit"
+  | "sales"
+  | "gross_profit_per_car"
+  | "tires_sold"
+  | "car_count";
+
+export interface DashboardMonth {
+  month: string;
+  totals: {
+    sales: number | null;
+    gross_profit: number | null;
+    tires_sold: number | null;
+    car_count: number | null;
+    gp_per_car: number | null;
+  };
+}
+
+export type DashboardChartRow = Record<string, number | string | null> & {
+  month: string;
+  monthKey: string;
+};
+
+const MONTHS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+
+function metricValue(month: DashboardMonth | undefined, metric: DashboardChartMetric): number | null {
+  if (!month) return null;
+  if (metric === "gross_profit_per_car") return month.totals.gp_per_car;
+  return month.totals[metric];
+}
+
+/**
+ * Builds January–December chart rows from the same monthly records used by Numbers.
+ * The current shop month is removed from the solid series and exposed separately as MTD.
+ */
+export function buildDashboardChart(
+  monthly: DashboardMonth[],
+  metric: DashboardChartMetric,
+  shopToday: string,
+): { years: string[]; rows: DashboardChartRow[]; currentYear: string; currentMonth: string } | null {
+  if (monthly.length === 0) return null;
+
+  const currentYear = shopToday.slice(0, 4);
+  const currentMonth = shopToday.slice(0, 7);
+  const years = Array.from(new Set(monthly.map((entry) => entry.month.slice(0, 4)))).sort();
+  const rows = MONTHS.map((monthNumber) => {
+    const monthKey = `${currentYear}-${monthNumber}`;
+    const label = new Date(`2000-${monthNumber}-01T00:00:00Z`).toLocaleString(undefined, {
+      timeZone: "UTC",
+      month: "short",
+    });
+    const row: DashboardChartRow = { month: label, monthKey };
+
+    for (const year of years) {
+      const recordKey = `${year}-${monthNumber}`;
+      const value = metricValue(monthly.find((entry) => entry.month === recordKey), metric);
+      const isCurrentIncompleteMonth = year === currentYear && recordKey === currentMonth;
+      row[year] = isCurrentIncompleteMonth ? null : value;
+      row[`${year}__mtd`] = isCurrentIncompleteMonth ? value : null;
+    }
+
+    return row;
+  });
+
+  return { years, rows, currentYear, currentMonth };
+}

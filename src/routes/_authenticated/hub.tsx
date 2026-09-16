@@ -4,10 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   CartesianGrid,
+  ComposedChart,
   Legend,
   Line,
-  LineChart,
   ResponsiveContainer,
+  Scatter,
   Tooltip as ChartTooltip,
   XAxis,
   YAxis,
@@ -21,6 +22,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCount, formatCurrency, gpPerCar } from "@/lib/metrics-math";
 import { usePermissions } from "@/components/use-permissions";
+import {
+  buildDashboardChart,
+  type DashboardChartMetric,
+} from "@/lib/dashboard-chart";
 
 export const Route = createFileRoute("/_authenticated/hub")({
   head: () => ({
@@ -86,36 +91,13 @@ function Dashboard() {
     { key: "tires_sold", label: "Tires sold", currency: false },
     { key: "car_count", label: "Car count", currency: false },
   ] as const;
-  const [chartMetric, setChartMetric] = useState<(typeof CHART_METRICS)[number]["key"]>("gross_profit");
-  const chartMetricDef = CHART_METRICS.find((m) => m.key === chartMetric)!;
+  const [chartMetric, setChartMetric] = useState<DashboardChartMetric>("gross_profit");
+  const chartMetricDef = CHART_METRICS.find((m) => m.key === chartMetric) ?? CHART_METRICS[0];
 
   const monthlyByYear = useMemo(() => {
-    if (!data?.monthly.length) return null;
-    const years = Array.from(new Set(data.monthly.map((m) => m.month.slice(0, 4)))).sort();
-    const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-    // Label from a fixed UTC date so the axis always runs January → December.
-    const label = (mo: string) =>
-      new Date(`2000-${mo}-01T00:00:00Z`).toLocaleString(undefined, { timeZone: "UTC", month: "short" });
-    const rows = months.map((mo) => {
-      const row: Record<string, number | string | null> = { month: label(mo) };
-      for (const year of years) {
-        const found = data.monthly.find((m) => m.month === `${year}-${mo}`);
-        const totals = found?.totals;
-        row[year] =
-          chartMetric === "gross_profit_per_car"
-            ? (totals?.gp_per_car ?? null)
-            : chartMetric === "sales"
-              ? (totals?.sales ?? null)
-              : chartMetric === "tires_sold"
-                ? (totals?.tires_sold ?? null)
-                : chartMetric === "car_count"
-                  ? (totals?.car_count ?? null)
-                  : (totals?.gross_profit ?? null);
-      }
-      return row;
-    });
-    return { years, rows };
-  }, [data?.monthly, chartMetric]);
+    if (!data) return null;
+    return buildDashboardChart(data.monthly, chartMetric, data.today);
+  }, [data, chartMetric]);
 
   const YEAR_COLORS = [
     "var(--color-chart-1)",
@@ -251,7 +233,7 @@ function Dashboard() {
                   </p>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={monthlyByYear.rows}>
+                    <ComposedChart data={monthlyByYear.rows}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                       <YAxis
@@ -259,13 +241,7 @@ function Dashboard() {
                         tickFormatter={(v) => (chartMetricDef.currency ? `$${v}` : `${v}`)}
                       />
                       <ChartTooltip
-                        formatter={(v) =>
-                          typeof v !== "number"
-                            ? "Not updated"
-                            : chartMetricDef.currency
-                              ? formatCurrency(v)
-                              : formatCount(v)
-                        }
+                        content={<MonthlyChartTooltip currency={chartMetricDef.currency} />}
                       />
                       <Legend wrapperStyle={{ fontSize: 12 }} />
                       {monthlyByYear.years.map((year, i) => (
@@ -281,12 +257,22 @@ function Dashboard() {
                           connectNulls={false}
                         />
                       ))}
-                    </LineChart>
+                      {monthlyByYear.years.map((year, i) => (
+                        <Scatter
+                          key={`${year}-mtd`}
+                          dataKey={`${year}__mtd`}
+                          name={`${year} MTD`}
+                          fill={YEAR_COLORS[i % YEAR_COLORS.length]}
+                          stroke={YEAR_COLORS[i % YEAR_COLORS.length]}
+                          legendType="none"
+                        />
+                      ))}
+                    </ComposedChart>
                   </ResponsiveContainer>
                 )}
                 <p className="mt-2 text-xs text-muted-foreground">
-                  January through December, using the same confirmed monthly records as the Numbers page. Months with no
-                  saved value are left blank, never drawn as zero.
+                  January through December, using the same confirmed monthly records as the Numbers page. The current
+                  month is shown as its actual month-to-date point; future months stay blank.
                 </p>
               </CardContent>
             </Card>
@@ -340,6 +326,41 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between gap-4">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-semibold">{value}</span>
+    </div>
+  );
+}
+
+function MonthlyChartTooltip({
+  active,
+  label,
+  payload,
+  currency,
+}: {
+  active?: boolean;
+  label?: string | number;
+  payload?: ReadonlyArray<{ name?: string | number; value?: string | number; color?: string }>;
+  currency: boolean;
+}) {
+  const visible = payload?.filter((entry) => typeof entry.value === "number") ?? [];
+  if (!active || visible.length === 0) return null;
+  const mtd = visible.find((entry) => String(entry.name).endsWith(" MTD"));
+  const title = mtd
+    ? `${label} ${String(mtd.name).replace(" MTD", "")} — Month to date`
+    : String(label ?? "");
+
+  return (
+    <div className="rounded-md border border-border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-elevated">
+      <p className="mb-1 font-semibold">{title}</p>
+      {visible.map((entry) => {
+        const name = String(entry.name).replace(" MTD", "");
+        const value = typeof entry.value === "number" ? entry.value : null;
+        return (
+          <p key={String(entry.name)}>
+            {name}: {currency ? formatCurrency(value) : formatCount(value)}
+            {String(entry.name).endsWith(" MTD") ? " · Month to date" : ""}
+          </p>
+        );
+      })}
     </div>
   );
 }
