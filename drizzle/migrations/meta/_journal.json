@@ -134,6 +134,13 @@
       "when": 1789580611749,
       "tag": "0018_shared_hank_conversation_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789580991387,
+      "tag": "0019_explicit_delete_denials_storage_manage_and_definer_grants",
+      "breakpoints": true
     }
   ]
 }
