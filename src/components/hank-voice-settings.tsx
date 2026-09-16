@@ -167,6 +167,8 @@ export function HankVoiceSettings({
           similarity: form.similarity,
           style: form.style,
           speakerBoost: form.speakerBoost,
+          inputMode: form.inputMode,
+          autoListen: form.autoListen,
         },
       });
       await queryClient.invalidateQueries({ queryKey: ["ai-settings"] });
@@ -228,6 +230,55 @@ export function HankVoiceSettings({
               onCheckedChange={(value) => set("autoSpeak", value)}
             />
           </div>
+
+          <div className="space-y-3 rounded-xl border border-border bg-muted/40 p-3">
+            <div>
+              <p className="flex items-center gap-2 text-sm font-medium">
+                <Mic className="h-3.5 w-3.5" /> Voice Mode input
+              </p>
+              <p className="text-xs text-muted-foreground">
+                How the microphone works when someone taps the voice button beside the message box.
+              </p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {(
+                [
+                  { key: "auto", label: "Automatic conversation", hint: "Hank listens whenever he is not talking." },
+                  { key: "push", label: "Push-to-talk", hint: "Hold the microphone to speak. Better in a noisy bay." },
+                ] as const
+              ).map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  disabled={!canEdit}
+                  onClick={() => set("inputMode", option.key)}
+                  className={`rounded-xl border p-3 text-left transition-colors ${
+                    form.inputMode === option.key
+                      ? "border-primary bg-primary/10"
+                      : "border-border bg-card hover:bg-muted"
+                  } ${canEdit ? "" : "opacity-60"}`}
+                >
+                  <span className="block text-xs font-semibold">{option.label}</span>
+                  <span className="mt-0.5 block text-[11px] text-muted-foreground">{option.hint}</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium">Auto-start listening</p>
+                <p className="text-xs text-muted-foreground">
+                  Starts listening as soon as Voice Mode opens, and again after each answer.
+                </p>
+              </div>
+              <Switch
+                checked={form.autoListen}
+                disabled={!canEdit || form.inputMode === "push"}
+                aria-label="Auto-start listening"
+                onCheckedChange={(value) => set("autoListen", value)}
+              />
+            </div>
+          </div>
+
 
           <div className="rounded-xl border border-border bg-muted/40 p-3">
             <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Currently selected</p>
