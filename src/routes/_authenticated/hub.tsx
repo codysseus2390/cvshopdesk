@@ -68,9 +68,16 @@ function Dashboard() {
     return percent === null ? undefined : `${percent}% of the monthly goal`;
   };
 
-  const today = data?.todayRow;
+  const today = data?.previousDayRow;
   const todayGp = today?.gross_profit ?? null;
   const todayCars = today?.car_count ?? null;
+  const prevDayLabel = data?.previousDay
+    ? new Date(`${data.previousDay}T00:00:00Z`).toLocaleDateString(undefined, {
+        timeZone: "UTC",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
 
   const monthlyByYear = useMemo(() => {
     if (!data?.monthly.length) return null;
