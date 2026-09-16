@@ -229,8 +229,20 @@ function Dashboard() {
           <section className="grid gap-4 lg:grid-cols-3">
             {shows("monthly_chart") && (
             <Card className="lg:col-span-2">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 font-display"><BarChart3 className="h-5 w-5 text-secondary" />Monthly gross profit</CardTitle>
+              <CardHeader className="flex-row items-center justify-between gap-3 pb-3">
+                <CardTitle className="flex items-center gap-2 font-display"><BarChart3 className="h-5 w-5 text-secondary" />Monthly {chartMetricDef.label.toLowerCase()}</CardTitle>
+                <select
+                  aria-label="Chart metric"
+                  value={chartMetric}
+                  onChange={(e) => setChartMetric(e.target.value as typeof chartMetric)}
+                  className="h-9 rounded-lg border border-border bg-background px-2 text-sm"
+                >
+                  {CHART_METRICS.map((m) => (
+                    <option key={m.key} value={m.key}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
               </CardHeader>
               <CardContent className="h-64">
                 {!monthlyByYear ? (
@@ -242,8 +254,19 @@ function Dashboard() {
                     <LineChart data={monthlyByYear.rows}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} />
-                      <ChartTooltip formatter={(v) => formatCurrency(typeof v === "number" ? v : null)} />
+                      <YAxis
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(v) => (chartMetricDef.currency ? `$${v}` : `${v}`)}
+                      />
+                      <ChartTooltip
+                        formatter={(v) =>
+                          typeof v !== "number"
+                            ? "Not updated"
+                            : chartMetricDef.currency
+                              ? formatCurrency(v)
+                              : formatCount(v)
+                        }
+                      />
                       <Legend wrapperStyle={{ fontSize: 12 }} />
                       {monthlyByYear.years.map((year, i) => (
                         <Line
@@ -262,7 +285,8 @@ function Dashboard() {
                   </ResponsiveContainer>
                 )}
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Months with no saved gross profit are left blank, never drawn as zero.
+                  January through December, using the same confirmed monthly records as the Numbers page. Months with no
+                  saved value are left blank, never drawn as zero.
                 </p>
               </CardContent>
             </Card>
