@@ -115,7 +115,7 @@ export const listMembers = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("shop_members")
-      .select("id, email, role, status, requested_at, decided_at")
+      .select("id, email, role, status, requested_at, decided_at, user_id")
       .order("requested_at", { ascending: true });
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -197,5 +197,81 @@ export const setMemberRole = createServerFn({ method: "POST" })
       .eq("id", data.memberId)
       .neq("role", "owner");
     if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * Lets the owner or an admin set an employee's sign-in email or password.
+ *
+ * The caller is checked twice: their membership must be manager/owner of the
+ * same shop as the employee, and the owner's own row can only be changed by the
+ * owner themselves. Only after those checks does the privileged auth client run
+ * the change, and the result is written to the shop's audit history.
+ */
+export const setMemberCredentials = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        memberId: z.string().uuid(),
+        email: z.string().email().max(200).optional(),
+        password: z.string().min(10).max(72).optional(),
+      })
+      .refine((v) => Boolean(v.email || v.password), {
+        message: "Enter a new email address or a new password.",
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: member, error: readError } = await context.supabase
+      .from("shop_members")
+      .select("id, user_id, role, status, shop_id, email")
+      .eq("id", data.memberId)
+      .maybeSingle();
+    if (readError) throw new Error(readError.message);
+    if (!member) throw new Error("That employee is not part of this shop.");
+
+    const { data: isManager, error: roleError } = await (context.supabase as unknown as {
+      rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+    }).rpc("is_shop_manager", { _shop_id: member.shop_id, _user_id: context.userId });
+    if (roleError) throw new Error(roleError.message);
+    if (isManager !== true) throw new Error("Only the owner and admins can change sign-in details.");
+
+    if (member.role === "owner" && member.user_id !== context.userId) {
+      throw new Error("The owner's sign-in details can only be changed by the owner.");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const payload: { email?: string; password?: string; email_confirm?: boolean } = {};
+    if (data.email) {
+      payload.email = data.email;
+      payload.email_confirm = true;
+    }
+    if (data.password) payload.password = data.password;
+
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(member.user_id, payload);
+    if (authError) throw new Error(authError.message);
+
+    if (data.email) {
+      const { error: syncError } = await context.supabase
+        .from("shop_members")
+        .update({ email: data.email })
+        .eq("id", member.id);
+      if (syncError) throw new Error(syncError.message);
+    }
+
+    await (context.supabase as unknown as {
+      rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: { message: string } | null }>;
+    }).rpc("log_audit_event", {
+      p_action: "staff.credentials_changed",
+      p_target: member.id,
+      // The password itself is never recorded — only that it was replaced.
+      p_detail: {
+        previous_email: member.email,
+        new_email: data.email ?? null,
+        password_changed: Boolean(data.password),
+      },
+    });
+
     return { ok: true };
   });

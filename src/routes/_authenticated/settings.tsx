@@ -2,7 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { addStaffMember, decideMember, listInvites, listMembers, setMemberRole } from "@/lib/shop.functions";
+import {
+  addStaffMember,
+  decideMember,
+  listInvites,
+  listMembers,
+  setMemberCredentials,
+  setMemberRole,
+} from "@/lib/shop.functions";
 import { listAuditEvents, saveShopSettings, setRolePermission } from "@/lib/admin.functions";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate, useShopContext } from "@/components/access-gate";
@@ -327,10 +334,13 @@ function StaffAndRoles({ isAdmin, isOwner }: { isAdmin: boolean; isOwner: boolea
                         />
                       )}
                     </>
-                  )}
-                </div>
-              </div>
-            ))}
+                   )}
+                 </div>
+                 <div className="w-full">
+                   <SignInDetails memberId={m.id} email={m.email} isOwnerRow={m.role === "owner"} isOwner={isOwner} />
+                 </div>
+               </div>
+             ))}
           {isAdmin && !isOwner && (
             <p className="text-xs text-muted-foreground">
               Admins manage staff and TV screens. The owner account cannot be changed, removed or transferred here.
@@ -338,6 +348,112 @@ function StaffAndRoles({ isAdmin, isOwner }: { isAdmin: boolean; isOwner: boolea
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+/** Owner/admin editor for one employee's sign-in email and password. */
+function SignInDetails({
+  memberId,
+  email,
+  isOwnerRow,
+  isOwner,
+}: {
+  memberId: string;
+  email: string | null;
+  isOwnerRow: boolean;
+  isOwner: boolean;
+}) {
+  const saveCredentials = useServerFn(setMemberCredentials);
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
+
+  if (isOwnerRow && !isOwner) return null;
+
+  async function save() {
+    setBusy(true);
+    setNote(null);
+    try {
+      await saveCredentials({
+        data: {
+          memberId,
+          ...(newEmail.trim() ? { email: newEmail.trim() } : {}),
+          ...(newPassword ? { password: newPassword } : {}),
+        },
+      });
+      setNewEmail("");
+      setNewPassword("");
+      await queryClient.invalidateQueries({ queryKey: ["members"] });
+      setNote({ ok: true, text: "Sign-in details updated." });
+    } catch (err) {
+      setNote({ ok: false, text: err instanceof Error ? err.message : "That did not work." });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        Change email or password
+      </Button>
+    );
+  }
+
+  return (
+    <div className="mt-2 space-y-3 rounded-md border border-border bg-muted/30 p-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1">
+          <Label htmlFor={`email-${memberId}`}>New sign-in email</Label>
+          <Input
+            id={`email-${memberId}`}
+            type="email"
+            placeholder={email ?? "name@example.com"}
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor={`password-${memberId}`}>New password</Label>
+          <Input
+            id={`password-${memberId}`}
+            type="password"
+            placeholder="At least 10 characters"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          size="sm"
+          disabled={busy || (!newEmail.trim() && newPassword.length < 10)}
+          onClick={() => void save()}
+        >
+          {busy ? "Saving…" : "Save sign-in details"}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={busy}
+          onClick={() => {
+            setOpen(false);
+            setNewEmail("");
+            setNewPassword("");
+            setNote(null);
+          }}
+        >
+          Cancel
+        </Button>
+        <span className="text-xs text-muted-foreground">
+          Tell the employee their new password in person — nothing is emailed from here.
+        </span>
+      </div>
+      {note && <p className={`text-sm ${note.ok ? "text-muted-foreground" : "text-destructive"}`}>{note.text}</p>}
     </div>
   );
 }
