@@ -238,7 +238,9 @@ export function VoiceMode(props: Props) {
         let sum = 0;
         for (const sample of buffer) sum += sample * sample;
         const rms = Math.sqrt(sum / buffer.length);
-        setLevel(mutedRef.current ? 0 : Math.min(1, rms * 6));
+        const shown = mutedRef.current ? 0 : Math.min(1, rms * 6);
+        micRef.current = shown;
+        setLevel(shown);
         if (mutedRef.current) return;
         const now = Date.now();
         const current = phaseRef.current;
