@@ -78,6 +78,13 @@
       "when": 1789307575145,
       "tag": "0010_restrict_security_definer_function_execute",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789572142505,
+      "tag": "0011_harden_definer_function_execute",
+      "breakpoints": true
     }
   ]
 }
