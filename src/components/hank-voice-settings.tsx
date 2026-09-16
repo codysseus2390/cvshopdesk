@@ -172,6 +172,11 @@ export function HankVoiceSettings({
           speakerBoost: form.speakerBoost,
           inputMode: form.inputMode,
           autoListen: form.autoListen,
+          wakeEnabled: form.wakeEnabled,
+          wakePhrase: form.wakePhrase.trim() || HANK_WAKE_DEFAULT_PHRASE,
+          wakeSound: form.wakeSound,
+          wakeResponse: form.wakeResponse,
+          wakeTimeoutSeconds: form.wakeTimeoutSeconds,
         },
       });
       await queryClient.invalidateQueries({ queryKey: ["ai-settings"] });
