@@ -18,6 +18,11 @@ import {
   type ReportRow,
 } from "./numbers-math";
 import { shopToday } from "./metrics-math";
+import {
+  overallProductivity,
+  SHOP_PRODUCTIVITY_TECHNICIAN,
+  type ProductivityInput,
+} from "./productivity-math";
 
 type Supa = { from: (t: string) => any; rpc: (fn: string, args?: Record<string, unknown>) => any };
 
@@ -45,11 +50,7 @@ export async function resolveShop(supabase: unknown, userId: string): Promise<Sh
   };
 }
 
-interface ProductivityRow {
-  business_date: string;
-  technician: string;
-  productivity_pct: number | null;
-  period_scope: string | null;
+interface ProductivityRow extends ProductivityInput {
   note: string | null;
 }
 
@@ -110,7 +111,7 @@ export async function buildNumbersReport(
       .lte("business_date", range.to),
     sb
       .from("technician_productivity")
-      .select("business_date, technician, productivity_pct, period_scope, note")
+      .select("business_date, technician, productivity_pct, hours_billed, hours_worked, period_scope, note, updated_at")
       .gte("business_date", prev.from)
       .lte("business_date", range.to),
     sb
@@ -137,13 +138,20 @@ export async function buildNumbersReport(
       ...productivity.map((p) => p.technician),
     ]),
   )
-    .filter((t) => t && t.trim().length > 0)
+    .filter((t) => t && t !== SHOP_PRODUCTIVITY_TECHNICIAN && t.trim().length > 0)
     .sort();
+
+  const mechanicActual = overallProductivity(productivity, range, kind, today);
+  const mechanicPrevious = overallProductivity(productivity, prev, kind, today);
 
   const report: ReportRow[] = [];
   for (const def of NUMBER_METRICS) {
-    const actual = actuals[def.key as keyof typeof actuals] as number | null;
-    const previousValue = previous[def.key as keyof typeof previous] as number | null;
+    const actual = def.key === "mechanic_productivity"
+      ? mechanicActual
+      : actuals[def.key as keyof typeof actuals] as number | null;
+    const previousValue = def.key === "mechanic_productivity"
+      ? mechanicPrevious
+      : previous[def.key as keyof typeof previous] as number | null;
     const legacy = legacyTargets[def.key];
     const rule: GoalRule | undefined =
       goalRules[def.key] ?? (legacy === null || legacy === undefined ? undefined : { method: "fixed", monthly: legacy });

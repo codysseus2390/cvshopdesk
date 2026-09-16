@@ -54,6 +54,7 @@ export const saveNumbersCorrection = createServerFn({ method: "POST" })
         gross_profit: nullableNumber,
         tires_sold: nullableNumber,
         car_count: nullableNumber,
+        mechanic_productivity: nullableNumber.optional(),
         productivity: z
           .array(z.object({ technician: z.string().min(1).max(120), value: nullableNumber }))
           .max(40)
@@ -97,6 +98,20 @@ export const saveNumbersCorrection = createServerFn({ method: "POST" })
       p_correction_note: data.note ?? null,
     });
     if (error) throw new Error(error.message);
+
+    if (data.mechanic_productivity !== undefined) {
+      const { SHOP_PRODUCTIVITY_TECHNICIAN } = await import("./productivity-math");
+      const { error: productivityError } = await sb.rpc("save_period_productivity", {
+        p_shop_id: shop.shopId,
+        p_business_date: businessDate,
+        p_technician: SHOP_PRODUCTIVITY_TECHNICIAN,
+        p_productivity_pct: data.mechanic_productivity,
+        p_period_scope: data.kind,
+        p_correction_scope: scope,
+        p_note: data.note ?? null,
+      });
+      if (productivityError) throw new Error(productivityError.message);
+    }
 
     for (const entry of data.productivity ?? []) {
       const { error: prodError } = await sb.rpc("save_period_productivity", {

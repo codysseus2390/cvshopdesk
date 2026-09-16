@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { CarFront, CircleDollarSign, Gauge, CircleDashed } from "lucide-react";
+import { CarFront, CircleDollarSign, Gauge, CircleDashed, Wrench } from "lucide-react";
 
 export function MetricCard({
   label,
@@ -12,8 +12,10 @@ export function MetricCard({
   hint?: string | undefined;
   size?: "normal" | "tv";
 }) {
-  const notUpdated = value === "Not updated" || value === "Unavailable";
-  const Icon = label.toLowerCase().includes("profit")
+  const notUpdated = value === "Not updated" || value === "Unavailable" || value === "—";
+  const Icon = label.toLowerCase().includes("productivity")
+    ? Wrench
+    : label.toLowerCase().includes("profit")
     ? CircleDollarSign
     : label.toLowerCase().includes("tire")
       ? CircleDashed
