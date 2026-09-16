@@ -80,7 +80,7 @@ function NumbersPage() {
 
   function switchKind(next: PeriodKind) {
     setKind(next);
-    setAnchor(report?.range.from);
+    setAnchor(undefined);
     setEditing(false);
     setResult(null);
   }
