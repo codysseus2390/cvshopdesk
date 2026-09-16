@@ -141,6 +141,13 @@
       "when": 1789580991387,
       "tag": "0019_explicit_delete_denials_storage_manage_and_definer_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789590605435,
+      "tag": "0020_numbers_reporting_goals_and_corrections",
+      "breakpoints": true
     }
   ]
 }

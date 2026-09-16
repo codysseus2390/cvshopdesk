@@ -14,6 +14,37 @@ function term(value: string) {
 
 export const SHOP_DATA_TOOLS: ShopAiTool[] = [
   {
+    name: "get_numbers_report",
+    sourceLabel: "Numbers report",
+    description:
+      "Reads the Numbers report for a week, month or year: sales, gross profit, gross profit %, cars, tires and technician productivity with each metric's goal, variance, the same period last year and the year-over-year change. Use this for goal progress, period comparisons and year-over-year questions.",
+    permission: "view_dashboard",
+    parameters: {
+      type: "object",
+      properties: {
+        period: { type: "string", enum: ["weekly", "monthly", "yearly"], description: "Reporting period. Defaults to monthly." },
+        anchor: { type: "string", description: "Any date inside the period, YYYY-MM-DD. Defaults to today." },
+      },
+      additionalProperties: false,
+    },
+    execute: async (ctx, args) => {
+      const parsed = z
+        .object({
+          period: z.enum(["weekly", "monthly", "yearly"]).optional(),
+          anchor: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+        })
+        .parse(args);
+      const { buildNumbersReport } = await import("@/lib/numbers.server");
+      const report = await buildNumbersReport(
+        ctx.supabase,
+        { shopId: ctx.shopId, role: "", timezone: ctx.timezone, name: "" },
+        parsed.period ?? "monthly",
+        parsed.anchor,
+      );
+      return { data: report };
+    },
+  },
+  {
     name: "get_dashboard_numbers",
     sourceLabel: "Dashboard numbers",
     description:

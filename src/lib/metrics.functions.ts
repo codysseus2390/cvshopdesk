@@ -39,6 +39,7 @@ export const saveMetricEntry = createServerFn({ method: "POST" })
       .object({
         business_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         scope: z.enum(["daily", "mtd", "ytd"]),
+        sales: nullableNumber.optional(),
         gross_profit: nullableNumber,
         tires_sold: nullableNumber,
         car_count: nullableNumber,
@@ -52,15 +53,17 @@ export const saveMetricEntry = createServerFn({ method: "POST" })
     const shop = await resolveShop(supabase as unknown as Supa, userId);
 
     const flags: string[] = [];
+    if (data.sales === null || data.sales === undefined) flags.push("sales missing");
     if (data.gross_profit === null) flags.push("gross_profit missing");
     if (data.tires_sold === null) flags.push("tires_sold missing");
     if (data.car_count === null) flags.push("car_count missing");
 
     const sb = supabase as unknown as Supa;
-    const { data: id, error } = await sb.rpc("save_metric_snapshot", {
+    const { data: id, error } = await sb.rpc("save_shop_metrics", {
       p_shop_id: shop.shopId,
       p_business_date: data.business_date,
       p_scope: data.scope,
+      p_sales: data.sales ?? null,
       p_gross_profit: data.gross_profit,
       p_tires_sold: data.tires_sold,
       p_car_count: data.car_count,

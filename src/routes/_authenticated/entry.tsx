@@ -32,6 +32,7 @@ export const Route = createFileRoute("/_authenticated/entry")({
 type Draft = {
   business_date: string;
   scope: "daily" | "mtd" | "ytd";
+  sales: string;
   gross_profit: string;
   tires_sold: string;
   car_count: string;
@@ -48,6 +49,7 @@ function EntryPage() {
   const [draft, setDraft] = useState<Draft>({
     business_date: today,
     scope: "daily",
+    sales: "",
     gross_profit: "",
     tires_sold: "",
     car_count: "",
@@ -64,7 +66,7 @@ function EntryPage() {
   const gp = num(draft.gross_profit);
   const cars = num(draft.car_count);
   const invalid =
-    [draft.gross_profit, draft.tires_sold, draft.car_count].some((v) => v.trim() !== "" && !Number.isFinite(Number(v))) ||
+    [draft.sales, draft.gross_profit, draft.tires_sold, draft.car_count].some((v) => v.trim() !== "" && !Number.isFinite(Number(v))) ||
     !/^\d{4}-\d{2}-\d{2}$/.test(date);
 
   const existing = dashboard.data?.recent.find((r) => r.business_date === date && r.scope === draft.scope);
@@ -78,6 +80,7 @@ function EntryPage() {
         data: {
           business_date: date,
           scope: draft.scope,
+          sales: num(draft.sales),
           gross_profit: gp,
           tires_sold: num(draft.tires_sold),
           car_count: cars,
@@ -127,7 +130,8 @@ function EntryPage() {
                 </select>
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Field label="Sales ($)" value={draft.sales} onChange={(v) => setDraft({ ...draft, sales: v })} />
               <Field
                 label="Gross profit ($)"
                 value={draft.gross_profit}
@@ -188,6 +192,9 @@ function EntryPage() {
                   </li>
                   <li>
                     <strong>Scope:</strong> {draft.scope}
+                  </li>
+                  <li>
+                    <strong>Sales:</strong> {formatCurrency(num(draft.sales))}
                   </li>
                   <li>
                     <strong>Gross profit:</strong> {formatCurrency(gp)}

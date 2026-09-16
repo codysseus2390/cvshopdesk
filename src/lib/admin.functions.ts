@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { APP_ROLES, PERMISSIONS } from "@/lib/permissions";
+import type { GoalRules } from "@/lib/numbers-math";
 
 const permissionKeys = PERMISSIONS.map((p) => p.key) as [string, ...string[]];
 const assignableRoles = ["manager", "staff", "display"] as const;
@@ -48,6 +49,7 @@ export const getAdminConfig = createServerFn({ method: "GET" })
       settings: {
         hidden_widgets: (settings?.hidden_widgets ?? []) as string[],
         targets: (settings?.targets ?? {}) as Record<string, number | null>,
+        goal_rules: (settings?.goal_rules ?? {}) as GoalRules,
         technician_goals: (settings?.technician_goals ?? []) as ShopSettingsPayload["technician_goals"],
         updated_at: (settings?.updated_at ?? null) as string | null,
       },
