@@ -312,6 +312,41 @@ function ShopAiPage() {
                     >
                       {message.content}
                     </div>
+                    {voiceOn && !message.failed && message.content.trim().length > 0 && (
+                      <div className="mt-1.5 flex items-center gap-2">
+                        {speech.playingId === message.id ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 rounded-full px-2 text-xs"
+                            onClick={speech.stop}
+                          >
+                            <Square className="mr-1.5 h-3 w-3" /> Stop
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 rounded-full px-2 text-xs text-muted-foreground"
+                            aria-label={`Read this answer out loud`}
+                            disabled={speech.loadingId === message.id}
+                            onClick={() => void speech.play(message.id, message.content)}
+                          >
+                            {speech.loadingId === message.id ? (
+                              <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+                            ) : (
+                              <Volume2 className="mr-1.5 h-3 w-3" />
+                            )}
+                            {speech.loadingId === message.id ? "Preparing…" : "Listen"}
+                          </Button>
+                        )}
+                        {speech.error && speech.playingId === null && speech.loadingId === null && isLast(message) && (
+                          <span className="text-[11px] text-muted-foreground">{speech.error}</span>
+                        )}
+                      </div>
+                    )}
                     {isLast(message) &&
                       (message.proposals ?? []).map((proposal) => (
                         <DetectedCard
