@@ -20,6 +20,7 @@ import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedHubRouteImport } from './routes/_authenticated/hub'
 import { Route as AuthenticatedImportsRouteImport } from './routes/_authenticated/imports'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
+import { Route as AuthenticatedNumbersRouteImport } from './routes/_authenticated/numbers'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedShopAiRouteImport } from './routes/_authenticated/shop-ai'
 import { Route as AuthenticatedToolsRouteImport } from './routes/_authenticated/tools'
@@ -79,6 +80,11 @@ const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
   path: '/inventory',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNumbersRoute = AuthenticatedNumbersRouteImport.update({
+  id: '/numbers',
+  path: '/numbers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -111,6 +117,7 @@ export interface FileRoutesByFullPath {
   '/hub': typeof AuthenticatedHubRoute
   '/imports': typeof AuthenticatedImportsRoute
   '/inventory': typeof AuthenticatedInventoryRoute
+  '/numbers': typeof AuthenticatedNumbersRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/shop-ai': typeof AuthenticatedShopAiRoute
   '/tools': typeof AuthenticatedToolsRoute
@@ -127,6 +134,7 @@ export interface FileRoutesByTo {
   '/hub': typeof AuthenticatedHubRoute
   '/imports': typeof AuthenticatedImportsRoute
   '/inventory': typeof AuthenticatedInventoryRoute
+  '/numbers': typeof AuthenticatedNumbersRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/shop-ai': typeof AuthenticatedShopAiRoute
   '/tools': typeof AuthenticatedToolsRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/_authenticated/hub': typeof AuthenticatedHubRoute
   '/_authenticated/imports': typeof AuthenticatedImportsRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
+  '/_authenticated/numbers': typeof AuthenticatedNumbersRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/shop-ai': typeof AuthenticatedShopAiRoute
   '/_authenticated/tools': typeof AuthenticatedToolsRoute
@@ -163,6 +172,7 @@ export interface FileRouteTypes {
     | '/hub'
     | '/imports'
     | '/inventory'
+    | '/numbers'
     | '/settings'
     | '/shop-ai'
     | '/tools'
@@ -179,6 +189,7 @@ export interface FileRouteTypes {
     | '/hub'
     | '/imports'
     | '/inventory'
+    | '/numbers'
     | '/settings'
     | '/shop-ai'
     | '/tools'
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/_authenticated/hub'
     | '/_authenticated/imports'
     | '/_authenticated/inventory'
+    | '/_authenticated/numbers'
     | '/_authenticated/settings'
     | '/_authenticated/shop-ai'
     | '/_authenticated/tools'
@@ -287,6 +299,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/numbers': {
+      id: '/_authenticated/numbers'
+      path: '/numbers'
+      fullPath: '/numbers'
+      preLoaderRoute: typeof AuthenticatedNumbersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -327,6 +346,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHubRoute: typeof AuthenticatedHubRoute
   AuthenticatedImportsRoute: typeof AuthenticatedImportsRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
+  AuthenticatedNumbersRoute: typeof AuthenticatedNumbersRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedShopAiRoute: typeof AuthenticatedShopAiRoute
   AuthenticatedToolsRoute: typeof AuthenticatedToolsRoute
@@ -342,6 +362,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHubRoute: AuthenticatedHubRoute,
   AuthenticatedImportsRoute: AuthenticatedImportsRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
+  AuthenticatedNumbersRoute: AuthenticatedNumbersRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedShopAiRoute: AuthenticatedShopAiRoute,
   AuthenticatedToolsRoute: AuthenticatedToolsRoute,
