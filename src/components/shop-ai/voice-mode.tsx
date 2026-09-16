@@ -102,6 +102,8 @@ export function VoiceMode(props: Props) {
 
   const busy = props.busy;
   const speaking = props.speaking;
+  const wakeMode = props.inputMode === "wake";
+
 
   /* ---------- recording ---------- */
 
@@ -298,11 +300,43 @@ export function VoiceMode(props: Props) {
 
   // The conversation loop: whenever nothing else is happening, listen again.
   useEffect(() => {
-    if (props.inputMode === "push" || !props.autoListen) return;
+    if (props.inputMode === "push") return;
+    if (!wakeMode && !props.autoListen) return;
     if (phase !== "ready" || muted || busy || speaking) return;
     const timer = setTimeout(() => startRecording(), 250);
     return () => clearTimeout(timer);
-  }, [phase, muted, busy, speaking, props.inputMode, props.autoListen, startRecording]);
+  }, [phase, muted, busy, speaking, props.inputMode, props.autoListen, wakeMode, startRecording]);
+
+  /* ---------- wake phrase ---------- */
+
+  // Only listens for the phrase while nothing else is going on, so Hank's own
+  // voice can never wake him and ordinary talk mid-conversation is not re-triggered.
+  const wake = useWakeWord({
+    active: wakeMode && phase === "waiting" && !muted,
+    phrase: props.wakePhrase,
+    onDetected: () => {
+      if (props.wakeSound) chime(ctxRef.current);
+      if (props.wakeResponse && props.onAcknowledge) {
+        props.onAcknowledge(HANK_WAKE_ACKS[Math.floor(Math.random() * HANK_WAKE_ACKS.length)]!);
+      }
+      setHeard("");
+      setPhase("ready");
+    },
+  });
+
+  // Wake mode starts out waiting rather than listening.
+  useEffect(() => {
+    if (wakeMode && phase === "ready" && heard === "" && startedAtRef.current === 0) setPhase("waiting");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wakeMode, phase]);
+
+  // After a quiet stretch the conversation ends and he waits for the phrase again.
+  useEffect(() => {
+    if (!wakeMode || phase !== "ready" || busy || speaking) return;
+    const timer = setTimeout(() => setPhase("waiting"), Math.max(10, props.wakeTimeoutSeconds) * 1_000);
+    return () => clearTimeout(timer);
+  }, [wakeMode, phase, busy, speaking, props.wakeTimeoutSeconds]);
+
 
   /* ---------- controls ---------- */
 
