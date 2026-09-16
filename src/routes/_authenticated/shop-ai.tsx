@@ -194,7 +194,7 @@ function ShopAiPage() {
 
   // Start at the bottom of the conversation and keep the latest message in view.
   useEffect(() => {
-    if (!endRef.current) return;
+    if (!endRef.current) return undefined;
     if (messages.length > 0 && !isLoading && !initialScrollDone.current) {
       const id = requestAnimationFrame(() => {
         endRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
@@ -202,6 +202,7 @@ function ShopAiPage() {
       });
       return () => cancelAnimationFrame(id);
     }
+    return undefined;
   }, [messages.length, isLoading]);
 
   useEffect(() => {
