@@ -13,9 +13,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Mic, MicOff, Square, TriangleAlert, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { transcribeHankSpeech } from "@/lib/voice.functions";
-import type { HankVoiceInputMode } from "@/lib/ai/voice-config";
+import { HANK_WAKE_ACKS, type HankVoiceInputMode } from "@/lib/ai/voice-config";
+import { useWakeWord } from "./use-wake-word";
 
-type Phase = "starting" | "ready" | "listening" | "processing" | "working" | "speaking" | "error";
+type Phase = "starting" | "waiting" | "ready" | "listening" | "processing" | "working" | "speaking" | "error";
 
 interface Props {
   assistantName: string;
@@ -25,11 +26,38 @@ interface Props {
   speaking: boolean;
   inputMode: HankVoiceInputMode;
   autoListen: boolean;
+  wakePhrase: string;
+  wakeSound: boolean;
+  wakeResponse: boolean;
+  wakeTimeoutSeconds: number;
   /** The last thing Hank said, shown as a short caption. */
   caption: string;
   onSubmit: (text: string) => void;
+  /** Speaks a short acknowledgement in Hank's saved voice. */
+  onAcknowledge?: (text: string) => void;
   onStopSpeaking: () => void;
   onExit: () => void;
+}
+
+/** Short rising chime, made in the browser. No file, no request. */
+function chime(ctx: AudioContext | null) {
+  if (!ctx) return;
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(660, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(990, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.24);
+  } catch {
+    /* a missing chime never matters */
+  }
 }
 
 /** Loudness thresholds (0-1 RMS). Higher while Hank talks, to ignore his voice. */
