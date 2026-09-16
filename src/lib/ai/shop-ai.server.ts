@@ -159,7 +159,11 @@ export async function runShopAiTurn(options: {
  * Runs one tool call under the caller's own permissions and records every
  * AI-initiated attempt — executed, blocked, awaiting confirmation or failed.
  */
-async function executeTool(ctx: ShopAiToolContext, name: string, args: Record<string, unknown>) {
+async function executeTool(
+  ctx: ShopAiToolContext,
+  name: string,
+  args: Record<string, unknown>,
+): Promise<{ ok: boolean; changed: boolean; payload: string; proposal?: DetectedProposal }> {
   const tool = findShopAiTool(name);
   if (!tool) {
     return { ok: false, changed: false, payload: JSON.stringify({ error: `Tool ${name} is not connected.` }) };
