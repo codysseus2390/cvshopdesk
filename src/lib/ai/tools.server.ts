@@ -16,6 +16,7 @@ import type { PermissionKey } from "@/lib/permissions";
 import { SHOP_DATA_TOOLS } from "./tools/shop-data.server";
 import { SHOP_ACTION_TOOLS } from "./tools/shop-actions.server";
 import { VISION_TOOLS, type DetectedProposal } from "./tools/vision.server";
+import { IMAGE_TOOLS } from "./tools/image.server";
 
 /**
  * Thrown by an action tool when the change turned out to be consequential
@@ -48,6 +49,8 @@ export interface ShopAiToolOutcome {
   after?: unknown;
   /** Detected-information card the UI should show before anything is written. */
   proposal?: DetectedProposal;
+  /** A picture Hank just created, stored privately, to show in the conversation. */
+  image?: { name: string; path: string; mimeType: string };
 }
 
 export type { DetectedProposal };
@@ -68,7 +71,7 @@ export interface ShopAiTool {
   execute: (ctx: ShopAiToolContext, args: Record<string, unknown>) => Promise<ShopAiToolOutcome>;
 }
 
-export const SHOP_AI_TOOLS: ShopAiTool[] = [...VISION_TOOLS, ...SHOP_DATA_TOOLS, ...SHOP_ACTION_TOOLS];
+export const SHOP_AI_TOOLS: ShopAiTool[] = [...VISION_TOOLS, ...IMAGE_TOOLS, ...SHOP_DATA_TOOLS, ...SHOP_ACTION_TOOLS];
 
 export function findShopAiTool(name: string): ShopAiTool | undefined {
   return SHOP_AI_TOOLS.find((tool) => tool.name === name);
