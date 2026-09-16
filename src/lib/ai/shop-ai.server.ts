@@ -187,6 +187,7 @@ async function executeTool(
       confirmed: args["confirmed"] === true,
       target_table: entry.targetTable ?? null,
       target_id: entry.targetId ?? null,
+      source_type: ctx.sourceType,
       args,
       before_values: entry.before ?? null,
       after_values: entry.after ?? null,
