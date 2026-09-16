@@ -536,6 +536,7 @@ export type Database = {
           import_id: string | null
           is_current: boolean
           note: string | null
+          sales: number | null
           scope: Database["public"]["Enums"]["report_scope"]
           shop_id: string
           source: Database["public"]["Enums"]["metric_source"]
@@ -554,6 +555,7 @@ export type Database = {
           import_id?: string | null
           is_current?: boolean
           note?: string | null
+          sales?: number | null
           scope?: Database["public"]["Enums"]["report_scope"]
           shop_id: string
           source?: Database["public"]["Enums"]["metric_source"]
@@ -572,6 +574,7 @@ export type Database = {
           import_id?: string | null
           is_current?: boolean
           note?: string | null
+          sales?: number | null
           scope?: Database["public"]["Enums"]["report_scope"]
           shop_id?: string
           source?: Database["public"]["Enums"]["metric_source"]
@@ -892,6 +895,7 @@ export type Database = {
       }
       shop_settings: {
         Row: {
+          goal_rules: Json
           hidden_widgets: Json
           shop_id: string
           targets: Json
@@ -900,6 +904,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          goal_rules?: Json
           hidden_widgets?: Json
           shop_id: string
           targets?: Json
@@ -908,6 +913,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          goal_rules?: Json
           hidden_widgets?: Json
           shop_id?: string
           targets?: Json
@@ -997,6 +1003,7 @@ export type Database = {
           hours_worked: number | null
           id: string
           note: string | null
+          period_scope: string | null
           productivity_pct: number | null
           shop_id: string
           technician: string
@@ -1011,6 +1018,7 @@ export type Database = {
           hours_worked?: number | null
           id?: string
           note?: string | null
+          period_scope?: string | null
           productivity_pct?: number | null
           shop_id: string
           technician: string
@@ -1025,6 +1033,7 @@ export type Database = {
           hours_worked?: number | null
           id?: string
           note?: string | null
+          period_scope?: string | null
           productivity_pct?: number | null
           shop_id?: string
           technician?: string
@@ -1240,6 +1249,35 @@ export type Database = {
           p_gross_profit: number
           p_import_id: string
           p_note: string
+          p_scope: Database["public"]["Enums"]["report_scope"]
+          p_shop_id: string
+          p_source: Database["public"]["Enums"]["metric_source"]
+          p_tires_sold: number
+        }
+        Returns: string
+      }
+      save_period_productivity: {
+        Args: {
+          p_business_date: string
+          p_correction_scope: Database["public"]["Enums"]["report_scope"]
+          p_note?: string
+          p_period_scope: string
+          p_productivity_pct: number
+          p_shop_id: string
+          p_technician: string
+        }
+        Returns: string
+      }
+      save_shop_metrics: {
+        Args: {
+          p_business_date: string
+          p_car_count: number
+          p_correction_note?: string
+          p_flags: Json
+          p_gross_profit: number
+          p_import_id: string
+          p_note: string
+          p_sales: number
           p_scope: Database["public"]["Enums"]["report_scope"]
           p_shop_id: string
           p_source: Database["public"]["Enums"]["metric_source"]
