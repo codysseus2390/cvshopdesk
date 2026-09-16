@@ -22,6 +22,9 @@ export function useHankSpeech() {
   // sound still goes to the speakers untouched.
   const ctxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
+  // Gentle boost so Hank is easy to hear on phone speakers; the ElevenLabs
+  // audio comes back fairly soft.
+  const gainRef = useRef<GainNode | null>(null);
   const samplesRef = useRef<Float32Array<ArrayBuffer> | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
