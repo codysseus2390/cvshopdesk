@@ -9,6 +9,7 @@ import {
   findShopAiTool,
   shopAiToolDefinitions,
   toolSourceLabel,
+  type DetectedProposal,
   type ShopAiToolContext,
 } from "./tools.server";
 
@@ -31,6 +32,16 @@ Doing work in the app:
 - For a consequential change (replacing figures that already exist, cancelling an order, editing saved customer details, anything other people see), state exactly what will change, from what to what, and wait for the user to agree. Only then call the tool again with confirmed=true.
 - If a tool reports needs_confirmation, do not retry it silently: describe the change and ask.
 - After a tool runs, report plainly what was saved, including the date and figures. If it failed, say what failed and what to try.
+
+Images and screenshots (report, invoice, order, customer screen, technician stats, anything else):
+- Read the image carefully and work out which of your tools the information belongs to. This is not limited to a fixed list of report types.
+- When the user wants information from an image put into the app, you MUST first call propose_detected_changes with every value you read, the tool that will save each record, and a confidence mark on each field. Never write image-derived data without proposing it first.
+- Copy values exactly as printed. Never infer, average or complete a number you cannot actually see. Mark anything blurred, cropped or cut off as unreadable, and put it in warnings.
+- Check the report's own labels for the date and scope (daily vs month-to-date vs year-to-date) and use them. If the date or scope is not visible, ask — do not assume today or daily.
+- Do not confuse sales with gross profit, or invoice count with car count. If a label is ambiguous, ask in the proposal's question field.
+- After the user confirms, call the action tools with the confirmed values and confirmed=true, then report what was saved. If the user corrects a value, use their value. If they cancel, write nothing.
+- For several records at once (a technician list, several orders), put each one in the proposal as its own record so the user sees the whole preview before anything is written.
+- Match names against existing records first (search_customers, list_technician_productivity) so you update the right row instead of creating a duplicate.
 
 Style: plain, practical shop language. Be concise by default; expand when asked. Use short lists when they help.`;
 
@@ -62,6 +73,8 @@ export interface ShopAiResult {
   toolActivity: ShopAiToolActivity[];
   /** True when at least one action tool changed data, so the UI should refresh. */
   dataChanged: boolean;
+  /** Detected-information cards awaiting the user's Confirm / Edit / Cancel. */
+  proposals: DetectedProposal[];
 }
 
 type ResponsesItem = Record<string, unknown>;
@@ -98,6 +111,7 @@ export async function runShopAiTurn(options: {
   const model = resolveShopAiModel({ question: options.question });
   const tools = shopAiToolDefinitions();
   const toolActivity: ShopAiToolActivity[] = [];
+  const proposals: DetectedProposal[] = [];
   let dataChanged = false;
 
   const input: ResponsesItem[] = [
@@ -121,7 +135,7 @@ export async function runShopAiTurn(options: {
 
     const calls = output.filter((item) => item["type"] === "function_call");
     if (calls.length === 0 || round === SHOP_AI_MAX_TOOL_ROUNDS) {
-      return { reply: text.trim(), model, toolActivity, dataChanged };
+      return { reply: text.trim(), model, toolActivity, dataChanged, proposals };
     }
 
     // Resend the model's items, then append each tool result beside its call.
@@ -132,19 +146,24 @@ export async function runShopAiTurn(options: {
       const args = safeParseArgs(call["arguments"]);
       const outcome = await executeTool(options.toolContext, name, args);
       if (outcome.changed) dataChanged = true;
+      if (outcome.proposal) proposals.push(outcome.proposal);
       toolActivity.push({ name, sourceLabel: toolSourceLabel(name), ok: outcome.ok, changed: outcome.changed });
       input.push({ type: "function_call_output", call_id: callId, output: outcome.payload });
     }
   }
 
-  return { reply: "", model, toolActivity, dataChanged };
+  return { reply: "", model, toolActivity, dataChanged, proposals };
 }
 
 /**
  * Runs one tool call under the caller's own permissions and records every
  * AI-initiated attempt — executed, blocked, awaiting confirmation or failed.
  */
-async function executeTool(ctx: ShopAiToolContext, name: string, args: Record<string, unknown>) {
+async function executeTool(
+  ctx: ShopAiToolContext,
+  name: string,
+  args: Record<string, unknown>,
+): Promise<{ ok: boolean; changed: boolean; payload: string; proposal?: DetectedProposal }> {
   const tool = findShopAiTool(name);
   if (!tool) {
     return { ok: false, changed: false, payload: JSON.stringify({ error: `Tool ${name} is not connected.` }) };
@@ -168,6 +187,7 @@ async function executeTool(ctx: ShopAiToolContext, name: string, args: Record<st
       confirmed: args["confirmed"] === true,
       target_table: entry.targetTable ?? null,
       target_id: entry.targetId ?? null,
+      source_type: ctx.sourceType,
       args,
       before_values: entry.before ?? null,
       after_values: entry.after ?? null,
@@ -208,7 +228,12 @@ async function executeTool(ctx: ShopAiToolContext, name: string, args: Record<st
       before: result.before,
       after: result.after,
     });
-    return { ok: true, changed: Boolean(tool.mutating), payload: JSON.stringify(result.data ?? null) };
+    return {
+      ok: true,
+      changed: Boolean(tool.mutating),
+      payload: JSON.stringify(result.data ?? null),
+      ...(result.proposal ? { proposal: result.proposal } : {}),
+    };
   } catch (err) {
     if (err instanceof ConfirmationRequiredError) {
       await log({ status: "confirmation_requested", error: err.message });

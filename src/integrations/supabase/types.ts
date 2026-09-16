@@ -24,7 +24,9 @@ export type Database = {
           created_at: string
           error: string | null
           id: string
+          proposal: Json | null
           shop_id: string
+          source_type: string | null
           status: string
           target_id: string | null
           target_table: string | null
@@ -40,7 +42,9 @@ export type Database = {
           created_at?: string
           error?: string | null
           id?: string
+          proposal?: Json | null
           shop_id: string
+          source_type?: string | null
           status: string
           target_id?: string | null
           target_table?: string | null
@@ -56,7 +60,9 @@ export type Database = {
           created_at?: string
           error?: string | null
           id?: string
+          proposal?: Json | null
           shop_id?: string
+          source_type?: string | null
           status?: string
           target_id?: string | null
           target_table?: string | null

@@ -7,6 +7,20 @@ import { shopToday } from "@/lib/metrics-math";
 
 type Supa = { from: (table: string) => any; storage: any; rpc: (fn: string, args?: unknown) => any };
 
+/** Detected-information card shape, mirrored from the server-only vision tool. */
+export interface DetectedProposalView {
+  id: string;
+  title: string;
+  source: "image" | "document" | "text";
+  question: string | null;
+  warnings: string[];
+  records: {
+    label: string | null;
+    tool: string;
+    fields: { label: string; value: string | null; confidence: "clear" | "uncertain" | "unreadable"; note: string | null }[];
+  }[];
+}
+
 /** Conversation key stored on each saved row's `sources` payload. */
 const SHOP_AI_THREAD = "shop-ai";
 
@@ -54,6 +68,7 @@ interface StoredMessage {
   sources: {
     thread?: string;
     tools?: { name: string; sourceLabel: string; ok: boolean; changed?: boolean }[];
+    proposals?: unknown[];
     attachments?: StoredAttachment[];
   } | null;
 }
@@ -83,6 +98,7 @@ export const listShopAiMessages = createServerFn({ method: "GET" })
       content: row.content,
       createdAt: row.created_at,
       tools: row.sources?.tools ?? [],
+      proposals: (row.sources?.proposals ?? []) as DetectedProposalView[],
       attachments: (row.sources?.attachments ?? []).map((file) => ({ name: file.name, mimeType: file.mimeType })),
     }));
   });
@@ -193,6 +209,7 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
           timezone: membership.timezone,
           today: membership.today,
           can: membership.can,
+          sourceType: data.attachments.length > 0 ? ("image" as const) : ("text" as const),
         },
       });
 
@@ -204,11 +221,22 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
         user_id: userId,
         role: "assistant",
         content: reply,
-        sources: { thread: SHOP_AI_THREAD, model: result.model, tools: result.toolActivity },
+        sources: {
+          thread: SHOP_AI_THREAD,
+          model: result.model,
+          tools: result.toolActivity,
+          proposals: result.proposals,
+        },
       });
       if (replyError) throw new Error(`The answer could not be saved: ${replyError.message}`);
 
-      return { ok: true as const, reply, tools: result.toolActivity, dataChanged: result.dataChanged };
+      return {
+        ok: true as const,
+        reply,
+        tools: result.toolActivity,
+        dataChanged: result.dataChanged,
+        proposals: result.proposals as DetectedProposalView[],
+      };
     } catch (err) {
       return {
         ok: false as const,
@@ -218,6 +246,7 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
             : "Shop AI is unavailable right now.",
         tools: [],
         dataChanged: false,
+        proposals: [] as DetectedProposalView[],
       };
     }
   });

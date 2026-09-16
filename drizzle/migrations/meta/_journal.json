@@ -92,6 +92,13 @@
       "when": 1789572732401,
       "tag": "0012_shop_ai_actions_tire_orders_productivity",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789573367002,
+      "tag": "0013_ai_actions_source_type",
+      "breakpoints": true
     }
   ]
 }
