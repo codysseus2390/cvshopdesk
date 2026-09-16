@@ -368,7 +368,20 @@ function MetricRow({
           </Badge>
         )}
       </td>
-      <td className="py-2 pr-4">{formatMetric(row.actual, row.format)}</td>
+      <td className="py-2 pr-4">
+        {editing ? (
+          <Input
+            aria-label={`${row.label} value`}
+            inputMode="decimal"
+            className="h-9 w-32"
+            placeholder="Not updated"
+            value={value}
+            onChange={(e) => onChange?.(e.target.value)}
+          />
+        ) : (
+          formatMetric(row.actual, row.format)
+        )}
+      </td>
       <td className="py-2 pr-4 text-muted-foreground">{formatMetric(row.goal, row.format)}</td>
       <td className="py-2 pr-4">
         {formatDiff(row.variance, row.format)}
