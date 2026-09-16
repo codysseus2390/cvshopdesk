@@ -135,7 +135,7 @@ export async function runShopAiTurn(options: {
 
     const calls = output.filter((item) => item["type"] === "function_call");
     if (calls.length === 0 || round === SHOP_AI_MAX_TOOL_ROUNDS) {
-      return { reply: text.trim(), model, toolActivity, dataChanged };
+      return { reply: text.trim(), model, toolActivity, dataChanged, proposals };
     }
 
     // Resend the model's items, then append each tool result beside its call.
