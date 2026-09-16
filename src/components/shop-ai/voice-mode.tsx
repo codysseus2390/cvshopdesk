@@ -99,6 +99,7 @@ export function VoiceMode(props: Props) {
   const phaseRef = useRef<Phase>("starting");
   const mutedRef = useRef(false);
   const holdRef = useRef(false);
+  const micRef = useRef(0);
 
   phaseRef.current = phase;
   mutedRef.current = muted;
