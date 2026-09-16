@@ -45,11 +45,12 @@ interface ChatMessage {
   content: string;
   tools?: ToolActivityItem[];
   failed?: boolean;
+  attachments?: { name: string; mimeType: string }[];
 }
 
 const SUGGESTIONS = [
   "Explain a P0171 lean code to a customer in plain language",
-  "What tire rotation interval should we recommend for an AWD crossover?",
+  "Enter today's numbers: gross profit 4,106.22 and 14 cars",
   "Draft a polite text telling a customer their parts are delayed",
 ];
 
@@ -60,8 +61,12 @@ function ShopAiPage() {
   const queryClient = useQueryClient();
 
   const [draft, setDraft] = useState("");
+  const [attachments, setAttachments] = useState<DraftAttachment[]>([]);
+  const [attachError, setAttachError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const [pending, setPending] = useState<ChatMessage[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const { data: saved, isLoading } = useQuery({
@@ -75,16 +80,29 @@ function ShopAiPage() {
       role: row.role,
       content: row.content,
       tools: row.tools as ToolActivityItem[],
+      attachments: row.attachments,
     })),
     ...pending,
   ];
 
   const mutation = useMutation({
-    mutationFn: (message: string) => send({ data: { message } }),
+    mutationFn: (payload: { message: string; attachments: DraftAttachment[] }) =>
+      send({
+        data: {
+          message: payload.message,
+          attachments: payload.attachments.map((file) => ({
+            name: file.name,
+            mimeType: file.mimeType as never,
+            dataUrl: file.dataUrl,
+          })),
+        },
+      }),
     onSuccess: async (result) => {
       if (result.ok) {
         setPending([]);
         await queryClient.invalidateQueries({ queryKey: ["shop-ai-messages"] });
+        // A tool changed shop data, so refresh every screen that reads it.
+        if (result.dataChanged) await queryClient.invalidateQueries();
       } else {
         setPending((prev) => [
           ...prev,
@@ -113,18 +131,48 @@ function ShopAiPage() {
     inputRef.current?.focus();
   }, []);
 
+  async function addFiles(files: File[]) {
+    setAttachError(null);
+    let accepted = [...attachments];
+    for (const file of files) {
+      const problem = validateAttachment(file, accepted.length);
+      if (problem) {
+        setAttachError(problem);
+        continue;
+      }
+      try {
+        accepted = [...accepted, await readAttachment(file)];
+      } catch (err) {
+        setAttachError(err instanceof Error ? err.message : "That file could not be read.");
+      }
+    }
+    setAttachments(accepted);
+  }
+
   function submit(text?: string) {
     const message = (text ?? draft).trim();
-    if (!message || mutation.isPending) return;
+    if ((!message && attachments.length === 0) || mutation.isPending) return;
+    const outgoing = attachments;
     setDraft("");
-    setPending([{ id: `u-${Date.now()}`, role: "user", content: message }]);
-    mutation.mutate(message);
+    setAttachments([]);
+    setAttachError(null);
+    setPending([
+      {
+        id: `u-${Date.now()}`,
+        role: "user",
+        content: message,
+        attachments: outgoing.map((file) => ({ name: file.name, mimeType: file.mimeType })),
+      },
+    ]);
+    mutation.mutate({ message, attachments: outgoing });
     inputRef.current?.focus();
   }
 
   async function reset() {
     if (mutation.isPending) return;
     setPending([]);
+    setAttachments([]);
+    setAttachError(null);
     await clear();
     await queryClient.invalidateQueries({ queryKey: ["shop-ai-messages"] });
     inputRef.current?.focus();
