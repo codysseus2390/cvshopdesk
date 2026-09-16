@@ -86,7 +86,7 @@ function NumbersPage() {
   }
 
   const summary = useMemo(
-    () => (report?.rows ?? []).filter((r) => ["sales", "gross_profit", "car_count", "tires_sold"].includes(r.key)),
+    () => (report?.rows ?? []).filter((r) => ["gross_profit", "car_count", "tires_sold"].includes(r.key)),
     [report?.rows],
   );
 
@@ -250,7 +250,13 @@ function NumbersPage() {
                     </thead>
                     <tbody>
                       {report.rows.map((row) => (
-                        <MetricRow key={row.key} row={row} />
+                        <MetricRow
+                          key={row.key}
+                          row={row}
+                          editing={editing && row.key !== "gp_percent"}
+                          value={draft[row.key] ?? ""}
+                          onChange={(next) => setDraft((prev) => ({ ...prev, [row.key]: next }))}
+                        />
                       ))}
                     </tbody>
                   </table>
@@ -280,25 +286,9 @@ function NumbersPage() {
                   <CardTitle className="font-display">Correct {report.range.label}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    {report.rows
-                      .filter((row) => row.key !== "gp_percent")
-                      .map((row) => (
-                        <div key={row.key} className="space-y-1">
-                          <Label htmlFor={`edit-${row.key}`}>{row.label}</Label>
-                          <Input
-                            id={`edit-${row.key}`}
-                            inputMode="decimal"
-                            placeholder="Leave blank for not updated"
-                            value={draft[row.key] ?? ""}
-                            onChange={(e) => setDraft((prev) => ({ ...prev, [row.key]: e.target.value }))}
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Saved: {formatMetric(row.actual, row.format)}
-                          </p>
-                        </div>
-                      ))}
-                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Type directly into the Actual column above. Leave a box blank for “Not updated”.
+                  </p>
                   <div className="space-y-1">
                     <Label htmlFor="correction-note">Correction note (optional)</Label>
                     <Input
@@ -355,7 +345,17 @@ function NumbersPage() {
   );
 }
 
-function MetricRow({ row }: { row: ReportRow }) {
+function MetricRow({
+  row,
+  editing = false,
+  value = "",
+  onChange,
+}: {
+  row: ReportRow;
+  editing?: boolean;
+  value?: string;
+  onChange?: (next: string) => void;
+}) {
   const up = (row.yoy_diff ?? 0) > 0;
   const down = (row.yoy_diff ?? 0) < 0;
   return (
@@ -368,7 +368,20 @@ function MetricRow({ row }: { row: ReportRow }) {
           </Badge>
         )}
       </td>
-      <td className="py-2 pr-4">{formatMetric(row.actual, row.format)}</td>
+      <td className="py-2 pr-4">
+        {editing ? (
+          <Input
+            aria-label={`${row.label} value`}
+            inputMode="decimal"
+            className="h-9 w-32"
+            placeholder="Not updated"
+            value={value}
+            onChange={(e) => onChange?.(e.target.value)}
+          />
+        ) : (
+          formatMetric(row.actual, row.format)
+        )}
+      </td>
       <td className="py-2 pr-4 text-muted-foreground">{formatMetric(row.goal, row.format)}</td>
       <td className="py-2 pr-4">
         {formatDiff(row.variance, row.format)}
