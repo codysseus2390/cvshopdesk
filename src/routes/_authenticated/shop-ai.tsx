@@ -2,13 +2,20 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Bot, RotateCcw, Send, UserRound } from "lucide-react";
+import { Bot, ImageIcon, Paperclip, RotateCcw, Send, TriangleAlert, UserRound } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate } from "@/components/access-gate";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { ThinkingIndicator, ToolActivity, type ToolActivityItem } from "@/components/shop-ai/tool-activity";
+import {
+  ACCEPTED_ATTACHMENT_TYPES,
+  AttachmentStrip,
+  readAttachment,
+  validateAttachment,
+  type DraftAttachment,
+} from "@/components/shop-ai/attachments";
 import { clearShopAiConversation, listShopAiMessages, sendShopAiMessage } from "@/lib/shop-ai.functions";
 
 export const Route = createFileRoute("/_authenticated/shop-ai")({
