@@ -15,6 +15,7 @@
 import type { PermissionKey } from "@/lib/permissions";
 import { SHOP_DATA_TOOLS } from "./tools/shop-data.server";
 import { SHOP_ACTION_TOOLS } from "./tools/shop-actions.server";
+import { MONTHLY_NUMBER_TOOLS } from "./tools/monthly-numbers.server";
 import { VISION_TOOLS, type DetectedProposal } from "./tools/vision.server";
 import { IMAGE_TOOLS } from "./tools/image.server";
 
@@ -71,7 +72,13 @@ export interface ShopAiTool {
   execute: (ctx: ShopAiToolContext, args: Record<string, unknown>) => Promise<ShopAiToolOutcome>;
 }
 
-export const SHOP_AI_TOOLS: ShopAiTool[] = [...VISION_TOOLS, ...IMAGE_TOOLS, ...SHOP_DATA_TOOLS, ...SHOP_ACTION_TOOLS];
+export const SHOP_AI_TOOLS: ShopAiTool[] = [
+  ...VISION_TOOLS,
+  ...IMAGE_TOOLS,
+  ...SHOP_DATA_TOOLS,
+  ...MONTHLY_NUMBER_TOOLS,
+  ...SHOP_ACTION_TOOLS,
+];
 
 export function findShopAiTool(name: string): ShopAiTool | undefined {
   return SHOP_AI_TOOLS.find((tool) => tool.name === name);
