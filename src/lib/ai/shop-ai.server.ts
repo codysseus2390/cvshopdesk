@@ -76,6 +76,8 @@ export interface ShopAiResult {
   dataChanged: boolean;
   /** Detected-information cards awaiting the user's Confirm / Edit / Cancel. */
   proposals: DetectedProposal[];
+  /** Pictures Hank created this turn, already stored privately. */
+  images: { name: string; path: string; mimeType: string }[];
 }
 
 type ResponsesItem = Record<string, unknown>;
@@ -117,6 +119,7 @@ export async function runShopAiTurn(options: {
   const tools = shopAiToolDefinitions(settings.disabledTools);
   const toolActivity: ShopAiToolActivity[] = [];
   const proposals: DetectedProposal[] = [];
+  const images: { name: string; path: string; mimeType: string }[] = [];
   let dataChanged = false;
 
   const input: ResponsesItem[] = [
@@ -140,7 +143,7 @@ export async function runShopAiTurn(options: {
 
     const calls = output.filter((item) => item["type"] === "function_call");
     if (calls.length === 0 || round === SHOP_AI_MAX_TOOL_ROUNDS) {
-      return { reply: text.trim(), model, toolActivity, dataChanged, proposals };
+      return { reply: text.trim(), model, toolActivity, dataChanged, proposals, images };
     }
 
     // Resend the model's items, then append each tool result beside its call.
