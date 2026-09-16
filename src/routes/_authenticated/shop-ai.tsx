@@ -462,6 +462,19 @@ function ShopAiPage() {
             }}
           />
 
+          <input
+            ref={cameraRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => {
+              void addFiles(Array.from(e.target.files ?? []));
+              e.target.value = "";
+            }}
+          />
+
+
           {draft.length >= SHOP_AI_COUNTER_THRESHOLD && (
             <p
               className={`mt-1 text-right text-[11px] ${overLimit ? "font-medium text-destructive" : "text-muted-foreground"}`}
