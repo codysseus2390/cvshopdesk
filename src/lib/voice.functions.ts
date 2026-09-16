@@ -36,12 +36,14 @@ function toBase64(buffer: ArrayBuffer): string {
 
 /** Turns any voice failure into a safe, useful message. */
 function failure(err: unknown) {
-  const { VoiceServiceError } = require("@/lib/ai/elevenlabs.server") as typeof import("@/lib/ai/elevenlabs.server");
-  if (err instanceof VoiceServiceError) return { ok: false as const, code: err.code, message: err.message };
+  const known = err instanceof Error && err.name === "VoiceServiceError";
   return {
     ok: false as const,
-    code: "unavailable" as const,
-    message: err instanceof Error ? err.message : "Hank's voice could not be produced just now.",
+    code: known ? ((err as { code: string }).code as "unavailable") : ("unavailable" as const),
+    message:
+      err instanceof Error && err.message
+        ? err.message
+        : "Hank's voice could not be produced just now.",
   };
 }
 
