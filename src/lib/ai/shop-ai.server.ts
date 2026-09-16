@@ -72,6 +72,8 @@ export interface ShopAiResult {
   toolActivity: ShopAiToolActivity[];
   /** True when at least one action tool changed data, so the UI should refresh. */
   dataChanged: boolean;
+  /** Detected-information cards awaiting the user's Confirm / Edit / Cancel. */
+  proposals: DetectedProposal[];
 }
 
 type ResponsesItem = Record<string, unknown>;
