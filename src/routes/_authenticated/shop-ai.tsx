@@ -91,6 +91,7 @@ function ShopAiPage() {
   const [pending, setPending] = useState<ChatMessage[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const { data: saved, isLoading } = useQuery({
@@ -488,6 +489,7 @@ function ShopAiPage() {
               <ComposerMenu
                 disabled={mutation.isPending}
                 onAttach={() => fileRef.current?.click()}
+                onTakePhoto={() => cameraRef.current?.click()}
                 onCreateImage={() => {
                   setDraft(CREATE_IMAGE_PREFIX);
                   inputRef.current?.focus();
