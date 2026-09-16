@@ -239,36 +239,6 @@ function Dashboard() {
           )}
 
 
-          {shows("scorecards") && (
-          <section>
-            <h2 className="mb-3 flex items-center gap-2 font-display text-xl font-bold"><BarChart3 className="h-5 w-5 text-primary" />Monthly scorecards</h2>
-            {data.monthly.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nothing confirmed yet.</p>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {data.monthly
-                  .slice()
-                  .reverse()
-                  .map((m) => (
-                    <Card key={m.month}>
-                      <CardHeader>
-                        <CardTitle className="font-display text-lg">{m.month}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-1 text-sm">
-                        <Row label="GP" value={formatCurrency(m.totals.gross_profit)} />
-                        <Row label="Tires" value={formatCount(m.totals.tires_sold)} />
-                        <Row label="Cars" value={formatCount(m.totals.car_count)} />
-                        <Row label="GP/car" value={formatCurrency(m.totals.gp_per_car)} />
-                        {m.totals.missing_days > 0 && (
-                          <p className="text-xs text-muted-foreground">{m.totals.missing_days} day(s) missing</p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-              </div>
-            )}
-          </section>
-          )}
         </div>
       )}
     </AppShell>
