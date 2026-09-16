@@ -63,7 +63,7 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
 
       const { data: existing } = await ctx.supabase
         .from("metric_snapshots")
-        .select("id, gross_profit, tires_sold, car_count")
+        .select("id, sales, gross_profit, tires_sold, car_count")
         .eq("business_date", businessDate)
         .eq("scope", input.scope)
         .eq("is_current", true)
@@ -78,15 +78,18 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
       const gross = input.gross_profit ?? existing?.gross_profit ?? null;
       const tires = input.tires_sold ?? existing?.tires_sold ?? null;
       const cars = input.car_count ?? existing?.car_count ?? null;
+      const sales = input.sales ?? existing?.sales ?? null;
       const flags: string[] = [];
+      if (sales === null) flags.push("sales missing");
       if (gross === null) flags.push("gross_profit missing");
       if (tires === null) flags.push("tires_sold missing");
       if (cars === null) flags.push("car_count missing");
 
-      const { data: id, error } = await ctx.supabase.rpc("save_metric_snapshot", {
+      const { data: id, error } = await ctx.supabase.rpc("save_shop_metrics", {
         p_shop_id: ctx.shopId,
         p_business_date: businessDate,
         p_scope: input.scope,
+        p_sales: sales,
         p_gross_profit: gross,
         p_tires_sold: tires,
         p_car_count: cars,
