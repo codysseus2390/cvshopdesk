@@ -14,6 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_actions: {
+        Row: {
+          after_values: Json | null
+          args: Json
+          before_values: Json | null
+          confirmation_required: boolean
+          confirmed: boolean
+          created_at: string
+          error: string | null
+          id: string
+          shop_id: string
+          status: string
+          target_id: string | null
+          target_table: string | null
+          tool: string
+          user_id: string
+        }
+        Insert: {
+          after_values?: Json | null
+          args?: Json
+          before_values?: Json | null
+          confirmation_required?: boolean
+          confirmed?: boolean
+          created_at?: string
+          error?: string | null
+          id?: string
+          shop_id: string
+          status: string
+          target_id?: string | null
+          target_table?: string | null
+          tool: string
+          user_id: string
+        }
+        Update: {
+          after_values?: Json | null
+          args?: Json
+          before_values?: Json | null
+          confirmation_required?: boolean
+          confirmed?: boolean
+          created_at?: string
+          error?: string | null
+          id?: string
+          shop_id?: string
+          status?: string
+          target_id?: string | null
+          target_table?: string | null
+          tool?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_actions_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assistant_messages: {
         Row: {
           content: string
@@ -802,6 +861,143 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "staff_invites_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      technician_productivity: {
+        Row: {
+          business_date: string
+          cars: number | null
+          created_at: string
+          entered_by: string
+          hours_billed: number | null
+          hours_worked: number | null
+          id: string
+          note: string | null
+          productivity_pct: number | null
+          shop_id: string
+          technician: string
+          updated_at: string
+        }
+        Insert: {
+          business_date: string
+          cars?: number | null
+          created_at?: string
+          entered_by: string
+          hours_billed?: number | null
+          hours_worked?: number | null
+          id?: string
+          note?: string | null
+          productivity_pct?: number | null
+          shop_id: string
+          technician: string
+          updated_at?: string
+        }
+        Update: {
+          business_date?: string
+          cars?: number | null
+          created_at?: string
+          entered_by?: string
+          hours_billed?: number | null
+          hours_worked?: number | null
+          id?: string
+          note?: string | null
+          productivity_pct?: number | null
+          shop_id?: string
+          technician?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technician_productivity_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tire_orders: {
+        Row: {
+          brand: string | null
+          created_at: string
+          created_by: string
+          customer_id: string | null
+          customer_name: string
+          external_ref: string | null
+          id: string
+          model: string | null
+          notes: string | null
+          phone: string | null
+          price_each: number | null
+          quantity: number
+          received_at: string | null
+          shop_id: string
+          size: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+          vehicle_label: string | null
+          vendor: string | null
+        }
+        Insert: {
+          brand?: string | null
+          created_at?: string
+          created_by: string
+          customer_id?: string | null
+          customer_name: string
+          external_ref?: string | null
+          id?: string
+          model?: string | null
+          notes?: string | null
+          phone?: string | null
+          price_each?: number | null
+          quantity?: number
+          received_at?: string | null
+          shop_id: string
+          size?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          vehicle_label?: string | null
+          vendor?: string | null
+        }
+        Update: {
+          brand?: string | null
+          created_at?: string
+          created_by?: string
+          customer_id?: string | null
+          customer_name?: string
+          external_ref?: string | null
+          id?: string
+          model?: string | null
+          notes?: string | null
+          phone?: string | null
+          price_each?: number | null
+          quantity?: number
+          received_at?: string | null
+          shop_id?: string
+          size?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+          vehicle_label?: string | null
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tire_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tire_orders_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"
