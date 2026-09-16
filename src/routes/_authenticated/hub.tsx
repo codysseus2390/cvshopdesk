@@ -26,6 +26,7 @@ import {
   buildDashboardChart,
   type DashboardChartMetric,
 } from "@/lib/dashboard-chart";
+import { formatDashboardWeekRange, weeklyGoalNote } from "@/lib/dashboard-week";
 
 export const Route = createFileRoute("/_authenticated/hub")({
   head: () => ({
@@ -155,6 +156,38 @@ function Dashboard() {
             )}
           </section>
           )}
+
+          <section>
+            <h2 className="mb-3 flex flex-wrap items-baseline gap-2 font-display text-xl font-bold">
+              <CalendarRange className="h-5 w-5 text-primary" />
+              This week
+              <span className="text-sm font-semibold text-muted-foreground">
+                {formatDashboardWeekRange(data.week.from, data.week.through)}
+              </span>
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <MetricCard
+                label="Gross profit"
+                value={formatCurrency(data.week.gross_profit)}
+                hint={weeklyGoalNote(data.week.gross_profit, data.week.goals.gross_profit)}
+              />
+              <MetricCard
+                label="Tires sold"
+                value={formatCount(data.week.tires_sold)}
+                hint={weeklyGoalNote(data.week.tires_sold, data.week.goals.tires_sold)}
+              />
+              <MetricCard
+                label="Car count"
+                value={formatCount(data.week.car_count)}
+                hint={weeklyGoalNote(data.week.car_count, data.week.goals.car_count)}
+              />
+              <MetricCard
+                label="GP per car"
+                value={formatCurrency(data.week.gp_per_car)}
+                hint={data.week.gp_per_car === null ? "Needs weekly gross profit and car count" : undefined}
+              />
+            </div>
+          </section>
 
           {shows("mtd") && (
           <section>

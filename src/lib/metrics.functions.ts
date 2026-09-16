@@ -9,6 +9,8 @@ import {
   type PeriodTotals,
 } from "./metrics-math";
 import { aggregatePeriod, resolvePeriod, type NumbersRow, type PeriodValues } from "./numbers-math";
+import { buildNumbersReport } from "./numbers.server";
+import { dashboardWeekFromReport } from "./dashboard-week";
 
 type MonthTotals = PeriodValues & { gp_per_car: number | null };
 
@@ -108,6 +110,9 @@ export const getDashboard = createServerFn({ method: "GET" })
     const previousDayRow =
       current.find((r) => r.business_date === previousDay && r.scope === "daily") ?? null;
     const mtd = monthToDate(current, monthPrefix, today);
+    const week = dashboardWeekFromReport(
+      await buildNumbersReport(supabase, shop, "weekly", today),
+    );
 
     // The chart and the Numbers page read the same accepted monthly records
     // through the shared reporting aggregation, so corrections flow to both.
@@ -146,6 +151,7 @@ export const getDashboard = createServerFn({ method: "GET" })
       todayRow,
       previousDay,
       previousDayRow,
+      week,
       mtd,
       ytd,
       ytdLastYear,
