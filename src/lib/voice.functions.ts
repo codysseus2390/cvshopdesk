@@ -223,6 +223,8 @@ export const saveHankVoiceSettings = createServerFn({ method: "POST" })
         voice_similarity: data.similarity,
         voice_style: data.style,
         voice_speaker_boost: data.speakerBoost,
+        voice_input_mode: data.inputMode,
+        voice_auto_listen: data.autoListen,
         updated_by: context.userId,
         updated_at: new Date().toISOString(),
       },
