@@ -119,6 +119,7 @@ function NumbersPage() {
           gross_profit: num("gross_profit"),
           tires_sold: num("tires_sold"),
           car_count: num("car_count"),
+          mechanic_productivity: num("mechanic_productivity"),
           productivity: report.technicians.map((technician) => ({
             technician,
             value: num(`productivity:${technician}`),

@@ -246,6 +246,7 @@ export const NUMBER_METRICS: MetricDef[] = [
   { key: "gp_percent", label: "Gross profit %", format: "percent", prorate: false },
   { key: "car_count", label: "Cars", format: "count", prorate: true },
   { key: "tires_sold", label: "Tires", format: "count", prorate: true },
+  { key: "mechanic_productivity", label: "Mechanic productivity", format: "percent", prorate: false },
 ];
 
 export function productivityMetric(technician: string): MetricDef {
