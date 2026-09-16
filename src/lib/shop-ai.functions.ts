@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { SHOP_AI_HISTORY_LIMIT } from "@/lib/ai/model-config";
+import { SHOP_AI_HISTORY_LIMIT, SHOP_AI_MAX_MESSAGE_CHARS } from "@/lib/ai/model-config";
 import { resolvePermissions, type AppRole, type PermissionKey } from "@/lib/permissions";
 import { shopToday } from "@/lib/metrics-math";
 
@@ -24,10 +24,9 @@ export interface DetectedProposalView {
 /** Conversation key stored on each saved row's `sources` payload. */
 const SHOP_AI_THREAD = "shop-ai";
 
-/** Image and document types Shop AI can read. */
-export const SHOP_AI_ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "application/pdf"] as const;
-export const SHOP_AI_MAX_FILE_BYTES = 8 * 1024 * 1024;
-export const SHOP_AI_MAX_FILES = 4;
+import { SHOP_AI_ACCEPTED_TYPES, SHOP_AI_MAX_FILE_BYTES, SHOP_AI_MAX_FILES } from "@/lib/shop-ai.limits";
+
+export { SHOP_AI_ACCEPTED_TYPES, SHOP_AI_MAX_FILE_BYTES, SHOP_AI_MAX_FILES };
 /** How many past attachments are replayed so follow-up questions still see them. */
 const REPLAY_ATTACHMENTS = 2;
 
@@ -128,7 +127,12 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
-        message: z.string().max(4000).default(""),
+        message: z
+          .string()
+          .max(SHOP_AI_MAX_MESSAGE_CHARS, {
+            message: `That message is longer than ${SHOP_AI_MAX_MESSAGE_CHARS.toLocaleString()} characters. Shorten it or send it in two parts — nothing was sent.`,
+          })
+          .default(""),
         attachments: z.array(attachmentSchema).max(SHOP_AI_MAX_FILES).default([]),
       })
       .refine((v) => v.message.trim().length > 0 || v.attachments.length > 0, "Add a message or an attachment.")
@@ -141,6 +145,11 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
 
     const { AiUnavailableError } = await import("@/lib/ai.server");
     const { runShopAiTurn } = await import("@/lib/ai/shop-ai.server");
+    const { loadAssistantSettings } = await import("@/lib/ai-settings.functions");
+    const settings = await loadAssistantSettings(context.supabase, membership.shopId);
+    if (!settings.visionEnabled && data.attachments.length > 0) {
+      throw new Error("Image and file analysis is turned off in Hank Settings. Turn it back on to send attachments.");
+    }
 
     // Keep the original file in private storage so follow-up questions can see it.
     const stored: StoredAttachment[] = [];
@@ -211,10 +220,13 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
           can: membership.can,
           sourceType: data.attachments.length > 0 ? ("image" as const) : ("text" as const),
         },
+        settings,
       });
 
       const reply =
-        result.reply.length > 0 ? result.reply : "Shop AI did not return an answer for that. Try rephrasing it.";
+        result.reply.length > 0
+          ? result.reply
+          : `${settings.assistantName} did not return an answer for that. Try rephrasing it.`;
 
       const { error: replyError } = await sb.from("assistant_messages").insert({
         shop_id: membership.shopId,
@@ -243,7 +255,7 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
         reply:
           err instanceof AiUnavailableError || err instanceof Error
             ? err.message
-            : "Shop AI is unavailable right now.",
+            : `${settings.assistantName} is unavailable right now.`,
         tools: [],
         dataChanged: false,
         proposals: [] as DetectedProposalView[],

@@ -78,9 +78,23 @@ export function toolSourceLabel(name: string): string {
   return findShopAiTool(name)?.sourceLabel ?? name;
 }
 
-/** Serialises the registry into OpenAI Responses API tool definitions. */
-export function shopAiToolDefinitions() {
+/** Plain metadata for the Hank Settings screen. */
+export function shopAiToolCatalogue() {
   return SHOP_AI_TOOLS.map((tool) => ({
+    name: tool.name,
+    label: tool.sourceLabel,
+    description: tool.description.split(". ")[0] ?? tool.description,
+    mutating: Boolean(tool.mutating),
+    requiresConfirmation: Boolean(tool.requiresConfirmation),
+    permission: tool.permission ?? null,
+    /** Vision proposals and read tools stay on; they cannot change data. */
+    canDisable: Boolean(tool.mutating),
+  }));
+}
+
+/** Serialises the registry into OpenAI Responses API tool definitions. */
+export function shopAiToolDefinitions(disabled: string[] = []) {
+  return SHOP_AI_TOOLS.filter((tool) => !(tool.mutating && disabled.includes(tool.name))).map((tool) => ({
     type: "function" as const,
     name: tool.name,
     description: tool.requiresConfirmation

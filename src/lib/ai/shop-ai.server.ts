@@ -4,6 +4,7 @@
  */
 import { AiUnavailableError } from "@/lib/ai.server";
 import { SHOP_AI_MAX_TOOL_ROUNDS, resolveShopAiModel } from "./model-config";
+import { ASSISTANT_SETTINGS_DEFAULTS, personaInstructions, type AssistantSettings } from "./persona";
 import {
   ConfirmationRequiredError,
   findShopAiTool,
@@ -15,7 +16,7 @@ import {
 
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 
-export const SHOP_AI_SYSTEM_INSTRUCTION = `You are Shop AI, the in-app assistant and operator for Cedar Valley Tire & Auto Service, an automotive tire and repair shop. You help service advisors, technicians, managers and the owner.
+export const SHOP_AI_SYSTEM_INSTRUCTION = `You are the in-app assistant and operator for Cedar Valley Tire & Auto Service, an automotive tire and repair shop. You help service advisors, technicians, managers and the owner.
 
 You are useful for: automotive diagnosis reasoning, tires and fitment, maintenance intervals, repair procedures at a shop-advisor level, service-advisor phrasing and customer explanations, shop operations, reading screenshots and documents the user attaches, and carrying out work in this app through your approved tools.
 
@@ -93,23 +94,27 @@ function userContent(message: ShopAiTurnMessage) {
   return blocks;
 }
 
-/** Runs one Shop AI turn, including tool rounds and the AI action log. */
+/** Runs one assistant turn, including tool rounds and the AI action log. */
 export async function runShopAiTurn(options: {
   history: ShopAiTurnMessage[];
   question: string;
   attachments?: ShopAiAttachment[];
   toolContext: ShopAiToolContext;
+  /** Saved Hank configuration; falls back to the defaults. */
+  settings?: AssistantSettings;
 }): Promise<ShopAiResult> {
   const key = process.env["OPENAI_API_KEY"];
+  const settings = options.settings ?? ASSISTANT_SETTINGS_DEFAULTS;
   if (!key) {
     throw new AiUnavailableError(
-      "Shop AI is not configured yet. Add the OPENAI_API_KEY secret in the project's backend secrets, then try again.",
+      `${settings.assistantName} is not configured yet. Add the OPENAI_API_KEY secret in the project's backend secrets, then try again.`,
       "not_configured",
     );
   }
 
-  const model = resolveShopAiModel({ question: options.question });
-  const tools = shopAiToolDefinitions();
+  const model = resolveShopAiModel({ question: options.question, tier: settings.modelTier });
+  const instructions = `${SHOP_AI_SYSTEM_INSTRUCTION}\n\n${personaInstructions(settings)}`;
+  const tools = shopAiToolDefinitions(settings.disabledTools);
   const toolActivity: ShopAiToolActivity[] = [];
   const proposals: DetectedProposal[] = [];
   let dataChanged = false;
@@ -126,7 +131,7 @@ export async function runShopAiTurn(options: {
   for (let round = 0; round <= SHOP_AI_MAX_TOOL_ROUNDS; round++) {
     const { text, output } = await callResponses(key, {
       model,
-      instructions: SHOP_AI_SYSTEM_INSTRUCTION,
+      instructions,
       input,
       store: false,
       stream: true,

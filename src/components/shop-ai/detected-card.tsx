@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { DetectedProposalView } from "@/lib/shop-ai.functions";
 
 /**
- * "Detected information" preview for anything Shop AI read out of an image.
+ * "Detected information" preview for anything Hank read out of an image.
  * Nothing has been written yet: the user confirms, edits or cancels, and the
  * chosen answer is sent back as the next message so the approved action tools run.
  */

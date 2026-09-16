@@ -79,6 +79,71 @@ export type Database = {
           },
         ]
       }
+      ai_settings: {
+        Row: {
+          assistant_name: string
+          avatar_url: string | null
+          casual_language: boolean
+          created_at: string
+          customer_facing_professional: boolean
+          disabled_tools: string[]
+          humor: boolean
+          mild_profanity: boolean
+          model_tier: string
+          personality: string
+          shop_banter: boolean
+          shop_id: string
+          subtitle: string
+          updated_at: string
+          updated_by: string | null
+          vision_enabled: boolean
+        }
+        Insert: {
+          assistant_name?: string
+          avatar_url?: string | null
+          casual_language?: boolean
+          created_at?: string
+          customer_facing_professional?: boolean
+          disabled_tools?: string[]
+          humor?: boolean
+          mild_profanity?: boolean
+          model_tier?: string
+          personality?: string
+          shop_banter?: boolean
+          shop_id: string
+          subtitle?: string
+          updated_at?: string
+          updated_by?: string | null
+          vision_enabled?: boolean
+        }
+        Update: {
+          assistant_name?: string
+          avatar_url?: string | null
+          casual_language?: boolean
+          created_at?: string
+          customer_facing_professional?: boolean
+          disabled_tools?: string[]
+          humor?: boolean
+          mild_profanity?: boolean
+          model_tier?: string
+          personality?: string
+          shop_banter?: boolean
+          shop_id?: string
+          subtitle?: string
+          updated_at?: string
+          updated_by?: string | null
+          vision_enabled?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_settings_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: true
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assistant_messages: {
         Row: {
           content: string

@@ -32,7 +32,7 @@ export function readAttachment(file: File): Promise<DraftAttachment> {
 
 /** Returns an error message when a file cannot be attached. */
 export function validateAttachment(file: File, current: number): string | null {
-  if (current >= MAX_ATTACHMENTS) return `Shop AI takes up to ${MAX_ATTACHMENTS} attachments per message.`;
+  if (current >= MAX_ATTACHMENTS) return `Hank takes up to ${MAX_ATTACHMENTS} attachments per message.`;
   if (!ACCEPTED_ATTACHMENT_TYPES.includes(file.type)) {
     return `${file.name || "That file"} is not supported. Attach a PNG, JPG, WEBP image or a PDF.`;
   }

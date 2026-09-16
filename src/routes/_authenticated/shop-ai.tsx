@@ -23,16 +23,18 @@ import {
   sendShopAiMessage,
   type DetectedProposalView,
 } from "@/lib/shop-ai.functions";
+import { getAiSettings } from "@/lib/ai-settings.functions";
+import { SHOP_AI_COUNTER_THRESHOLD, SHOP_AI_MAX_MESSAGE_CHARS, ASSISTANT_DEFAULTS } from "@/lib/ai/model-config";
 
 export const Route = createFileRoute("/_authenticated/shop-ai")({
   head: () => ({
     meta: [
-      { title: "Shop AI — Cedar Valley Hub" },
+      { title: "Hank — Cedar Valley Hub" },
       {
         name: "description",
-        content: "Ask Shop AI about automotive service, tires and shop operations from inside Cedar Valley Hub.",
+        content: "Ask Hank about automotive service, tires and shop operations from inside Cedar Valley Hub.",
       },
-      { property: "og:title", content: "Shop AI — Cedar Valley Hub" },
+      { property: "og:title", content: "Hank — Cedar Valley Hub" },
       { property: "og:description", content: "Cedar Valley shop assistant for service advisors and technicians." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -81,6 +83,12 @@ function ShopAiPage() {
     queryFn: () => fetchMessages(),
   });
 
+  const loadSettings = useServerFn(getAiSettings);
+  const { data: config } = useQuery({ queryKey: ["ai-settings"], queryFn: () => loadSettings() });
+  const assistantName = config?.settings.assistantName || ASSISTANT_DEFAULTS.name;
+  const subtitle = config?.settings.subtitle || ASSISTANT_DEFAULTS.subtitle;
+  const overLimit = draft.length > SHOP_AI_MAX_MESSAGE_CHARS;
+
   const messages: ChatMessage[] = [
     ...(saved ?? []).map((row) => ({
       id: row.id,
@@ -124,7 +132,7 @@ function ShopAiPage() {
         {
           id: `err-${Date.now()}`,
           role: "assistant",
-          content: err instanceof Error ? err.message : "Shop AI could not answer just now.",
+          content: err instanceof Error ? err.message : `${assistantName} could not answer just now.`,
           failed: true,
         },
       ]);
@@ -164,6 +172,12 @@ function ShopAiPage() {
   function submit(text?: string) {
     const message = (text ?? draft).trim();
     if ((!message && attachments.length === 0) || mutation.isPending) return;
+    if (message.length > SHOP_AI_MAX_MESSAGE_CHARS) {
+      setAttachError(
+        `That message is ${message.length.toLocaleString()} characters. The limit is ${SHOP_AI_MAX_MESSAGE_CHARS.toLocaleString()} — nothing was sent. Shorten it or send it in two parts.`,
+      );
+      return;
+    }
     const outgoing = attachments;
     setDraft("");
     setAttachments([]);
@@ -192,8 +206,8 @@ function ShopAiPage() {
 
   return (
     <AppShell
-      title="Shop AI"
-      subtitle="Automotive and shop-operations help. Shop data sources connect later — it will say when it cannot see them."
+      title={assistantName}
+      subtitle={`${subtitle} — automotive and shop-operations help. It says so when it cannot see a data source.`}
     >
       <div className="mx-auto flex w-full max-w-3xl flex-col">
         <div className="mb-3 flex items-center justify-end">
@@ -211,7 +225,7 @@ function ShopAiPage() {
                 <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <Bot className="h-6 w-6" />
                 </span>
-                <h2 className="mt-3 font-display text-xl font-bold">How can Shop AI help?</h2>
+                <h2 className="mt-3 font-display text-xl font-bold">How can {assistantName} help?</h2>
                 <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
                   Ask about diagnostics, tires, maintenance intervals, customer wording or shop process. It will not
                   guess at customer, inventory or sales records.
@@ -339,9 +353,9 @@ function ShopAiPage() {
                 submit();
               }
             }}
-            placeholder="Ask Shop AI, or paste a screenshot with Ctrl + V… (Shift + Enter for a new line)"
+            placeholder={`Ask ${assistantName}, or paste a screenshot with Ctrl + V… (Shift + Enter for a new line)`}
             rows={3}
-            aria-label="Message Shop AI"
+            aria-label={`Message ${assistantName}`}
             className="min-h-[76px] resize-none border-transparent bg-muted/60 focus-visible:border-primary/40"
           />
 
@@ -357,6 +371,14 @@ function ShopAiPage() {
             }}
           />
 
+          {draft.length >= SHOP_AI_COUNTER_THRESHOLD && (
+            <p
+              className={`mt-1 text-right text-[11px] ${overLimit ? "font-medium text-destructive" : "text-muted-foreground"}`}
+            >
+              {draft.length.toLocaleString()} / {SHOP_AI_MAX_MESSAGE_CHARS.toLocaleString()} characters
+            </p>
+          )}
+
           <div className="mt-2 flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2">
               <Button
@@ -371,12 +393,12 @@ function ShopAiPage() {
                 <Paperclip className="h-4 w-4" />
               </Button>
               <p className="truncate text-[11px] text-muted-foreground">
-                Paste or attach screenshots. Shop AI asks before changing anything already saved.
+                Paste or attach screenshots. {assistantName} asks before changing anything already saved.
               </p>
             </div>
             <Button
               type="submit"
-              disabled={mutation.isPending || (draft.trim().length === 0 && attachments.length === 0)}
+              disabled={mutation.isPending || overLimit || (draft.trim().length === 0 && attachments.length === 0)}
               className="rounded-xl"
             >
               <Send className="mr-2 h-4 w-4" /> Send
