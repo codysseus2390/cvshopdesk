@@ -106,6 +106,7 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
           saved: true,
           business_date: businessDate,
           scope: input.scope,
+          sales,
           gross_profit: gross,
           tires_sold: tires,
           car_count: cars,
