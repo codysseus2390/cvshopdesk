@@ -192,8 +192,21 @@ function ShopAiPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoSpeak, lastId]);
 
+  // Start at the bottom of the conversation and keep the latest message in view.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    if (!endRef.current) return;
+    if (messages.length > 0 && !isLoading && !initialScrollDone.current) {
+      const id = requestAnimationFrame(() => {
+        endRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+        initialScrollDone.current = true;
+      });
+      return () => cancelAnimationFrame(id);
+    }
+  }, [messages.length, isLoading]);
+
+  useEffect(() => {
+    if (!endRef.current || !initialScrollDone.current) return;
+    endRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages.length, mutation.isPending]);
 
   useEffect(() => {
