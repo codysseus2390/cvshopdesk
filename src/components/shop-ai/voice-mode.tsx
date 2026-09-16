@@ -447,6 +447,17 @@ export function VoiceMode(props: Props) {
             <TriangleAlert className="h-3.5 w-3.5" /> {error}
           </p>
         )}
+        {wakeMode && !wake.supported && (
+          <p className="flex items-center gap-2 text-center text-xs text-muted-foreground">
+            <TriangleAlert className="h-3.5 w-3.5" /> This browser cannot listen for a wake phrase. Use Chrome or Edge,
+            or just start talking here as usual.
+          </p>
+        )}
+        {wakeMode && wake.error && (
+          <p className="flex items-center gap-2 text-center text-xs font-medium text-destructive">
+            <TriangleAlert className="h-3.5 w-3.5" /> {wake.error}
+          </p>
+        )}
       </div>
 
       <div className="flex w-full max-w-md items-center justify-center gap-3 pb-2">
