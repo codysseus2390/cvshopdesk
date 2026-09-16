@@ -127,6 +127,8 @@ export const getDashboard = createServerFn({ method: "GET" })
       shop: { id: shop.shopId, name: shop.name, timezone: shop.timezone, role: shop.role },
       today,
       todayRow,
+      previousDay,
+      previousDayRow,
       mtd,
       ytd,
       ytdLastYear,
