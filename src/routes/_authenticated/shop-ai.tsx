@@ -222,8 +222,16 @@ function ShopAiPage() {
             {messages.map((message) =>
               message.role === "user" ? (
                 <div key={message.id} className="flex justify-end gap-2">
-                  <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-primary px-4 py-2.5 text-sm text-primary-foreground shadow-sm">
-                    {message.content}
+                  <div className="max-w-[85%] space-y-1.5">
+                    <div className="whitespace-pre-wrap rounded-2xl bg-primary px-4 py-2.5 text-sm text-primary-foreground shadow-sm">
+                      {message.content}
+                    </div>
+                    {(message.attachments ?? []).length > 0 && (
+                      <p className="flex items-center justify-end gap-1 text-[11px] text-muted-foreground">
+                        <ImageIcon className="h-3 w-3" />
+                        {(message.attachments ?? []).map((file) => file.name).join(", ")}
+                      </p>
+                    )}
                   </div>
                   <span className="mt-1 hidden h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground sm:flex">
                     <UserRound className="h-3.5 w-3.5" />
