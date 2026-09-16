@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -79,21 +79,43 @@ function Dashboard() {
       })
     : null;
 
+  const CHART_METRICS = [
+    { key: "gross_profit", label: "Gross profit", currency: true },
+    { key: "sales", label: "Sales", currency: true },
+    { key: "gross_profit_per_car", label: "GP per car", currency: true },
+    { key: "tires_sold", label: "Tires sold", currency: false },
+    { key: "car_count", label: "Car count", currency: false },
+  ] as const;
+  const [chartMetric, setChartMetric] = useState<(typeof CHART_METRICS)[number]["key"]>("gross_profit");
+  const chartMetricDef = CHART_METRICS.find((m) => m.key === chartMetric)!;
+
   const monthlyByYear = useMemo(() => {
     if (!data?.monthly.length) return null;
     const years = Array.from(new Set(data.monthly.map((m) => m.month.slice(0, 4)))).sort();
     const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-    const label = (mo: string) => new Date(`2000-${mo}-01`).toLocaleString(undefined, { month: "short" });
+    // Label from a fixed UTC date so the axis always runs January → December.
+    const label = (mo: string) =>
+      new Date(`2000-${mo}-01T00:00:00Z`).toLocaleString(undefined, { timeZone: "UTC", month: "short" });
     const rows = months.map((mo) => {
       const row: Record<string, number | string | null> = { month: label(mo) };
       for (const year of years) {
         const found = data.monthly.find((m) => m.month === `${year}-${mo}`);
-        row[year] = found?.totals.gross_profit ?? null;
+        const totals = found?.totals;
+        row[year] =
+          chartMetric === "gross_profit_per_car"
+            ? (totals?.gp_per_car ?? null)
+            : chartMetric === "sales"
+              ? (totals?.sales ?? null)
+              : chartMetric === "tires_sold"
+                ? (totals?.tires_sold ?? null)
+                : chartMetric === "car_count"
+                  ? (totals?.car_count ?? null)
+                  : (totals?.gross_profit ?? null);
       }
       return row;
     });
     return { years, rows };
-  }, [data?.monthly]);
+  }, [data?.monthly, chartMetric]);
 
   const YEAR_COLORS = [
     "var(--color-chart-1)",
@@ -207,8 +229,20 @@ function Dashboard() {
           <section className="grid gap-4 lg:grid-cols-3">
             {shows("monthly_chart") && (
             <Card className="lg:col-span-2">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 font-display"><BarChart3 className="h-5 w-5 text-secondary" />Monthly gross profit</CardTitle>
+              <CardHeader className="flex-row items-center justify-between gap-3 pb-3">
+                <CardTitle className="flex items-center gap-2 font-display"><BarChart3 className="h-5 w-5 text-secondary" />Monthly {chartMetricDef.label.toLowerCase()}</CardTitle>
+                <select
+                  aria-label="Chart metric"
+                  value={chartMetric}
+                  onChange={(e) => setChartMetric(e.target.value as typeof chartMetric)}
+                  className="h-9 rounded-lg border border-border bg-background px-2 text-sm"
+                >
+                  {CHART_METRICS.map((m) => (
+                    <option key={m.key} value={m.key}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
               </CardHeader>
               <CardContent className="h-64">
                 {!monthlyByYear ? (
@@ -220,8 +254,19 @@ function Dashboard() {
                     <LineChart data={monthlyByYear.rows}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
                       <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} />
-                      <ChartTooltip formatter={(v) => formatCurrency(typeof v === "number" ? v : null)} />
+                      <YAxis
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(v) => (chartMetricDef.currency ? `$${v}` : `${v}`)}
+                      />
+                      <ChartTooltip
+                        formatter={(v) =>
+                          typeof v !== "number"
+                            ? "Not updated"
+                            : chartMetricDef.currency
+                              ? formatCurrency(v)
+                              : formatCount(v)
+                        }
+                      />
                       <Legend wrapperStyle={{ fontSize: 12 }} />
                       {monthlyByYear.years.map((year, i) => (
                         <Line
@@ -240,7 +285,8 @@ function Dashboard() {
                   </ResponsiveContainer>
                 )}
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Months with no saved gross profit are left blank, never drawn as zero.
+                  January through December, using the same confirmed monthly records as the Numbers page. Months with no
+                  saved value are left blank, never drawn as zero.
                 </p>
               </CardContent>
             </Card>
