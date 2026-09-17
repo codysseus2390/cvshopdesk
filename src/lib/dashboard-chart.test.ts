@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDashboardChart, type DashboardChartMetric, type DashboardMonth } from "./dashboard-chart";
+import { buildDashboardChart, buildDashboardSparkline, type DashboardChartMetric, type DashboardMonth } from "./dashboard-chart";
 
 const totals = (value: number) => ({
   sales: value * 2,
@@ -15,6 +15,25 @@ const months: DashboardMonth[] = [
   { month: "2026-08", totals: totals(50_000) },
   { month: "2026-09", totals: totals(21_918) },
 ];
+
+describe("dashboard sparkline data", () => {
+  it("excludes partial/future months and preserves missing months as gaps", () => {
+    const trend = buildDashboardSparkline([...months, { month: "2026-12", totals: totals(99_000) }], "gross_profit", "2026-09-16");
+    expect(trend?.year).toBe("2026");
+    expect(trend?.points).toHaveLength(8);
+    expect(trend?.points[0]?.value).toBe(40_000);
+    expect(trend?.points[1]?.value).toBeNull();
+    expect(trend?.points[7]?.value).toBe(50_000);
+  });
+  it("uses historical completed data when the current year has none, and keeps real zero", () => {
+    const trend = buildDashboardSparkline([{ month: "2025-01", totals: totals(0) }, months[3]!], "gross_profit", "2026-09-16");
+    expect(trend).toEqual({ year: "2025", points: [{ month: "2025-01", value: 0 }] });
+  });
+  it("does not manufacture a trend from only current-month or unavailable GP-per-car data", () => {
+    expect(buildDashboardSparkline([months[3]!], "gross_profit", "2026-09-16")).toBeNull();
+    expect(buildDashboardSparkline([{ month: "2026-01", totals: { ...totals(0), gp_per_car: null } }], "gross_profit_per_car", "2026-09-16")).toBeNull();
+  });
+});
 
 describe("dashboard current-month chart treatment", () => {
   it("keeps completed months solid and moves the exact current value to the MTD point", () => {
@@ -47,3 +66,4 @@ describe("dashboard current-month chart treatment", () => {
     expect(chart?.rows[8]?.["2026__mtd"]).not.toBeNull();
   });
 });
+
