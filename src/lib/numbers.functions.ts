@@ -91,7 +91,7 @@ export const saveMechanicProductivityEntry = createServerFn({ method: "POST" })
     const to = weeklyRange.to > monthlyRange.to ? weeklyRange.to : monthlyRange.to;
     const { data: existing, error: existingError } = await sb
       .from("technician_productivity")
-      .select("business_date, technician, period_scope, productivity_pct")
+      .select("business_date, technician, period_scope, productivity_pct, hours_billed, hours_worked, cars, note, entered_by")
       .eq("shop_id", shop.shopId)
       .in("technician", [...MECHANICS])
       .gte("business_date", from)
@@ -106,12 +106,19 @@ export const saveMechanicProductivityEntry = createServerFn({ method: "POST" })
         .map((row) => row.business_date),
     );
     const { weeklyDate, monthlyDate } = mechanicPeriodDates(data.previous_day, data.period_anchor, dailyDates);
-    const rowsByKey = new Map<string, Record<string, unknown>>();
-    for (const row of (existing ?? []) as {
+    const existingRows = (existing ?? []) as {
       business_date: string;
       technician: string;
       period_scope: string | null;
-    }[]) {
+      hours_billed: number | null;
+      hours_worked: number | null;
+      cars: number | null;
+      note: string | null;
+      entered_by: string;
+    }[];
+    const existingByKey = new Map(existingRows.map((row) => [`${row.technician}|${row.business_date}`, row]));
+    const rowsByKey = new Map<string, Record<string, unknown>>();
+    for (const row of existingRows) {
       const inWeekly =
         row.period_scope === "weekly" && row.business_date >= weeklyRange.from && row.business_date <= weeklyRange.to;
       const inMonthly =
@@ -123,10 +130,11 @@ export const saveMechanicProductivityEntry = createServerFn({ method: "POST" })
         technician: row.technician,
         productivity_pct: null,
         period_scope: row.period_scope,
-        hours_billed: null,
-        hours_worked: null,
-        cars: null,
-        entered_by: context.userId,
+        hours_billed: row.hours_billed,
+        hours_worked: row.hours_worked,
+        cars: row.cars,
+        note: row.note,
+        entered_by: row.entered_by,
         updated_at: now,
       });
     }
@@ -137,15 +145,17 @@ export const saveMechanicProductivityEntry = createServerFn({ method: "POST" })
         { business_date: monthlyDate, productivity_pct: entry.monthly, period_scope: "monthly" },
       ];
       for (const period of periodRows) {
+        const prior = existingByKey.get(`${entry.technician}|${period.business_date}`);
         rowsByKey.set(`${entry.technician}|${period.business_date}`, {
           shop_id: shop.shopId,
           business_date: period.business_date,
           technician: entry.technician,
           productivity_pct: period.productivity_pct,
           period_scope: period.period_scope,
-          hours_billed: null,
-          hours_worked: null,
-          cars: null,
+          hours_billed: prior?.hours_billed ?? null,
+          hours_worked: prior?.hours_worked ?? null,
+          cars: prior?.cars ?? null,
+          note: prior?.note ?? null,
           entered_by: context.userId,
           updated_at: now,
         });
