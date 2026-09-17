@@ -6,11 +6,15 @@ export function MetricCard({
   value,
   hint,
   size = "normal",
+  appearance = "default",
+  periodLabel,
 }: {
   label: string;
   value: string;
   hint?: string | undefined;
   size?: "normal" | "tv";
+  appearance?: "default" | "dashboard";
+  periodLabel?: string;
 }) {
   const notUpdated = value === "Not updated" || value === "Unavailable" || value === "—";
   const Icon = label.toLowerCase().includes("productivity")
@@ -23,6 +27,27 @@ export function MetricCard({
         ? CarFront
         : Gauge;
   const greenAccent = label.toLowerCase().includes("profit") || label.toLowerCase().includes("car count");
+  if (appearance === "dashboard") {
+    return (
+      <Card className={`min-w-0 rounded-xl border shadow-card transition-shadow hover:shadow-elevated ${greenAccent ? "border-secondary/25" : "border-primary/25"}`}>
+        <CardContent className="flex min-h-40 flex-col p-4 xl:p-5">
+          <div className="flex items-center gap-3">
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm ${greenAccent ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"}`}>
+              <Icon className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold leading-tight text-foreground">{label}</p>
+              {periodLabel && <p className="mt-1 text-xs text-muted-foreground">{periodLabel}</p>}
+            </div>
+          </div>
+          <p className={`mt-5 break-words font-bold tracking-tight tabular-nums ${notUpdated ? "text-xl text-muted-foreground xl:text-2xl" : "text-3xl text-foreground xl:text-4xl"}`}>
+            {value}
+          </p>
+          {hint && <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{hint}</p>}
+        </CardContent>
+      </Card>
+    );
+  }
   return (
     <Card className={`relative overflow-hidden border-t-[3px] shadow-card hover:shadow-elevated ${greenAccent ? "border-t-secondary" : "border-t-primary"}`}>
       <CardContent className={size === "tv" ? "p-8" : "min-h-40 p-5 sm:min-h-0 sm:p-6"}>
@@ -56,3 +81,4 @@ export function MetricCard({
     </Card>
   );
 }
+
