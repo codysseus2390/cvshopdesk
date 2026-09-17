@@ -203,6 +203,42 @@ function Dashboard() {
             </div>
           </section>
 
+          <section>
+            <h2 className="mb-3 flex items-center gap-2 font-display text-xl font-bold">
+              <Trophy className="h-5 w-5 text-primary" />
+              Mechanic production
+            </h2>
+            <Card>
+              <CardContent className="pt-5">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[32rem] text-sm">
+                    <thead>
+                      <tr className="border-b border-border text-left text-muted-foreground">
+                        <th className="pb-2 pr-4 font-medium">Mechanic</th>
+                        <th className="pb-2 pr-4 font-medium">Previous day</th>
+                        <th className="pb-2 pr-4 font-medium">This week</th>
+                        <th className="pb-2 font-medium">Month to date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.mechanics.names.map((technician) => (
+                        <tr key={technician} className="border-b border-border/60 last:border-0">
+                          <th className="py-3 pr-4 text-left font-semibold">{technician}</th>
+                          <td className="py-3 pr-4">{formatProductivity(data.mechanics.previous_day[technician] ?? null)}</td>
+                          <td className="py-3 pr-4">{formatProductivity(data.mechanics.week[technician] ?? null)}</td>
+                          <td className="py-3">{formatProductivity(data.mechanics.month[technician] ?? null)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Production percentages entered for each reporting period. A dash means not updated.
+                </p>
+              </CardContent>
+            </Card>
+          </section>
+
           {shows("mtd") && (
           <section>
             <h2 className="mb-3 flex items-center gap-2 font-display text-xl font-bold"><CalendarRange className="h-5 w-5 text-secondary" />Month to date</h2>
@@ -420,3 +456,4 @@ function MonthlyChartTooltip({
     </div>
   );
 }
+
