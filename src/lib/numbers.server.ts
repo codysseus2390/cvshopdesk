@@ -55,7 +55,11 @@ interface ProductivityRow extends ProductivityInput {
 }
 
 /** Period value for one technician: a saved period correction wins, else the average of daily entries. */
-function productivityValue(rows: ProductivityRow[], range: PeriodRange, technician: string): number | null {
+export function productivityValue(
+  rows: ProductivityInput[],
+  range: { from: string; to: string; kind: PeriodKind | "daily" },
+  technician: string,
+): number | null {
   const inRange = rows.filter(
     (r) => r.technician === technician && r.business_date >= range.from && r.business_date <= range.to,
   );
@@ -188,3 +192,4 @@ export async function buildNumbersReport(
     corrections: (corrections ?? []) as NumbersReport["corrections"],
   };
 }
+
