@@ -10,6 +10,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { HANK_TTS_MAX_CHARS, HANK_TTS_MIME } from "@/lib/ai/voice-config";
+import { resolvePermissions, type AppRole } from "@/lib/permissions";
 
 type Supa = { from: (table: string) => any };
 
@@ -21,7 +22,17 @@ async function membership(sb: Supa, userId: string) {
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data || data.status !== "approved") throw new Error("You do not have access to a shop yet.");
-  return data as { shop_id: string; role: string };
+  const { data: overrides, error: overrideError } = await sb
+    .from("role_permissions")
+    .select("role, permission, allowed")
+    .eq("shop_id", data.shop_id);
+  if (overrideError) throw new Error(overrideError.message);
+  const permissions = resolvePermissions(data.role as AppRole, (overrides ?? []) as never);
+  return { shop_id: data.shop_id as string, role: data.role as string, canUseAssistant: permissions.use_assistant };
+}
+
+function requireAssistant(member: { canUseAssistant: boolean }) {
+  if (!member.canUseAssistant) throw new Error("The AI assistant is not enabled for your role.");
 }
 
 function requireManager(role: string) {
@@ -82,6 +93,7 @@ export const speakHankText = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Supa;
     const member = await membership(sb, context.userId);
+    requireAssistant(member);
     const { data: row } = await sb.from("ai_settings").select("*").eq("shop_id", member.shop_id).maybeSingle();
     const settings = (row ?? {}) as Record<string, unknown>;
 
@@ -139,8 +151,8 @@ export const testHankVoice = createServerFn({ method: "POST" })
 /**
  * Voice Mode's listening step: a recorded clip in, written words out.
  *
- * Available to any approved staff member, because it only writes down what was
- * said. The transcript is then sent through the ordinary Hank chat function, so
+ * Available to approved members with the use_assistant permission, because the
+ * transcript is then sent through the ordinary Hank chat function, so
  * personality, tools, permissions, confirmations and audit logging all apply
  * exactly as they do when the same words are typed.
  */
@@ -155,7 +167,8 @@ export const transcribeHankSpeech = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    await membership(context.supabase as unknown as Supa, context.userId);
+    const member = await membership(context.supabase as unknown as Supa, context.userId);
+    requireAssistant(member);
     const { HANK_STT_MAX_BYTES } = await import("@/lib/ai/voice-config");
     const audio = Buffer.from(data.audioBase64, "base64");
     if (audio.byteLength < 1_200) {
