@@ -9,9 +9,10 @@ import {
   type PeriodTotals,
 } from "./metrics-math";
 import { aggregatePeriod, resolvePeriod, type NumbersRow, type PeriodValues } from "./numbers-math";
-import { buildNumbersReport } from "./numbers.server";
+import { buildNumbersReport, productivityValue } from "./numbers.server";
 import { dashboardWeekFromReport } from "./dashboard-week";
 import { overallProductivity, type ProductivityInput } from "./productivity-math";
+import { MECHANICS } from "./mechanics";
 
 type MonthTotals = PeriodValues & { gp_per_car: number | null };
 
@@ -132,6 +133,27 @@ export const getDashboard = createServerFn({ method: "GET" })
       "daily",
       previousDay,
     );
+    const mechanics = {
+      names: [...MECHANICS],
+      previous_day: Object.fromEntries(
+        MECHANICS.map((technician) => [
+          technician,
+          productivityValue(productivity, { from: previousDay, to: previousDay, kind: "daily" }, technician),
+        ]),
+      ),
+      week: Object.fromEntries(
+        MECHANICS.map((technician) => [
+          technician,
+          weekReport.rows.find((row) => row.key === `productivity:${technician}`)?.actual ?? null,
+        ]),
+      ),
+      month: Object.fromEntries(
+        MECHANICS.map((technician) => [
+          technician,
+          monthReport.rows.find((row) => row.key === `productivity:${technician}`)?.actual ?? null,
+        ]),
+      ),
+    };
 
     // The chart and the Numbers page read the same accepted monthly records
     // through the shared reporting aggregation, so corrections flow to both.
@@ -171,6 +193,7 @@ export const getDashboard = createServerFn({ method: "GET" })
       previousDay,
       previousDayRow,
       previousDayProductivity,
+      mechanics,
       week,
       mtd: {
         ...mtd,
@@ -219,3 +242,4 @@ export const listMetricHistory = createServerFn({ method: "POST" })
 
     return { rows: rows ?? [], corrections: corrections ?? [] };
   });
+
