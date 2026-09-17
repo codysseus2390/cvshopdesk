@@ -23,6 +23,24 @@ export type DashboardChartRow = Record<string, number | string | null> & {
 
 const MONTHS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
 
+/** Comparable completed monthly values only; never compare daily, weekly and MTD totals as a trend. */
+export function buildDashboardSparkline(
+  monthly: DashboardMonth[],
+  metric: DashboardChartMetric,
+  shopToday: string,
+): { year: string; points: { month: string; value: number | null }[] } | null {
+  const currentMonth = shopToday.slice(0, 7);
+  const completed = monthly.filter((entry) => entry.month < currentMonth && metricValue(entry, metric) !== null);
+  const year = completed.map((entry) => entry.month.slice(0, 4)).sort().at(-1);
+  if (!year) return null;
+  const latestMonth = completed.filter((entry) => entry.month.startsWith(`${year}-`)).map((entry) => entry.month).sort().at(-1)!;
+  const points = MONTHS.filter((month) => `${year}-${month}` <= latestMonth).map((month) => ({
+    month: `${year}-${month}`,
+    value: metricValue(monthly.find((entry) => entry.month === `${year}-${month}`), metric),
+  }));
+  return { year, points };
+}
+
 function metricValue(month: DashboardMonth | undefined, metric: DashboardChartMetric): number | null {
   if (!month) return null;
   if (metric === "gross_profit_per_car") return month.totals.gp_per_car;
@@ -64,3 +82,4 @@ export function buildDashboardChart(
 
   return { years, rows, currentYear, currentMonth };
 }
+
