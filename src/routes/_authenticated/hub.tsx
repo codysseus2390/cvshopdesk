@@ -60,14 +60,6 @@ export function useDashboard() {
 }
 
 
-const DASHBOARD_PERIODS = [
-  { key: "today", label: "Previous day", controlLabel: "Previous Day" },
-  { key: "week", label: "This week", controlLabel: "This Week" },
-  { key: "mtd", label: "Month to date", controlLabel: "Month to Date" },
-  { key: "ytd", label: "Year to date", controlLabel: "Year to Date" },
-] as const;
-
-type DashboardPeriod = (typeof DASHBOARD_PERIODS)[number]["key"];
 type KpiKey = "gross_profit" | "tires_sold" | "car_count" | "gp_per_car";
 
 function Dashboard() {
@@ -77,9 +69,6 @@ function Dashboard() {
   const pending = shopContext?.pendingCount ?? 0;
   const hidden = perms.settings?.hidden_widgets ?? [];
   const shows = (key: string) => !hidden.includes(key);
-  const [period, setPeriod] = useState<DashboardPeriod>("today");
-  const visiblePeriods = DASHBOARD_PERIODS.filter((option) => option.key === "week" || shows(option.key));
-  const activePeriod = visiblePeriods.find((option) => option.key === period) ?? visiblePeriods[0]!;
   const targets = perms.settings?.targets ?? {};
   const goalNote = (key: string, actual: number | null) => {
     const goal = targets[key];
@@ -98,47 +87,43 @@ function Dashboard() {
       })
     : null;
 
-  const selected = !data ? null : activePeriod.key === "today"
-    ? {
-        gross_profit: todayGp,
-        tires_sold: today?.tires_sold ?? null,
-        car_count: todayCars,
-        gp_per_car: gpPerCar(todayGp, todayCars),
-      }
-    : activePeriod.key === "week" ? data.week : activePeriod.key === "mtd" ? data.mtd : data.ytd;
-  const selectedHint = (key: KpiKey): string | undefined => {
-    if (!data || !selected) return undefined;
-    if (activePeriod.key === "today") {
-      return key === "gp_per_car" && selected.gp_per_car === null ? "Needs gross profit and car count" : undefined;
-    }
-    if (activePeriod.key === "week") {
-      return key === "gp_per_car"
-        ? selected.gp_per_car === null ? "Needs weekly gross profit and car count" : undefined
-        : weeklyGoalNote(selected[key], data.week.goals[key]);
-    }
-    if (activePeriod.key === "mtd") {
-      if (key === "gp_per_car") return data.mtd.gp_per_car_note ?? goalNote(key, selected[key]);
-      const missing = data.mtd.coverage[key].days_missing_value;
-      const field = key === "gross_profit" ? "gross profit" : key === "tires_sold" ? "tire count" : "car count";
-      return missing > 0 ? `${missing} saved day(s) have no ${field}` : goalNote(key, selected[key]);
-    }
-    return key === "gp_per_car" ? data.ytd.gp_per_car_note ?? undefined : undefined;
+  const previousDayValues = {
+    gross_profit: todayGp,
+    tires_sold: today?.tires_sold ?? null,
+    car_count: todayCars,
+    gp_per_car: gpPerCar(todayGp, todayCars),
   };
-  const periodSummary = !data ? null : activePeriod.key === "today"
-    ? !today ? "No confirmed entry for the previous day yet. Nothing is assumed to be zero." : null
-    : activePeriod.key === "mtd"
-      ? data.mtd.basis === "cumulative-snapshot"
-        ? `From the accepted month-to-date report as of ${data.mtd.as_of}${data.mtd.stale ? ` · ${data.mtd.days_behind} day(s) behind the shop day, coverage incomplete` : ""}`
-        : data.mtd.basis === "none"
-          ? "No confirmed records for this month yet. Nothing is assumed to be zero."
-          : `Sum of ${data.mtd.covered_days} confirmed day(s) through ${data.mtd.as_of}${data.mtd.missing_days > 0 ? ` · ${data.mtd.missing_days} day(s) still missing` : ""}`
-      : activePeriod.key === "ytd"
-        ? `${data.ytd.basis === "cumulative-snapshot"
-            ? `From the accepted year-to-date report as of ${data.ytd.as_of}.`
-            : data.ytd.basis === "none"
-              ? "No confirmed records for this year yet."
-              : `Sum of ${data.ytd.covered_days} confirmed daily record(s) through ${data.ytd.as_of}, of ${data.ytd.covered_days + data.ytd.missing_days} day(s) elapsed.`} Cumulative reports are never added to daily totals.`
-        : null;
+  const weeklyHint = (key: KpiKey): string | undefined => !data ? undefined : key === "gp_per_car"
+    ? data.week.gp_per_car === null ? "Needs weekly gross profit and car count" : undefined
+    : weeklyGoalNote(data.week[key], data.week.goals[key]);
+  const monthlyHint = (key: KpiKey): string | undefined => {
+    if (!data) return undefined;
+    if (key === "gp_per_car") return data.mtd.gp_per_car_note ?? goalNote(key, data.mtd[key]);
+    const missing = data.mtd.coverage[key].days_missing_value;
+    const field = key === "gross_profit" ? "gross profit" : key === "tires_sold" ? "tire count" : "car count";
+    return missing > 0 ? `${missing} saved day(s) have no ${field}` : goalNote(key, data.mtd[key]);
+  };
+  const kpiProps = (key: KpiKey, currency: boolean) => {
+    const format = currency ? formatCurrency : formatCount;
+    return {
+      periodLabel: shows("mtd") ? "Month to date" : "This week",
+      value: format((shows("mtd") ? data?.mtd[key] : data?.week[key]) ?? null),
+      hint: shows("mtd") ? monthlyHint(key) : weeklyHint(key),
+      supportingValues: [
+        ...(shows("today") ? [{
+          label: "Previous day",
+          value: format(previousDayValues[key]),
+          hint: key === "gp_per_car" && previousDayValues[key] === null ? "Needs gross profit and car count" : undefined,
+        }] : []),
+        ...(shows("mtd") ? [{ label: "This week", value: format(data?.week[key] ?? null), hint: weeklyHint(key) }] : []),
+      ],
+    };
+  };
+  const monthlySummary = !data ? null : data.mtd.basis === "cumulative-snapshot"
+    ? `From the accepted month-to-date report as of ${data.mtd.as_of}${data.mtd.stale ? ` · ${data.mtd.days_behind} day(s) behind the shop day, coverage incomplete` : ""}`
+    : data.mtd.basis === "none"
+      ? "No confirmed records for this month yet. Nothing is assumed to be zero."
+      : `Sum of ${data.mtd.covered_days} confirmed day(s) through ${data.mtd.as_of}${data.mtd.missing_days > 0 ? ` · ${data.mtd.missing_days} day(s) still missing` : ""}`;
 
   const CHART_METRICS = [
     { key: "gross_profit", label: "Gross profit", currency: true },
@@ -180,14 +165,15 @@ function Dashboard() {
 
       {data && (
         <div className="space-y-6">
-          <section aria-labelledby="selected-period-heading">
+          <section aria-label="Dashboard KPIs">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <h2 id="selected-period-heading" className="flex flex-wrap items-center gap-2 text-lg font-semibold tracking-tight">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                {shows("today") && <span className="flex items-center gap-2">
                 <CalendarDays className="h-5 w-5 text-primary" />
-                {activePeriod.label}
-                {activePeriod.key === "today" && prevDayLabel && <span className="text-sm font-normal text-muted-foreground">{prevDayLabel}</span>}
-                {activePeriod.key === "week" && <span className="text-sm font-normal text-muted-foreground">{formatDashboardWeekRange(data.week.from, data.week.through)}</span>}
-              </h2>
+                Previous day {prevDayLabel}
+                </span>}
+                <span>This week {formatDashboardWeekRange(data.week.from, data.week.through)}</span>
+              </div>
               {shows("today") && (perms.can("edit_dashboard_numbers") ? (
                 <Button asChild size="sm" className="h-10 rounded-lg px-4 text-sm shadow-sm">
                   <Link to="/entry">Enter today's numbers</Link>
@@ -198,60 +184,48 @@ function Dashboard() {
                 </Button>
               ))}
             </div>
-            <div role="group" aria-label="Reporting period" className="mb-4 grid w-full grid-cols-2 gap-1 rounded-xl border border-border/70 bg-muted/50 p-1 sm:inline-flex sm:w-auto">
-              {visiblePeriods.map((option) => (
-                <button
-                  key={option.key}
-                  type="button"
-                  aria-pressed={activePeriod.key === option.key}
-                  onClick={() => setPeriod(option.key)}
-                  className={`min-h-10 rounded-lg px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${activePeriod.key === option.key ? "bg-card text-foreground shadow-sm ring-1 ring-border/70" : "text-muted-foreground hover:bg-card/60 hover:text-foreground"}`}
-                >
-                  {option.controlLabel}
-                </button>
-              ))}
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <MetricCard appearance="dashboard" label="Gross profit" {...kpiProps("gross_profit", true)} />
+              <MetricCard appearance="dashboard" label="Tires sold" {...kpiProps("tires_sold", false)} />
+              <MetricCard appearance="dashboard" label="Car count" {...kpiProps("car_count", false)} />
+              <MetricCard appearance="dashboard" label="GP per car" {...kpiProps("gp_per_car", true)} />
             </div>
-            {selected && (
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <MetricCard appearance="dashboard" periodLabel={activePeriod.label} label="Gross profit" value={formatCurrency(selected.gross_profit)} hint={selectedHint("gross_profit")} />
-                <MetricCard appearance="dashboard" periodLabel={activePeriod.label} label="Tires sold" value={formatCount(selected.tires_sold)} hint={selectedHint("tires_sold")} />
-                <MetricCard appearance="dashboard" periodLabel={activePeriod.label} label="Car count" value={formatCount(selected.car_count)} hint={selectedHint("car_count")} />
-                <MetricCard appearance="dashboard" periodLabel={activePeriod.label} label="GP per car" value={formatCurrency(selected.gp_per_car)} hint={selectedHint("gp_per_car")} />
-              </div>
-            )}
-            {periodSummary && <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{periodSummary}</p>}
+            <div className="mt-3 space-y-1 text-xs leading-relaxed text-muted-foreground">
+              {shows("today") && !today && <p>No confirmed entry for the previous day yet. Nothing is assumed to be zero.</p>}
+              {shows("mtd") && monthlySummary && <p>{monthlySummary}</p>}
+            </div>
           </section>
 
-          <section>
-            <h2 className="mb-3 flex items-center gap-2 font-display text-xl font-bold">
-              <Trophy className="h-5 w-5 text-primary" />
-              Mechanic production
-            </h2>
-            <Card>
-              <CardContent className="pt-5">
+          <section aria-labelledby="mechanic-production-heading">
+            <Card className="rounded-xl border border-primary/25 shadow-card">
+              <CardContent className="p-3 sm:p-3">
+                <h2 id="mechanic-production-heading" className="mb-2 flex items-center gap-2 text-sm font-semibold tracking-tight">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground"><Trophy className="h-4 w-4" /></span>
+                  Mechanic production
+                </h2>
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[32rem] text-sm">
+                  <table className="w-full table-fixed text-xs sm:table-auto">
                     <thead>
                       <tr className="border-b border-border text-left text-muted-foreground">
-                        <th className="pb-2 pr-4 font-medium">Mechanic</th>
-                        <th className="pb-2 pr-4 font-medium">Previous day</th>
-                        <th className="pb-2 pr-4 font-medium">This week</th>
-                        <th className="pb-2 font-medium">Month to date</th>
+                        <th className="pb-1.5 pr-2 font-medium">Mechanic</th>
+                        <th className="pb-1.5 pr-2 text-right font-medium">Previous day</th>
+                        <th className="pb-1.5 pr-2 text-right font-medium">This week</th>
+                        <th className="pb-1.5 text-right font-medium">Month to date</th>
                       </tr>
                     </thead>
                     <tbody>
                       {data.mechanics.names.map((technician) => (
                         <tr key={technician} className="border-b border-border/60 last:border-0">
-                          <th className="py-3 pr-4 text-left font-semibold">{technician}</th>
-                          <td className="py-3 pr-4">{formatProductivity(data.mechanics.previous_day[technician] ?? null)}</td>
-                          <td className="py-3 pr-4">{formatProductivity(data.mechanics.week[technician] ?? null)}</td>
-                          <td className="py-3">{formatProductivity(data.mechanics.month[technician] ?? null)}</td>
+                          <th className="py-1 pr-2 text-left font-semibold">{technician}</th>
+                          <td className="py-1 pr-2 text-right tabular-nums">{formatProductivity(data.mechanics.previous_day[technician] ?? null)}</td>
+                          <td className="py-1 pr-2 text-right tabular-nums">{formatProductivity(data.mechanics.week[technician] ?? null)}</td>
+                          <td className="py-1 text-right tabular-nums">{formatProductivity(data.mechanics.month[technician] ?? null)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-                <p className="mt-3 text-sm text-muted-foreground">
+                <p className="mt-2 text-xs text-muted-foreground">
                   Production percentages entered for each reporting period. A dash means not updated.
                 </p>
               </CardContent>
