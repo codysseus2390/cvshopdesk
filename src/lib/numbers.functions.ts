@@ -47,16 +47,28 @@ export const getMechanicProductivityEntry = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => mechanicPeriodInput.parse(input))
   .handler(async ({ data, context }) => {
     const shop = await requirePermission(context.supabase, context.userId, "edit_dashboard_numbers");
-    const { weeklyDate, monthlyDate } = mechanicPeriodDates(data.previous_day, data.period_anchor);
-    const { data: rows, error } = await (context.supabase as Supa)
+    const weeklyRange = resolvePeriod("weekly", data.period_anchor);
+    const monthlyRange = resolvePeriod("monthly", data.period_anchor);
+    const from = weeklyRange.from < monthlyRange.from ? weeklyRange.from : monthlyRange.from;
+    const to = weeklyRange.to > monthlyRange.to ? weeklyRange.to : monthlyRange.to;
+    const { data: existing, error } = await (context.supabase as Supa)
       .from("technician_productivity")
       .select("technician, business_date, period_scope, productivity_pct")
       .eq("shop_id", shop.shopId)
-      .in("business_date", [data.previous_day, weeklyDate, monthlyDate])
       .in("technician", [...MECHANICS])
-      .not("productivity_pct", "is", null);
+      .gte("business_date", from)
+      .lte("business_date", to);
     if (error) throw new Error(error.message);
-    return rows ?? [];
+    const dailyDates = new Set(
+      ((existing ?? []) as { business_date: string; period_scope: string | null }[])
+        .filter((row) => !row.period_scope)
+        .map((row) => row.business_date),
+    );
+    const { weeklyDate, monthlyDate } = mechanicPeriodDates(data.previous_day, data.period_anchor, dailyDates);
+    const dates = new Set([data.previous_day, weeklyDate, monthlyDate]);
+    return ((existing ?? []) as { business_date: string; productivity_pct: number | null }[]).filter(
+      (row) => dates.has(row.business_date) && row.productivity_pct !== null,
+    );
   });
 
 const nullablePercent = z
