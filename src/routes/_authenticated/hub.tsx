@@ -3,6 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
   ComposedChart,
   Legend,
@@ -24,6 +26,7 @@ import { formatCount, formatCurrency, gpPerCar } from "@/lib/metrics-math";
 import { usePermissions } from "@/components/use-permissions";
 import {
   buildDashboardChart,
+  buildDashboardSparkline,
   type DashboardChartMetric,
 } from "@/lib/dashboard-chart";
 import { formatDashboardWeekRange, weeklyGoalNote } from "@/lib/dashboard-week";
@@ -117,6 +120,7 @@ function Dashboard() {
         }] : []),
         ...(shows("mtd") ? [{ label: "This week", value: format(data?.week[key] ?? null), hint: weeklyHint(key) }] : []),
       ],
+      sparkline: <KpiSparkline trend={data ? buildDashboardSparkline(data.monthly, key === "gp_per_car" ? "gross_profit_per_car" : key, data.today) : null} green={key === "gross_profit" || key === "car_count"} />,
     };
   };
   const monthlySummary = !data ? null : data.mtd.basis === "cumulative-snapshot"
@@ -233,11 +237,11 @@ function Dashboard() {
           </section>
 
           {(shows("monthly_chart") || shows("ytd")) && (
-          <section className="grid gap-4 lg:grid-cols-3">
+          <section className="grid items-start gap-4 lg:grid-cols-3">
             {shows("monthly_chart") && (
-            <Card className="lg:col-span-2">
-              <CardHeader className="flex-row items-center justify-between gap-3 pb-3">
-                <CardTitle className="flex items-center gap-2 font-display"><BarChart3 className="h-5 w-5 text-secondary" />Monthly {chartMetricDef.label.toLowerCase()}</CardTitle>
+            <Card className="min-w-0 rounded-xl border-secondary/25 lg:col-span-2">
+              <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 p-4 pb-2 sm:p-4 sm:pb-2">
+                <CardTitle className="flex items-center gap-2 font-body text-base font-semibold"><BarChart3 className="h-5 w-5 text-secondary" />Monthly {chartMetricDef.label === "Gross profit" ? "Gross Profit" : chartMetricDef.label}</CardTitle>
                 <select
                   aria-label="Chart metric"
                   value={chartMetric}
@@ -251,35 +255,41 @@ function Dashboard() {
                   ))}
                 </select>
               </CardHeader>
-              <CardContent className="h-64">
+              <CardContent className="px-4 pb-4 sm:px-4 sm:pb-4">
                 {!monthlyByYear ? (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="rounded-lg border border-dashed border-border bg-muted/20 px-3 py-5 text-sm text-muted-foreground">
                     No monthly totals yet. They appear as daily entries and reports are confirmed.
                   </p>
                 ) : (
+                  <div className="h-52 sm:h-56">
                   <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={monthlyByYear.rows}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                    <ComposedChart data={monthlyByYear.rows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                      <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 5" vertical={false} />
+                      <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }} tickLine={false} axisLine={false} minTickGap={8} />
                       <YAxis
-                        tick={{ fontSize: 12 }}
-                        tickFormatter={(v) => (chartMetricDef.currency ? `$${v}` : `${v}`)}
+                        width={52}
+                        tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(v) => new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1, ...(chartMetricDef.currency ? { style: "currency", currency: "USD" } : {}) }).format(v)}
                       />
                       <ChartTooltip
                         content={<MonthlyChartTooltip currency={chartMetricDef.currency} />}
+                        cursor={{ stroke: "var(--color-muted-foreground)", strokeDasharray: "3 4", strokeOpacity: 0.4 }}
                       />
                       <Legend wrapperStyle={{ fontSize: 12 }} />
                       {monthlyByYear.years.map((year, i) => (
                         <Line
                           key={year}
-                          type="monotone"
+                          type="linear"
                           dataKey={year}
                           name={year}
                           stroke={YEAR_COLORS[i % YEAR_COLORS.length]}
-                          strokeWidth={2}
-                          dot={{ r: 3 }}
-                          activeDot={{ r: 5 }}
+                          strokeWidth={2.5}
+                          dot={{ r: 3, strokeWidth: 2, fill: "var(--color-card)" }}
+                          activeDot={{ r: 5, strokeWidth: 2 }}
                           connectNulls={false}
+                          isAnimationActive={false}
                         />
                       ))}
                       {monthlyByYear.years.map((year, i) => (
@@ -290,33 +300,35 @@ function Dashboard() {
                           fill={YEAR_COLORS[i % YEAR_COLORS.length]}
                           stroke={YEAR_COLORS[i % YEAR_COLORS.length]}
                           legendType="none"
+                          isAnimationActive={false}
                         />
                       ))}
                     </ComposedChart>
                   </ResponsiveContainer>
+                  </div>
                 )}
                 <p className="mt-2 text-xs text-muted-foreground">
                   January through December, using the same confirmed monthly records as the Numbers page. The current
-                  month is shown as its actual month-to-date point; future months stay blank.
+                  month is partial and shown as an isolated month-to-date point, outside the completed-month lines. Missing and future months stay blank.
                 </p>
               </CardContent>
             </Card>
             )}
 
             {shows("ytd") && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 font-display"><Trophy className="h-5 w-5 text-primary" />Year to date</CardTitle>
+            <Card className="min-w-0 rounded-xl border-primary/25">
+              <CardHeader className="p-4 pb-2 sm:p-4 sm:pb-2">
+                <CardTitle className="flex items-center gap-2 font-body text-base font-semibold"><Trophy className="h-5 w-5 text-primary" />Year to date</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm">
+              <CardContent className="space-y-1.5 px-4 pb-4 text-sm sm:px-4 sm:pb-4">
                 <Row label="Gross profit" value={formatCurrency(data.ytd.gross_profit)} />
                 <Row label="Tires sold" value={formatCount(data.ytd.tires_sold)} />
                 <Row label="Car count" value={formatCount(data.ytd.car_count)} />
                 <Row label="GP per car" value={formatCurrency(data.ytd.gp_per_car)} />
                 {data.ytd.gp_per_car_note && (
-                  <p className="text-xs text-muted-foreground">{data.ytd.gp_per_car_note}</p>
+                  <p className="text-xs leading-snug text-muted-foreground">{data.ytd.gp_per_car_note}</p>
                 )}
-                <p className="pt-2 text-xs text-muted-foreground">
+                <p className="pt-1 text-xs leading-snug text-muted-foreground">
                   {data.ytd.basis === "cumulative-snapshot"
                     ? `From the accepted year-to-date report as of ${data.ytd.as_of}.`
                     : data.ytd.basis === "none"
@@ -326,7 +338,7 @@ function Dashboard() {
                         } day(s) elapsed.`}{" "}
                   Cumulative reports are never added to daily totals.
                 </p>
-                <div className="border-t pt-2">
+                <div className="border-t border-border/70 pt-2">
                   <p className="mb-1 text-xs font-semibold text-muted-foreground">
                     Same period last year
                   </p>
@@ -350,7 +362,29 @@ function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-4">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-semibold">{value}</span>
+      <span className="font-semibold tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+function KpiSparkline({ trend, green }: { trend: ReturnType<typeof buildDashboardSparkline>; green: boolean }) {
+  const enoughData = trend && trend.points.filter((point) => point.value !== null).length >= 2;
+  const color = green ? "var(--color-secondary)" : "var(--color-primary)";
+  return (
+    <div className="mt-auto pt-2" aria-label={enoughData ? `Completed monthly trend for ${trend.year}; missing months are gaps` : "Monthly trend unavailable: not enough completed monthly values"}>
+      {enoughData ? (
+        <>
+          <div className="h-8" aria-hidden="true">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={trend.points} margin={{ top: 3, right: 2, bottom: 2, left: 2 }}>
+                <YAxis hide domain={["dataMin", "dataMax"]} />
+                <Area type="linear" dataKey="value" stroke={color} strokeWidth={1.75} fill={color} fillOpacity={0.1} dot={{ r: 1.5, fill: color, strokeWidth: 0 }} connectNulls={false} isAnimationActive={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="text-[10px] leading-tight text-muted-foreground">Completed months · {trend.year}</p>
+        </>
+      ) : <p className="border-t border-border/40 pt-2 text-[11px] leading-tight text-muted-foreground">Monthly trend unavailable</p>}
     </div>
   );
 }
