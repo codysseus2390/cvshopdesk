@@ -330,10 +330,18 @@ export const clearShopAiConversation = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const sb = context.supabase as unknown as Supa;
     const membership = await requireMembership(sb, context.userId);
+    if (membership.role !== "owner" && membership.role !== "manager") {
+      throw new Error("Only the owner and admins can start a new shared conversation.");
+    }
     const rows = await loadThread(sb, membership.shopId);
     const ids = rows.map((row) => row.id);
     if (ids.length > 0) {
-      const { error } = await sb.from("assistant_messages").delete().in("id", ids);
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { error } = await supabaseAdmin
+        .from("assistant_messages")
+        .delete()
+        .eq("shop_id", membership.shopId)
+        .in("id", ids);
       if (error) throw new Error(error.message);
     }
     return { ok: true as const, removed: ids.length };
