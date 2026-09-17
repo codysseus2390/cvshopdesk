@@ -34,6 +34,18 @@ maximum file size. Reuse the reviewed policies after checking their grants and
 shop isolation. Check every table's RLS, routines, triggers, grants, indexes,
 constraints, and applied migration journal before enabling app testing.
 
+For another fresh staging project, run
+`node scripts/prepare-staging-schema.mjs <verified-staging-reference>` to prepare
+SQL offline. Review the output and verify
+the dashboard project before running the whole script as `postgres` in the SQL
+editor. It refuses production's reference and a populated database, applies the
+source migrations in journal order, records their canonical LF SHA-256 hashes
+and timestamps in Drizzle's journal, creates the private bucket, and checks RLS
+and anonymous app-function access before committing. Errors roll back the whole
+transaction. The script does not connect to a database or assert its physical
+project identity; the dashboard identity check remains mandatory. It is for a
+fresh bootstrap, not upgrades or production migration.
+
 Start with synthetic records and staging users. Never clone production sessions,
 passwords, customer details, or attachments merely to populate staging.
 
@@ -55,16 +67,44 @@ passwords, customer details, or attachments merely to populate staging.
 
 Record these non-secret details once setup is verified:
 
-| Item                                  | Verified result               |
-| ------------------------------------- | ----------------------------- |
-| Organization / project name           | Pending account access        |
-| Staging project reference             | Pending creation or selection |
-| Database schema and migration journal | Pending rehearsal             |
-| Private storage bucket and policies   | Pending setup                 |
-| Auth redirect URLs and test roles     | Pending setup                 |
-| Independent provider credentials      | Pending setup                 |
-| Role and cross-shop behavior tests    | Pending security follow-ups   |
-| Backup restore rehearsal              | Pending private backup access |
-| Preview frontend host                 | Local initially               |
+| Item                                  | Verified result                                                                                                                    |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Organization / project name           | Cedar Valley ShopDesk / cvshopdesk-staging, Free, Ohio                                                                             |
+| Staging project reference             | `fsmyugwrfuvqrrhufryf`                                                                                                             |
+| Database schema and migration journal | 22 source migrations applied; 21 public app tables, all RLS enabled                                                                |
+| Private storage bucket and policies   | `shop-uploads`, private, 25 MiB; four reviewed upload policies present                                                             |
+| Local public backend settings         | Ignored `.env.local` configured; isolation check passes                                                                            |
+| Local server credential               | Existing staging key saved locally with owner approval; authenticated bucket/shop API reads pass                                   |
+| App login and real test accounts      | Guarded local app renders signup form; owner signup and confirmed-email login pending                                              |
+| Auth redirect URLs                    | Site URL and one exact allowed redirect: `http://127.0.0.1:8080`; email enabled, confirmation required, anonymous sign-in disabled |
+| Independent provider credentials      | Pending setup                                                                                                                      |
+| Role and cross-shop behavior tests    | SQL identity simulation passes isolation checks; denied staff/display customer-write override gap reproduced                       |
+| Backup restore rehearsal              | Pending private backup access                                                                                                      |
+| Preview frontend host                 | Local initially                                                                                                                    |
 
-This document is a setup checklist, not evidence that staging is already running.
+Schema setup was verified on 2026-09-17 through the staging dashboard. An initial
+acceptance check rolled back because it included Supabase's pre-existing
+`rls_auto_enable` event trigger. The final check distinguishes event-trigger
+functions from app RPCs; no automatic RLS protection was disabled. The committed
+result reported 22 migrations, 21 RLS-enabled app tables, and a private bucket.
+The migration journal itself also has RLS and no client-role grants. No users,
+production shop records, or production files were copied. The remaining
+acceptance items are still pending; schema setup is not a completed app test.
+
+On the same date, an authenticated server API check confirmed the private bucket,
+its 25 MiB limit, and zero shop records. The privileged staging key stays only in
+the ignored local environment file; GitHub and client settings do not receive it.
+OpenAI and ElevenLabs keys remain blank.
+
+`scripts/staging-permissions.sql` was run against the empty staging database.
+It switches to actual `authenticated`/`anon` database roles and simulates caller
+claims for owner, manager, staff, display, pending, revoked, and another shop.
+Customer read isolation and cross-shop insert denial passed for all seven cases.
+Staff could not approve a member; a manager could approve staff but could not
+change the owner or owner-only permission overrides. Anonymous customer reads and
+the superseded direct metric RPC were denied. Staff and display customer inserts
+still succeeded despite explicit denied `edit_records` overrides, confirming an
+existing policy gap. The transaction rolled back and reported zero shops and
+zero Auth users afterward. These are database behavior checks, not real JWT,
+storage-object, server-function, or signed-in browser tests. The script refuses
+a populated backend; verify its dashboard identity before any future run.

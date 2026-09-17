@@ -54,11 +54,21 @@ needed for staging; leave optional keys blank until those features are tested.
 
 ## Staging readiness
 
-The owner selected a separate Supabase project in their own account. Staging has
-not been provisioned by this code change. After account sign-in, create/identify
-the isolated project and verify its database, auth, storage, and provider
-credentials. No new billing plan or paid compute should be selected without
-the owner's agreement.
+The owner created `cvshopdesk-staging` in their own Cedar Valley ShopDesk
+organization, on the Free plan in Ohio. Its reference is
+`fsmyugwrfuvqrrhufryf`, distinct from production. On 2026-09-17, all 22 source
+migrations were applied in one guarded transaction with their Drizzle journal;
+all 21 app tables have RLS, and the private 25 MiB `shop-uploads` bucket and its
+four policies exist. Local public settings pass the environment isolation
+check. The owner-approved local staging server key successfully read the private
+bucket and empty shop table. Email confirmation stays required, and the exact
+local callback is `http://127.0.0.1:8080`. SQL role simulations verified customer
+isolation and membership restrictions while reproducing the existing staff/display
+write override gap; all fixtures rolled back. Confirmed-user app tests, provider
+credentials, broader permission tests, and security fixes remain pending. See
+[`supabase-staging.md`](./supabase-staging.md) for the acceptance record and
+fresh-bootstrap procedure. No new billing plan or paid compute should be
+selected without the owner's agreement.
 
 - Reconcile the live schema with all 22 existing SQL migrations and the applied
   migration journal. `drizzle/schema.ts` and snapshots are empty; do not use
@@ -142,7 +152,8 @@ The architecture audit found these follow-ups; this setup change does not fix th
 
 1. Align database RLS and RPC permissions with application overrides. Some approved
    member policies permit writes by staff/display despite hidden or denied controls.
-   Test real role tokens for direct table writes and RPC calls across shops.
+   Staging SQL simulations reproduced customer inserts despite denied `edit_records`
+   overrides. Test real role tokens for direct table writes and RPC calls across shops.
 2. Enforce assistant/voice access server-side and bind AI write consent to a
    server-issued pending action. A model-supplied `confirmed` flag is insufficient.
    Verify screenshot proposals cannot write before the user approves the action.
