@@ -175,6 +175,9 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
     const sb = context.supabase as unknown as Supa;
     const userId = context.userId;
     const membership = await requireMembership(sb, userId);
+    if (!membership.can("use_assistant")) {
+      throw new Error("The AI assistant is not enabled for your role.");
+    }
 
     const { AiUnavailableError } = await import("@/lib/ai.server");
     const { runShopAiTurn } = await import("@/lib/ai/shop-ai.server");
