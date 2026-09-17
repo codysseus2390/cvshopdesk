@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { resolvePermissions, type AppRole } from "@/lib/permissions";
 
 type Supa = { from: (t: string) => any };
 
@@ -24,12 +25,18 @@ export const askAssistant = createServerFn({ method: "POST" })
 
     const { data: member } = await sb
       .from("shop_members")
-      .select("shop_id")
+      .select("shop_id, role")
       .eq("user_id", userId)
       .eq("status", "approved")
       .maybeSingle();
     if (!member?.shop_id) throw new Error("You do not have access to a shop yet.");
     const shopId = member.shop_id as string;
+    const { data: overrides } = await sb
+      .from("role_permissions")
+      .select("role, permission, allowed")
+      .eq("shop_id", shopId);
+    const permissions = resolvePermissions(member.role as AppRole, (overrides ?? []) as never);
+    if (!permissions.use_assistant) throw new Error("The AI assistant is not enabled for your role.");
 
     const [{ data: confirmed }, { data: imports }, { data: corrections }] = await Promise.all([
       sb
@@ -106,6 +113,20 @@ Staff question: ${data.question}`,
 export const listAssistantHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { userId } = context;
+    const { data: member } = await context.supabase
+      .from("shop_members")
+      .select("shop_id, role")
+      .eq("user_id", userId)
+      .eq("status", "approved")
+      .maybeSingle();
+    if (!member?.shop_id) throw new Error("You do not have access to a shop yet.");
+    const { data: overrides } = await context.supabase
+      .from("role_permissions")
+      .select("role, permission, allowed")
+      .eq("shop_id", member.shop_id);
+    const permissions = resolvePermissions(member.role as AppRole, (overrides ?? []) as never);
+    if (!permissions.use_assistant) throw new Error("The AI assistant is not enabled for your role.");
     const { data, error } = await context.supabase
       .from("assistant_messages")
       .select("id, role, content, created_at")
@@ -114,3 +135,4 @@ export const listAssistantHistory = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data ?? [];
   });
+
