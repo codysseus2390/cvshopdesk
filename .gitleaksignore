@@ -1,0 +1,4 @@
+# Reviewed public Supabase publishable keys introduced in this historical commit.
+# Ignore only these two findings; future keys and every other .env entry are scanned.
+5041c56236f8e356cbe91a4510f96ba5bceff490:.env:generic-api-key:2
+5041c56236f8e356cbe91a4510f96ba5bceff490:.env:generic-api-key:5

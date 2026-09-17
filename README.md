@@ -1,9 +1,5 @@
 # Cedar Valley ShopDesk
 
-Create a new project with Cloud enabled.
-
-Create a new project with AI enabled.
-
 This project was built with [Lovable](https://lovable.dev).
 
 **Live app**: https://cvshopdesk.lovable.app
@@ -18,11 +14,27 @@ Continue developing this project in the [Lovable editor](https://lovable.dev/pro
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Use Node.js 24.19.0 and Bun 1.4.2, matching `.node-version` and `.bun-version`.
+The existing `bun.lock` is the dependency source of truth; use frozen installs.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+git clone https://github.com/codysseus2390/cvshopdesk.git
+cd cvshopdesk
+git switch -c feature/your-change
+bun install --frozen-lockfile
+cp .env.example .env.local
+# Replace the template settings with a separate staging backend's public settings.
+bun run dev:local
 ```
+
+The checked-in `.env` points to production and contains public connection settings.
+`dev:local` refuses that production target. The original `dev` command remains for
+Lovable's managed preview; it does not perform this local safety check.
+
+Run `bun run test:unit`, `bun run typecheck`, `bun run lint`, and `bun run build`
+before requesting review. Unit tests deliberately skip database checks even if a
+database URL exists in the shell. GitHub Actions runs these checks plus a secret
+scan; it does not publish the app or run migrations.
+
+Read [GitHub development](docs/github-development.md) for environment setup,
+staging readiness, backups, review, and release steps.
