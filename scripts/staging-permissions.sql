@@ -103,9 +103,8 @@ begin
   exception when insufficient_privilege then null;
   end;
 
-  -- Compatibility probes of known vulnerabilities, NOT desired authorization.
-  -- Tightening these policies should make these probes fail and require revising
-  -- this baseline into deny assertions alongside the security fix.
+  -- Staff and display members must not write customer records when edit_records
+  -- is disabled by default or by an owner override.
   for fixture in select * from (values
     ('00000000-0000-4000-8000-000000000103', 'staff'),
     ('00000000-0000-4000-8000-000000000104', 'display')
@@ -117,7 +116,11 @@ begin
                      and permission = 'edit_records' and not allowed) then
       raise exception 'Missing denied override fixture';
     end if;
-    insert into public.customers (shop_id, name) values (a, 'Known override gap: ' || fixture.role_name);
+    begin
+      insert into public.customers (shop_id, name) values (a, 'Must be denied');
+      raise exception 'Known permission gap remains for %', fixture.role_name;
+    exception when insufficient_privilege then null;
+    end;
   end loop;
 end $$;
 
@@ -132,6 +135,6 @@ begin
 end $$;
 reset role;
 rollback;
-select 'RLS isolation checks passed; staff/display write override gaps reproduced' as result,
+select 'RLS isolation checks passed; staff/display customer writes denied' as result,
        (select count(*) from public.shops) as remaining_shops,
        (select count(*) from auth.users) as remaining_auth_users;
