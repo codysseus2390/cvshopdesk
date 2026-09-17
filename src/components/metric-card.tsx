@@ -8,6 +8,7 @@ export function MetricCard({
   size = "normal",
   appearance = "default",
   periodLabel,
+  supportingValues,
 }: {
   label: string;
   value: string;
@@ -15,6 +16,7 @@ export function MetricCard({
   size?: "normal" | "tv";
   appearance?: "default" | "dashboard";
   periodLabel?: string;
+  supportingValues?: ReadonlyArray<{ label: string; value: string; hint?: string | undefined }>;
 }) {
   const notUpdated = value === "Not updated" || value === "Unavailable" || value === "—";
   const Icon = label.toLowerCase().includes("productivity")
@@ -30,7 +32,7 @@ export function MetricCard({
   if (appearance === "dashboard") {
     return (
       <Card className={`min-w-0 rounded-xl border shadow-card transition-shadow hover:shadow-elevated ${greenAccent ? "border-secondary/25" : "border-primary/25"}`}>
-        <CardContent className="flex min-h-40 flex-col p-4 xl:p-5">
+        <CardContent className="flex flex-col p-4 sm:p-4">
           <div className="flex items-center gap-3">
             <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm ${greenAccent ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"}`}>
               <Icon className="h-5 w-5" />
@@ -40,10 +42,23 @@ export function MetricCard({
               {periodLabel && <p className="mt-1 text-xs text-muted-foreground">{periodLabel}</p>}
             </div>
           </div>
-          <p className={`mt-5 break-words font-bold tracking-tight tabular-nums ${notUpdated ? "text-xl text-muted-foreground xl:text-2xl" : "text-3xl text-foreground xl:text-4xl"}`}>
+          <p className={`mt-3 break-words font-bold tracking-tight tabular-nums ${notUpdated ? "text-2xl text-muted-foreground" : "text-3xl text-foreground xl:text-4xl"}`}>
             {value}
           </p>
           {hint && <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{hint}</p>}
+          {supportingValues && (
+            <dl className="mt-3 space-y-2 border-t border-border/70 pt-3 text-xs">
+              {supportingValues.map((period) => (
+                <div key={period.label}>
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+                    <dt className="text-muted-foreground">{period.label}</dt>
+                    <dd className="font-semibold tabular-nums text-foreground">{period.value}</dd>
+                  </div>
+                  {period.hint && <p className="mt-1 leading-relaxed text-muted-foreground">{period.hint}</p>}
+                </div>
+              ))}
+            </dl>
+          )}
         </CardContent>
       </Card>
     );
