@@ -47,10 +47,12 @@ export function AppShell({
   title,
   subtitle,
   children,
+  appearance = "default",
 }: {
   title: string;
   subtitle?: ReactNode;
   children: ReactNode;
+  appearance?: "default" | "dashboard";
 }) {
   const navigate = useNavigate();
   const router = useRouter();
@@ -110,7 +112,7 @@ export function AppShell({
                   <ChevronLeft className="h-3.5 w-3.5" /> Dashboard
                 </Link>
               )}
-              <h1 className="font-display text-3xl font-bold leading-none text-foreground md:text-[1.75rem]">{title}</h1>
+              <h1 className={appearance === "dashboard" ? "text-2xl font-bold leading-tight tracking-tight text-foreground md:text-[1.75rem]" : "font-display text-3xl font-bold leading-none text-foreground md:text-[1.75rem]"}>{title}</h1>
               {subtitle && <div className="mt-1 hidden text-sm text-muted-foreground md:block">{subtitle}</div>}
             </div>
             <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 rounded-2xl border border-border/80 bg-card p-3 shadow-card md:mt-0 md:flex md:border-0 md:bg-transparent md:p-0 md:shadow-none">
@@ -138,10 +140,11 @@ export function AppShell({
               </Link>
             ))}
           </nav>
-          <main className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-7">{children}</main>
+          <main className={appearance === "dashboard" ? "mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-7" : "mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-7"}>{children}</main>
         </div>
       </div>
       <AssistantBar />
     </div>
   );
 }
+
