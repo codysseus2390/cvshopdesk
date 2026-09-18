@@ -1,7 +1,7 @@
 # Cedar Valley ShopDesk migration manifest
 
 Audit date: 2026-09-17  
-Audit scope: read-only provider metadata and policy inspection. No provider settings, code, database writes, permissions, secrets, or deployments were changed.
+Audit scope: provider metadata and policy inspection plus staging authentication configuration. Lovable production, DNS, production data, and secrets were not changed. The independent staging Auth URL/site settings were updated; the direct OAuth code is recorded below.
 
 ## Decision
 
@@ -11,7 +11,7 @@ The existing production database cannot currently be retained by the authenticat
 
 - Repository: `codysseus2390/cvshopdesk`.
 - Audited branch: `codex/github-development-safeguards`.
-- Branch head: `80a178e53d734a773b711dc04697131da76795dc`, the independent preview auth compatibility fix.
+- Branch head: `257f015870ddc1c0ab9ab70bce163bb3745222d3`, the direct Supabase OAuth implementation on top of the independent preview auth compatibility fix.
 - Redesign commit: `45a9af7cc79fd0c89b689852e1bf57684c79658a`.
 - `main`: `1f694690b7af1f28db6009c07b12e8441dd58691`.
 - The feature branch is 28 commits ahead of `main`; the redesign is not merged.
@@ -111,3 +111,21 @@ Resolve provider access and produce a signed migration inventory containing:
 4. a tested staging backup restore and destination-delta procedure.
 
 No application redesign or production migration should begin until that inventory is complete.
+
+
+## Independent staging import and authentication implementation (2026-09-17)
+
+- The imported TireShop history is in the independently controlled Supabase staging project `fsmyugwrfuvqrrhufryf`; it was not re-imported in this task.
+- Staging contains 21 `metric_snapshots` rows covering 2025-01-31 through 2026-09-16, with `source='manual'`, `import_id IS NULL`, and notes mapping Tires to `Tires`, Cars to `Cars`, and GP to `Order Profit`. Store 1 2025 totals match the supplied records exactly (2,423 tires, 3,106 cars, $546,438.23 GP). The supplied Store 2 totals are not present (92 tires, 197 cars, $114,686.20 GP); no raw source files or import hashes are recorded in staging. This is an explicit follow-up item, not a second import.
+- The staging project has one shop, two Auth users, two approved members, and one approved owner. Custom `role_permissions`, `shop_settings`, and `ai_settings` rows are empty; defaults remain in effect. The private `shop-uploads` bucket exists, but no valuable file set was verified in this audit.
+- Commit `257f015870ddc1c0ab9ab70bce163bb3745222d3` changes the auth page to call `supabase.auth.signInWithOAuth({ provider: "google" })` directly and keeps email/password sign-in. The callback is `{origin}/auth`, so no Lovable auth bridge is required by the page.
+- Staging Auth Site URL is `https://cvshopdesk-dashboard-preview.vercel.app`; the allowlist contains that origin's `/auth` callback and localhost. Google provider credentials are still disabled because they require the owner's Google Cloud OAuth client.
+- GitHub reports a successful Vercel status for this commit (deployment target URL is recorded in the commit status), but the Vercel account connector did not authorize deployment-detail reads. The preview alias remains `https://cvshopdesk-dashboard-preview.vercel.app`; verify its deployment is running this SHA before sign-in testing.
+- Vercel Preview must be confirmed to use staging `SUPABASE_URL`/publishable key and a staging-only `SUPABASE_SERVICE_ROLE_KEY` before write tests. The current dashboard showed the service-role variable in Production scope only; do not copy a production secret into Preview.
+- OpenAI and ElevenLabs keys should be entered directly in Vercel Settings → Environment Variables (Preview scope for staging, server-only names such as `OPENAI_API_KEY` and `ELEVENLABS_API_KEY`; never use a `VITE_` prefix) and/or the Supabase Edge Function secret store if the function reads them. Never send key values through chat.
+
+### Remaining owner actions
+
+1. In Google Cloud Console, create or reuse a Web OAuth client. Add authorized JavaScript origin `https://cvshopdesk-dashboard-preview.vercel.app` and redirect URI `https://fsmyugwrfuvqrrhufryf.supabase.co/auth/v1/callback`. Enter the client ID/secret directly in Supabase staging Authentication → Providers → Google and enable it.
+2. In Vercel, verify Preview's non-secret Supabase URL is the staging URL and add the staging service-role secret to Preview only if the server-side access gate requires it. Add `OPENAI_API_KEY`/ `ELEVENLABS_API_KEY` to Preview only when Hank testing is ready.
+3. Provide a staging owner/staff test account through the browser (never chat) to complete sign-in/out, session persistence, and unauthorized-access tests. Production and Lovable remain untouched.
