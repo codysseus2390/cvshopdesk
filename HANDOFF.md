@@ -28,7 +28,7 @@ handed off. The next agent should read this before starting any work.
 
 **Agent:** Claude Code (Sonnet 4.6)
 **Branch:** `claude/elegant-curie-ix5vn8`
-**Commit:** _(see latest commit SHA after push)_
+**Commit:** `9b5cfb2`
 
 **Completed this session:**
 - Read and preserved the existing Lovable `AGENTS.md` warning (moved to `LOVABLE_NOTES.md`)
