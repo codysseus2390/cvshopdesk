@@ -27,7 +27,6 @@ import {
   type DashboardChartMetric,
 } from "@/lib/dashboard-chart";
 import { formatDashboardWeekRange, weeklyGoalNote } from "@/lib/dashboard-week";
-import { formatProductivity } from "@/lib/productivity-math";
 
 export const Route = createFileRoute("/_authenticated/hub")({
   head: () => ({
