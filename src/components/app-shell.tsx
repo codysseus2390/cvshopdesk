@@ -80,7 +80,7 @@ export function AppShell({
   return (
     <div className="min-h-screen pb-28">
       <div className="flex">
-        <aside className="sticky top-0 hidden h-screen w-[212px] shrink-0 overflow-hidden border-r border-sidebar-border bg-sidebar px-3 py-5 shadow-elevated md:block">
+        <aside className="relative sticky top-0 hidden h-screen w-[212px] shrink-0 overflow-hidden border-r border-sidebar-border bg-sidebar px-3 py-5 shadow-elevated md:block">
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[47%] bg-cover bg-center opacity-95" style={{ backgroundImage: "url(/sidebar-brand-art.jpg)" }} aria-hidden="true" />
           <Link to="/hub" className="relative z-10 block border-b border-sidebar-border px-2 pb-5" aria-label="Cedar Valley Hub dashboard">
             <CedarLogo className="h-12 w-auto max-w-full object-contain" />
