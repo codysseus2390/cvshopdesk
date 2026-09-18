@@ -174,6 +174,7 @@ describe("yearly monthly rollup", () => {
         car_count: 6,
         created_at: "2026-01-05",
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ] as any;
     const totals = aggregatePeriod(rows, year, "2026-03-10");
     expect(totals.basis).toBe("monthly-rollup");

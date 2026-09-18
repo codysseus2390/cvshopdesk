@@ -18,14 +18,7 @@ import { useWakeWord } from "./use-wake-word";
 import { SoundBar, type SoundBarMode } from "./sound-bar";
 
 type Phase =
-  | "starting"
-  | "waiting"
-  | "ready"
-  | "listening"
-  | "processing"
-  | "working"
-  | "speaking"
-  | "error";
+  "starting" | "waiting" | "ready" | "listening" | "processing" | "working" | "speaking" | "error";
 
 interface Props {
   assistantName: string;

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Supa = { from: (t: string) => any; rpc: (f: string, a?: unknown) => any; storage: any };
 
 async function resolveShopId(supabase: Supa, userId: string) {

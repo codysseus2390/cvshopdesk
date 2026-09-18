@@ -24,6 +24,7 @@ import {
   type ProductivityInput,
 } from "./productivity-math";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Supa = { from: (t: string) => any; rpc: (fn: string, args?: Record<string, unknown>) => any };
 
 export interface ShopRef {

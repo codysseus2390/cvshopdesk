@@ -1,9 +1,5 @@
 export type DashboardChartMetric =
-  | "gross_profit"
-  | "sales"
-  | "gross_profit_per_car"
-  | "tires_sold"
-  | "car_count";
+  "gross_profit" | "sales" | "gross_profit_per_car" | "tires_sold" | "car_count";
 
 export interface DashboardMonth {
   month: string;

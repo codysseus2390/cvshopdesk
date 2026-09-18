@@ -12,6 +12,7 @@ import { z } from "zod";
 import { HANK_TTS_MAX_CHARS, HANK_TTS_MIME } from "@/lib/ai/voice-config";
 import { resolvePermissions, type AppRole } from "@/lib/permissions";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Supa = { from: (table: string) => any };
 
 async function membership(sb: Supa, userId: string) {

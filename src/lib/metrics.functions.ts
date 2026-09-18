@@ -16,6 +16,7 @@ import { MECHANICS } from "./mechanics";
 
 type MonthTotals = PeriodValues & { gp_per_car: number | null };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Supa = { from: (t: string) => any; rpc: (f: string, a?: unknown) => any };
 
 async function resolveShop(supabase: Supa, userId: string) {

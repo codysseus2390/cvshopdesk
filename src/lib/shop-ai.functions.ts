@@ -6,8 +6,11 @@ import { resolvePermissions, type AppRole, type PermissionKey } from "@/lib/perm
 import { shopToday } from "@/lib/metrics-math";
 
 type Supa = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   from: (table: string) => any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   storage: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rpc: (fn: string, args?: unknown) => any;
 };
 

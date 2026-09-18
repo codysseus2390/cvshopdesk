@@ -168,7 +168,9 @@ export const MONTHLY_NUMBER_TOOLS: ShopAiTool[] = [
         .eq("is_current", true)
         .in("business_date", dates);
       if (readError) throw new Error(readError.message);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const existingByMonth = new Map<string, any>(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ((existingRows ?? []) as any[]).map((r) => [String(r.business_date).slice(0, 7), r]),
       );
 

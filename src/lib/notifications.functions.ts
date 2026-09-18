@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 type Supa = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   from: (t: string) => any;
   rpc: (
     fn: string,

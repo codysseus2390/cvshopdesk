@@ -13,6 +13,7 @@ import { SHOP_AI_MAX_PERSONALITY_CHARS } from "@/lib/ai/model-config";
 import { ASSISTANT_SETTINGS_DEFAULTS, type AssistantSettings } from "@/lib/ai/persona";
 
 type Supa = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   from: (table: string) => any;
   rpc: (
     fn: string,

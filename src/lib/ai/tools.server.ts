@@ -28,6 +28,7 @@ export class ConfirmationRequiredError extends Error {}
 
 export interface ShopAiToolContext {
   /** Authenticated Supabase client for the signed-in staff member (RLS applies). */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any;
   shopId: string;
   userId: string;

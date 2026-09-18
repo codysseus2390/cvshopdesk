@@ -8,6 +8,7 @@ const permissionKeys = PERMISSIONS.map((p) => p.key) as [string, ...string[]];
 const assignableRoles = ["manager", "staff", "display"] as const;
 
 type Supa = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   from: (t: string) => any;
   rpc: (
     fn: string,

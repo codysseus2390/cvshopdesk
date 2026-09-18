@@ -133,6 +133,7 @@ export const acceptImportRecords = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const rows = normalizeRows(data.kind, data.items, data.importId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as unknown as { rpc: (f: string, a?: unknown) => any };
     const { data: result, error } = await sb.rpc("accept_import_records", {
       p_import_id: data.importId,

@@ -106,13 +106,11 @@ function ToolsPage() {
     try {
       const hash = await sha256(file);
       const folder = crypto.randomUUID();
-      const path = `${shopId}/${folder}/${file.name.replace(/[^\w.\-]+/g, "_")}`;
-      const { error: upErr } = await supabase.storage
-        .from("shop-uploads")
-        .upload(path, file, {
-          contentType: file.type || "application/octet-stream",
-          upsert: false,
-        });
+      const path = `${shopId}/${folder}/${file.name.replace(/[^\w.-]+/g, "_")}`;
+      const { error: upErr } = await supabase.storage.from("shop-uploads").upload(path, file, {
+        contentType: file.type || "application/octet-stream",
+        upsert: false,
+      });
       if (upErr) throw new Error(`The file could not be stored: ${upErr.message}`);
 
       const result = await register({

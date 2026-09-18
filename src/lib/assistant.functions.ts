@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { resolvePermissions, type AppRole } from "@/lib/permissions";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Supa = { from: (t: string) => any };
 
 export const askAssistant = createServerFn({ method: "POST" })

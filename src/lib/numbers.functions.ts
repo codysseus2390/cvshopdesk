@@ -16,6 +16,7 @@ const periodInput = z.object({
 const mechanicDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const mechanicPeriodInput = z.object({ previous_day: mechanicDate, period_anchor: mechanicDate });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Supa = { from: (t: string) => any; rpc: (fn: string, args?: Record<string, unknown>) => any };
 
 async function requirePermission(supabase: unknown, userId: string, permission: PermissionKey) {
