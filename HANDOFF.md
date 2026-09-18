@@ -16,7 +16,7 @@ handed off. The next agent should read this before starting any work.
 
 ## Current Branch
 
-`feat/dashboard-panels-integration` (open, ready for PR)
+`feat/dashboard-panels-integration` (open PR #5)
 
 ---
 
@@ -50,7 +50,6 @@ handed off. The next agent should read this before starting any work.
 - `NotificationsTvPanel` in `dashboard-panels.tsx` references `/tv-promo.jpg` — verify this exists in `public/`
 
 **Remaining work:**
-- Open PR for `feat/dashboard-panels-integration`
 - Open browser preview, verify 3-column middle row and System Settings appear
 - Audit remaining visual details against Figma (spacing, typography sizing, card proportions)
 - Then proceed per ROADMAP.md
@@ -64,9 +63,56 @@ handed off. The next agent should read this before starting any work.
 - No browser verification done (no browser access in this environment)
 
 **Next recommended step:**
-Open a PR for `feat/dashboard-panels-integration`. Preview the running app and compare the
-dashboard side-by-side with the Figma "Dashboard — Reference review" page. Address any
-remaining spacing, proportion, or typography differences before declaring Priority 1 done.
+Preview the running app and compare the dashboard side-by-side with the Figma "Dashboard — Reference review"
+page. Address any remaining spacing, proportion, or typography differences before declaring Priority 1 done.
+
+---
+
+### Session: 2026-09-18 — Project context update from owner briefing
+
+**Agent:** Claude Code (Sonnet 4.6)
+**Branch:** `docs/context-update`
+**Commit:** `e5b8068`
+
+**Completed this session:**
+- Received comprehensive project briefing from the owner
+- Rewrote `PROJECT_CONTEXT.md` to reflect accurate migration direction, multi-agent
+  system, Figma URL, Codex dashboard commits, TV mode direction, Hank future vision,
+  Codex staging branch, and the broader long-term vision
+- Rewrote `ROADMAP.md` with correct priority ordering (finish dashboard first), specific
+  Codex commit SHAs, accurate TV mode rotating-screen design, Hank provider-independence
+  goal, Lovable audit as an explicit priority, and Codex staging PR as Priority 2
+- Updated `HANDOFF.md` current branch and added this entry
+- No application code modified
+
+**Files modified:**
+- `PROJECT_CONTEXT.md` — major rewrite with accurate project context
+- `ROADMAP.md` — reordered and expanded with correct priorities and specifics
+- `HANDOFF.md` — current branch updated, this entry added
+
+**Key facts for next agent:**
+- Figma file: `https://www.figma.com/design/1GarIodYxJ1rBaTeuFYSVp` (page: "Dashboard — Reference review")
+- Dashboard redesign is ~75% complete — verify actual state from Figma + running app before assuming what remains
+- Latest dashboard commits: `37da12bc` (major redesign) and `cca7923b` (Figma alignment) — these are on a Codex branch, may not be in a shallow clone
+- Codex staging work is on `codex/github-development-safeguards` — draft PR open, not yet merged
+- Do not touch production backend config, DNS, Supabase permissions without explicit instruction
+
+**Remaining work:**
+- Merge this PR
+- Verify exact dashboard state against Figma before continuing any UI work
+- Then proceed per ROADMAP.md Priority 1
+
+**Known issues / blockers:**
+- None introduced by this session.
+- The Codex branch and its commits may not be present in shallow clones of this repo.
+
+**Validation status:**
+- Documentation-only changes; no lint/test run required.
+
+**Next recommended step:**
+Merge this PR. Then open the Figma file and the running app side by side, audit the
+dashboard against the "Dashboard — Reference review" page, and create a specific diff
+list of what still needs to change before writing any code.
 
 ---
 
