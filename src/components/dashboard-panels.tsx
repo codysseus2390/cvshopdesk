@@ -7,8 +7,6 @@ import {
   ChevronRight,
   CircleUserRound,
   FileText,
-  Gauge,
-  Image as ImageIcon,
   Link2,
   Monitor,
   Settings,
