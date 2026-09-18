@@ -87,7 +87,9 @@ export function TalkButton({ disabled, onResult, onError }: Props) {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       const mimeType = pickMimeType();
-      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
       framesRef.current = [];
       keepRef.current = true;
       recorder.ondataavailable = (event) => {
@@ -126,7 +128,13 @@ export function TalkButton({ disabled, onResult, onError }: Props) {
 
   if (state === "processing") {
     return (
-      <Button type="button" variant="outline" size="icon" disabled className="h-9 w-9 shrink-0 rounded-full">
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        disabled
+        className="h-9 w-9 shrink-0 rounded-full"
+      >
         <Loader2 className="h-4 w-4 animate-spin" />
         <span className="sr-only">Writing that down</span>
       </Button>

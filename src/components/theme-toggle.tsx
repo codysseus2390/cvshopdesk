@@ -17,12 +17,7 @@ export function useTheme() {
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    const initial: Theme =
-      stored === "dark" || stored === "light"
-        ? stored
-        : window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
+    const initial: Theme = stored === "dark" || stored === "light" ? stored : "light";
     setTheme(initial);
     apply(initial);
   }, []);

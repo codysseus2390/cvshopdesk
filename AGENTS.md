@@ -105,8 +105,8 @@ gated UI — never duplicate or hand-code role checks.
 When you are approaching the end of an agent session or context limit:
 
 **~15% usage remaining** — Stop starting any large new task. Finish only the unit
-  currently in progress. Commit and push all completed progress immediately so it is
-  not stranded locally if the session ends unexpectedly.
+currently in progress. Commit and push all completed progress immediately so it is
+not stranded locally if the session ends unexpectedly.
 
 **~10% usage remaining — enter handoff mode:**
 
@@ -136,6 +136,7 @@ When you are approaching the end of an agent session or context limit:
 ## Lovable Compatibility
 
 See `LOVABLE_NOTES.md` for full context. Summary:
+
 - The main branch is connected to the Lovable editor. Every push to it syncs back.
 - History rewrites on any pushed branch break Lovable's project history.
 - Do not remove or break `@lovable.dev/vite-tanstack-config` — it drives the entire build.

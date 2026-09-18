@@ -20,7 +20,10 @@ function confirmed(args: Record<string, unknown>) {
 }
 
 const confirmProp = {
-  confirmed: { type: "boolean", description: "Set true only after the user explicitly approved this exact change." },
+  confirmed: {
+    type: "boolean",
+    description: "Set true only after the user explicitly approved this exact change.",
+  },
 };
 
 export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
@@ -34,9 +37,15 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
     parameters: {
       type: "object",
       properties: {
-        business_date: { type: "string", description: "YYYY-MM-DD. Defaults to the shop's current business day." },
+        business_date: {
+          type: "string",
+          description: "YYYY-MM-DD. Defaults to the shop's current business day.",
+        },
         scope: { type: "string", enum: ["daily", "mtd", "ytd"], description: "Defaults to daily." },
-        sales: { type: "number", description: "Total sales / order sales. Separate from gross profit." },
+        sales: {
+          type: "number",
+          description: "Total sales / order sales. Separate from gross profit.",
+        },
         gross_profit: { type: "number" },
         tires_sold: { type: "integer" },
         car_count: { type: "integer" },
@@ -115,7 +124,13 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
         targetTable: "metric_snapshots",
         targetId: String(id ?? ""),
         before: existing ?? null,
-        after: { business_date: businessDate, scope: input.scope, gross_profit: gross, tires_sold: tires, car_count: cars },
+        after: {
+          business_date: businessDate,
+          scope: input.scope,
+          gross_profit: gross,
+          tires_sold: tires,
+          car_count: cars,
+        },
       };
     },
   },
@@ -260,13 +275,17 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
       if (!customer?.id) throw new Error("The customer was not saved.");
 
       let vehicle: unknown = null;
-      if (input.vehicle && Object.values(input.vehicle).some((v) => v && String(v).trim().length > 0)) {
+      if (
+        input.vehicle &&
+        Object.values(input.vehicle).some((v) => v && String(v).trim().length > 0)
+      ) {
         const { data: created, error: vehicleError } = await ctx.supabase
           .from("vehicles")
           .insert({
             shop_id: ctx.shopId,
             customer_id: customer.id,
-            identity_key: `${identity}:${input.vehicle.vin ?? input.vehicle.plate ?? Date.now()}`.toLowerCase(),
+            identity_key:
+              `${identity}:${input.vehicle.vin ?? input.vehicle.plate ?? Date.now()}`.toLowerCase(),
             year: input.vehicle.year ?? null,
             make: input.vehicle.make ?? null,
             model: input.vehicle.model ?? null,
@@ -275,7 +294,8 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
           })
           .select("id, year, make, model, vin, plate")
           .maybeSingle();
-        if (vehicleError) throw new Error(`Customer saved, but the vehicle failed: ${vehicleError.message}`);
+        if (vehicleError)
+          throw new Error(`Customer saved, but the vehicle failed: ${vehicleError.message}`);
         vehicle = created ?? null;
       }
 
@@ -340,7 +360,13 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
         .maybeSingle();
       if (error) throw new Error(error.message);
 
-      return { data: { updated: true, before, after }, targetTable: "customers", targetId: input.customer_id, before, after };
+      return {
+        data: { updated: true, before, after },
+        targetTable: "customers",
+        targetId: input.customer_id,
+        before,
+        after,
+      };
     },
   },
   {
@@ -405,7 +431,13 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
           .select("id, year, make, model, vin, plate")
           .maybeSingle();
         if (error) throw new Error(error.message);
-        return { data: { updated: true, before, after }, targetTable: "vehicles", targetId: input.vehicle_id, before, after };
+        return {
+          data: { updated: true, before, after },
+          targetTable: "vehicles",
+          targetId: input.vehicle_id,
+          before,
+          after,
+        };
       }
 
       if (!input.customer_id) throw new Error("A customer_id is needed to add a vehicle.");
@@ -414,7 +446,8 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
         .insert({
           shop_id: ctx.shopId,
           customer_id: input.customer_id,
-          identity_key: `ai:${input.customer_id}:${input.vin ?? input.plate ?? Date.now()}`.toLowerCase(),
+          identity_key:
+            `ai:${input.customer_id}:${input.vin ?? input.plate ?? Date.now()}`.toLowerCase(),
           year: input.year ?? null,
           make: input.make ?? null,
           model: input.model ?? null,
@@ -496,7 +529,11 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
         ...(input.status === "received" ? { received_at: new Date().toISOString() } : {}),
       };
 
-      const { data, error } = await ctx.supabase.from("tire_orders").insert(row).select("*").maybeSingle();
+      const { data, error } = await ctx.supabase
+        .from("tire_orders")
+        .insert(row)
+        .select("*")
+        .maybeSingle();
       if (error) throw new Error(error.message);
       return {
         data: { created: true, order: data },
@@ -518,7 +555,10 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
       type: "object",
       properties: {
         order_id: { type: "string", description: "The id from search_tire_orders." },
-        status: { type: "string", enum: ["draft", "ordered", "received", "installed", "cancelled"] },
+        status: {
+          type: "string",
+          enum: ["draft", "ordered", "received", "installed", "cancelled"],
+        },
         quantity: { type: "integer" },
         price_each: { type: "number" },
         vendor: { type: "string" },
@@ -557,15 +597,23 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
       if (consequential && !confirmed(args)) {
         throw new ConfirmationRequiredError(
           `Order for ${before.customer_name} (${before.quantity} × ${before.size ?? "unspecified size"}, status ${before.status}) would change to ${JSON.stringify(
-            { status: input.status ?? before.status, quantity: input.quantity ?? before.quantity, price_each: input.price_each ?? before.price_each },
+            {
+              status: input.status ?? before.status,
+              quantity: input.quantity ?? before.quantity,
+              price_each: input.price_each ?? before.price_each,
+            },
           )}. Ask the user to confirm.`,
         );
       }
 
-      const patch: Record<string, unknown> = { updated_by: ctx.userId, updated_at: new Date().toISOString() };
+      const patch: Record<string, unknown> = {
+        updated_by: ctx.userId,
+        updated_at: new Date().toISOString(),
+      };
       if (input.status !== undefined) {
         patch["status"] = input.status;
-        if (input.status === "received" && !before.received_at) patch["received_at"] = new Date().toISOString();
+        if (input.status === "received" && !before.received_at)
+          patch["received_at"] = new Date().toISOString();
       }
       if (input.quantity !== undefined) patch["quantity"] = input.quantity;
       if (input.price_each !== undefined) patch["price_each"] = input.price_each;
@@ -580,7 +628,13 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
         .select("*")
         .maybeSingle();
       if (error) throw new Error(error.message);
-      return { data: { updated: true, order: after }, targetTable: "tire_orders", targetId: input.order_id, before, after };
+      return {
+        data: { updated: true, order: after },
+        targetTable: "tire_orders",
+        targetId: input.order_id,
+        before,
+        after,
+      };
     },
   },
   {
@@ -630,7 +684,13 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
         .select("id, local_status, local_note")
         .maybeSingle();
       if (error) throw new Error(error.message);
-      return { data: { updated: true, job: after }, targetTable: "shop_jobs", targetId: input.job_id, before, after };
+      return {
+        data: { updated: true, job: after },
+        targetTable: "shop_jobs",
+        targetId: input.job_id,
+        before,
+        after,
+      };
     },
   },
   {
@@ -647,7 +707,11 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
         title: { type: "string" },
         message: { type: "string" },
         priority: { type: "string", enum: ["normal", "high"] },
-        audience: { type: "string", enum: ["all", "display", "all_display"], description: "all = staff, display = TV only, all_display = both." },
+        audience: {
+          type: "string",
+          enum: ["all", "display", "all_display"],
+          description: "all = staff, display = TV only, all_display = both.",
+        },
         ...confirmProp,
       },
       required: ["title", "message"],
@@ -688,15 +752,28 @@ export const SHOP_ACTION_TOOLS: ShopAiTool[] = [
           .eq("shop_id", ctx.shopId)
           .eq("status", "approved");
         for (const member of (members ?? []) as { user_id: string }[]) {
-          rows.push({ notification_id: created.id, shop_id: ctx.shopId, target: "user", user_id: member.user_id });
+          rows.push({
+            notification_id: created.id,
+            shop_id: ctx.shopId,
+            target: "user",
+            user_id: member.user_id,
+          });
         }
       }
       if (input.audience === "display" || input.audience === "all_display") {
-        rows.push({ notification_id: created.id, shop_id: ctx.shopId, target: "display", user_id: null });
+        rows.push({
+          notification_id: created.id,
+          shop_id: ctx.shopId,
+          target: "display",
+          user_id: null,
+        });
       }
       if (rows.length > 0) {
-        const { error: recipientError } = await ctx.supabase.from("notification_recipients").insert(rows);
-        if (recipientError) throw new Error(`Saved, but recipients failed: ${recipientError.message}`);
+        const { error: recipientError } = await ctx.supabase
+          .from("notification_recipients")
+          .insert(rows);
+        if (recipientError)
+          throw new Error(`Saved, but recipients failed: ${recipientError.message}`);
       }
 
       return {

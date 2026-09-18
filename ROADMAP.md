@@ -44,6 +44,7 @@ in place. What remains is likely design matching, spacing, responsive cleanup, a
 verification — not a rebuild.
 
 **Before touching the dashboard:**
+
 1. Read the Figma file: `https://www.figma.com/design/1GarIodYxJ1rBaTeuFYSVp`
    (page: **Dashboard — Reference review**)
 2. Compare the running app against the Figma design screen by screen
@@ -54,6 +55,7 @@ verification — not a rebuild.
 branding. A professional shop application, not a generic admin template.
 
 **Data rules that must be preserved:**
+
 - Missing daily values stay missing, never silently become zero
 - Partial current month must not visually imply a full-month downturn
 - Mechanic productivity is based on actual stored values, not computed defaults
@@ -85,6 +87,7 @@ Do not duplicate or conflict with work already done there.
 ## Priority 4 — Lovable dependency audit and migration
 
 The project still depends on:
+
 - `@lovable.dev/vite-tanstack-config` — drives the entire build
 - `@lovable.dev/cloud-auth-js` — auth bridge
 
@@ -100,6 +103,7 @@ See `LOVABLE_NOTES.md` for the full inventory and migration considerations.
 TV mode currently has a working but basic implementation. The full vision:
 
 **Rotating screens** (cycling every ~few seconds):
+
 - Large-format shop dashboard / today's numbers
 - Today's appointment schedule
 - Mechanic productivity
@@ -109,6 +113,7 @@ TV mode currently has a working but basic implementation. The full vision:
 - Important staff announcements
 
 **Design and animation:** TV mode is where expressive animation is appropriate.
+
 - Animated counters and progress bars
 - Smooth screen transitions
 - Temporary full-screen alerts
@@ -135,6 +140,7 @@ voice waveform) have not yet been created. Design before code.
 ## Priority 7 — Animation, micro-interactions, and polish
 
 For the **desktop dashboard** (restrained):
+
 - Smooth number transitions (count-up / fade-in on load)
 - Skeleton loaders while data fetches
 - Subtle hover and focus states

@@ -3,13 +3,21 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePermissions } from "@/components/use-permissions";
 import { saveNumbersGoals } from "@/lib/numbers.functions";
-import { NUMBER_METRICS, productivityMetric, type GoalRule, type GoalRules } from "@/lib/numbers-math";
+import {
+  NUMBER_METRICS,
+  productivityMetric,
+  type GoalRule,
+  type GoalRules,
+} from "@/lib/numbers-math";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-type Draft = Record<string, { method: "fixed" | "growth"; monthly: string; yearly: string; growth_pct: string }>;
+type Draft = Record<
+  string,
+  { method: "fixed" | "growth"; monthly: string; yearly: string; growth_pct: string }
+>;
 
 const blank = { method: "fixed" as const, monthly: "", yearly: "", growth_pct: "" };
 
@@ -23,7 +31,9 @@ export function NumbersGoals({ canEdit }: { canEdit: boolean }) {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
 
-  const technicians = (perms.settings?.technician_goals ?? []).map((g) => g.technician).filter(Boolean);
+  const technicians = (perms.settings?.technician_goals ?? [])
+    .map((g) => g.technician)
+    .filter(Boolean);
   const metrics = [...NUMBER_METRICS, ...technicians.map((t) => productivityMetric(t))];
 
   useEffect(() => {
@@ -34,7 +44,8 @@ export function NumbersGoals({ canEdit }: { canEdit: boolean }) {
         method: rule.method === "growth" ? "growth" : "fixed",
         monthly: rule.monthly === null || rule.monthly === undefined ? "" : String(rule.monthly),
         yearly: rule.yearly === null || rule.yearly === undefined ? "" : String(rule.yearly),
-        growth_pct: rule.growth_pct === null || rule.growth_pct === undefined ? "" : String(rule.growth_pct),
+        growth_pct:
+          rule.growth_pct === null || rule.growth_pct === undefined ? "" : String(rule.growth_pct),
       };
     }
     setDraft(next);
@@ -56,7 +67,9 @@ export function NumbersGoals({ canEdit }: { canEdit: boolean }) {
             ? { method: "growth", growth_pct: number(entry.growth_pct) }
             : { method: "fixed", monthly: number(entry.monthly), yearly: number(entry.yearly) };
         const empty =
-          entry.method === "growth" ? rule.growth_pct === null : rule.monthly === null && rule.yearly === null;
+          entry.method === "growth"
+            ? rule.growth_pct === null
+            : rule.monthly === null && rule.yearly === null;
         if (!empty) rules[metric.key] = rule;
       }
       await save({ data: { goal_rules: rules } });
@@ -77,7 +90,9 @@ export function NumbersGoals({ canEdit }: { canEdit: boolean }) {
           <CardTitle className="font-display">Numbers &amp; Goals</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Only the owner and admins can change goals.</p>
+          <p className="text-sm text-muted-foreground">
+            Only the owner and admins can change goals.
+          </p>
         </CardContent>
       </Card>
     );
@@ -90,13 +105,16 @@ export function NumbersGoals({ canEdit }: { canEdit: boolean }) {
       </CardHeader>
       <CardContent className="space-y-5">
         <p className="text-sm text-muted-foreground">
-          Set a fixed target, or a growth goal measured against the same period last year. Weekly goals are worked out
-          from the monthly figure, so there is nothing to type in each week.
+          Set a fixed target, or a growth goal measured against the same period last year. Weekly
+          goals are worked out from the monthly figure, so there is nothing to type in each week.
         </p>
         {metrics.map((metric) => {
           const entry = row(metric.key);
           return (
-            <div key={metric.key} className="grid gap-2 rounded-xl border border-border/70 p-3 sm:grid-cols-[14rem_1fr]">
+            <div
+              key={metric.key}
+              className="grid gap-2 rounded-xl border border-border/70 p-3 sm:grid-cols-[14rem_1fr]"
+            >
               <div>
                 <p className="text-sm font-semibold">{metric.label}</p>
                 <select
@@ -106,7 +124,10 @@ export function NumbersGoals({ canEdit }: { canEdit: boolean }) {
                   onChange={(e) =>
                     setDraft((prev) => ({
                       ...prev,
-                      [metric.key]: { ...row(metric.key), method: e.target.value as "fixed" | "growth" },
+                      [metric.key]: {
+                        ...row(metric.key),
+                        method: e.target.value as "fixed" | "growth",
+                      },
                     }))
                   }
                 >
@@ -171,7 +192,11 @@ export function NumbersGoals({ canEdit }: { canEdit: boolean }) {
           <Button onClick={submit} disabled={busy}>
             {busy ? "Saving…" : "Save goals"}
           </Button>
-          {note && <p className={`text-sm ${note.ok ? "text-muted-foreground" : "text-destructive"}`}>{note.text}</p>}
+          {note && (
+            <p className={`text-sm ${note.ok ? "text-muted-foreground" : "text-destructive"}`}>
+              {note.text}
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

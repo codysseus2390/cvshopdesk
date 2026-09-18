@@ -79,7 +79,11 @@ export function AssistantBar() {
     onError: (err) => {
       setTurns((t) => [
         ...t,
-        { role: "assistant", text: err instanceof Error ? err.message : "That did not work just now.", ok: false },
+        {
+          role: "assistant",
+          text: err instanceof Error ? err.message : "That did not work just now.",
+          ok: false,
+        },
       ]);
     },
   });
@@ -110,7 +114,10 @@ export function AssistantBar() {
     setAttachment(null);
     setProblem(null);
     setOpen(true);
-    setTurns((t) => [...t, { role: "user", text: outgoing ? `${outgoing.name}${q ? ` — ${q}` : ""}` : q }]);
+    setTurns((t) => [
+      ...t,
+      { role: "user", text: outgoing ? `${outgoing.name}${q ? ` — ${q}` : ""}` : q },
+    ]);
     mutation.mutate({ message: q, attachment: outgoing });
   }
 
@@ -153,7 +160,11 @@ export function AssistantBar() {
           <div className="mb-2 flex max-w-full items-center gap-2 truncate rounded-full border border-border bg-muted px-3 py-1.5 text-xs">
             <FileText className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">{attachment.name}</span>
-            <button type="button" onClick={() => setAttachment(null)} aria-label="Remove attachment">
+            <button
+              type="button"
+              onClick={() => setAttachment(null)}
+              aria-label="Remove attachment"
+            >
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -188,12 +199,16 @@ export function AssistantBar() {
                 void pickFile(file);
               }
             }}
-            placeholder={`Ask ${assistantName}, or paste a screenshot…`}
+            placeholder={`Ask ${assistantName} about your shop…`}
             aria-label={`Ask ${assistantName}`}
             className="h-12 min-w-0 flex-1 rounded-full border-transparent bg-muted/70 px-4 shadow-none focus-visible:border-primary/40"
           />
 
-          <TalkButton disabled={busy} onResult={(text) => submit(text)} onError={(message) => setProblem(message)} />
+          <TalkButton
+            disabled={busy}
+            onResult={(text) => submit(text)}
+            onError={(message) => setProblem(message)}
+          />
 
           <Button
             type="button"
@@ -252,7 +267,7 @@ export function AssistantBar() {
               ? "wake"
               : config?.voice?.inputMode === "wake"
                 ? "auto"
-                : config?.voice?.inputMode ?? "auto"
+                : (config?.voice?.inputMode ?? "auto")
           }
           autoListen={config?.voice?.autoListen !== false}
           wakePhrase={config?.voice?.wakePhrase?.trim() || "Hey Hank"}

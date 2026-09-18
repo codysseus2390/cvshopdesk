@@ -33,7 +33,10 @@ export const Route = createFileRoute("/_authenticated/tv")({
   head: () => ({
     meta: [
       { title: "TV mode — Cedar Valley Hub" },
-      { name: "description", content: "Staff-only full screen rotation of Cedar Valley numbers and the job board." },
+      {
+        name: "description",
+        content: "Staff-only full screen rotation of Cedar Valley numbers and the job board.",
+      },
       { property: "og:title", content: "TV mode — Cedar Valley Hub" },
       { property: "og:description", content: "Full screen staff display." },
     ],
@@ -69,7 +72,10 @@ function TvMode() {
   // Known arrivals first (oldest first), then the clearly-labelled unknown group.
   const jobs: BoardJob[] = [...(board.data?.jobs ?? []), ...(board.data?.jobsWithoutArrival ?? [])];
   const { pages, page } = jobPageAt(elapsed, jobs.length);
-  const visibleJobs = jobs.slice(page * JOB_ROWS_PER_PAGE, page * JOB_ROWS_PER_PAGE + JOB_ROWS_PER_PAGE);
+  const visibleJobs = jobs.slice(
+    page * JOB_ROWS_PER_PAGE,
+    page * JOB_ROWS_PER_PAGE + JOB_ROWS_PER_PAGE,
+  );
   const unknownFrom = board.data?.jobs.length ?? 0;
 
   const today = dashboard.data?.todayRow;
@@ -79,7 +85,9 @@ function TvMode() {
       : board.error instanceof Error
         ? board.error.message
         : null;
-  const staleMinutes = Math.round((Date.now() - Math.min(dashboard.dataUpdatedAt, board.dataUpdatedAt)) / 60_000);
+  const staleMinutes = Math.round(
+    (Date.now() - Math.min(dashboard.dataUpdatedAt, board.dataUpdatedAt)) / 60_000,
+  );
   const stale = Boolean(dashboard.dataUpdatedAt && board.dataUpdatedAt && staleMinutes >= 5);
 
   return (
@@ -92,13 +100,23 @@ function TvMode() {
           </p>
           <p>
             Imported snapshot · numbers saved{" "}
-            {dashboard.data?.lastUpdate ? new Date(dashboard.data.lastUpdate).toLocaleString() : "never"} · jobs{" "}
-            {board.data?.lastSnapshot ? new Date(board.data.lastSnapshot).toLocaleString() : "never"}
+            {dashboard.data?.lastUpdate
+              ? new Date(dashboard.data.lastUpdate).toLocaleString()
+              : "never"}{" "}
+            · jobs{" "}
+            {board.data?.lastSnapshot
+              ? new Date(board.data.lastSnapshot).toLocaleString()
+              : "never"}
           </p>
           <p className="text-sm">
-            Not a live TireShop connection · shop day {dashboard.data?.today ?? "—"} · next screen in {secondsLeft}s
+            Not a live TireShop connection · shop day {dashboard.data?.today ?? "—"} · next screen
+            in {secondsLeft}s
           </p>
-          {problem && <p className="text-base font-semibold text-destructive">Screen not updating: {problem}</p>}
+          {problem && (
+            <p className="text-base font-semibold text-destructive">
+              Screen not updating: {problem}
+            </p>
+          )}
           {!problem && stale && (
             <p className="text-base font-semibold text-destructive">
               Screen has not refreshed for {staleMinutes} minutes — numbers may be behind
@@ -126,19 +144,42 @@ function TvMode() {
       {screen === "numbers" ? (
         <div className="space-y-8">
           <div className="grid gap-6 md:grid-cols-4">
-            <MetricCard size="tv" label="Gross profit today" value={formatCurrency(today?.gross_profit ?? null)} />
-            <MetricCard size="tv" label="Tires sold today" value={formatCount(today?.tires_sold ?? null)} />
-            <MetricCard size="tv" label="Cars today" value={formatCount(today?.car_count ?? null)} />
+            <MetricCard
+              size="tv"
+              label="Gross profit today"
+              value={formatCurrency(today?.gross_profit ?? null)}
+            />
+            <MetricCard
+              size="tv"
+              label="Tires sold today"
+              value={formatCount(today?.tires_sold ?? null)}
+            />
+            <MetricCard
+              size="tv"
+              label="Cars today"
+              value={formatCount(today?.car_count ?? null)}
+            />
             <MetricCard
               size="tv"
               label="GP per car today"
-              value={formatCurrency(gpPerCar(today?.gross_profit ?? null, today?.car_count ?? null))}
+              value={formatCurrency(
+                gpPerCar(today?.gross_profit ?? null, today?.car_count ?? null),
+              )}
             />
           </div>
           <div className="grid gap-6 md:grid-cols-4">
-            <MetricCard label="Month to date GP" value={formatCurrency(dashboard.data?.mtd.gross_profit ?? null)} />
-            <MetricCard label="MTD tires" value={formatCount(dashboard.data?.mtd.tires_sold ?? null)} />
-            <MetricCard label="MTD cars" value={formatCount(dashboard.data?.mtd.car_count ?? null)} />
+            <MetricCard
+              label="Month to date GP"
+              value={formatCurrency(dashboard.data?.mtd.gross_profit ?? null)}
+            />
+            <MetricCard
+              label="MTD tires"
+              value={formatCount(dashboard.data?.mtd.tires_sold ?? null)}
+            />
+            <MetricCard
+              label="MTD cars"
+              value={formatCount(dashboard.data?.mtd.car_count ?? null)}
+            />
             <MetricCard
               label="MTD GP per car"
               value={formatCurrency(dashboard.data?.mtd.gp_per_car ?? null)}
@@ -148,14 +189,19 @@ function TvMode() {
           {dashboard.data?.mtd.as_of && (
             <p className="text-lg text-muted-foreground">
               Month to date from reports as of {dashboard.data.mtd.as_of}
-              {dashboard.data.mtd.stale ? ` · ${dashboard.data.mtd.days_behind} day(s) behind, coverage incomplete` : ""}
+              {dashboard.data.mtd.stale
+                ? ` · ${dashboard.data.mtd.days_behind} day(s) behind, coverage incomplete`
+                : ""}
             </p>
           )}
           {(dashboard.data?.monthly.length ?? 0) > 1 && (
             <div className="h-64 rounded-lg bg-card p-6">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={(dashboard.data?.monthly ?? []).map((m) => ({ month: m.month, gp: m.totals.gross_profit }))}
+                  data={(dashboard.data?.monthly ?? []).map((m) => ({
+                    month: m.month,
+                    gp: m.totals.gross_profit,
+                  }))}
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="month" tick={{ fontSize: 16 }} />
@@ -174,11 +220,14 @@ function TvMode() {
               {(board.data?.appointments ?? []).slice(0, JOB_ROWS_PER_PAGE).map((job) => (
                 <div key={job.id} className="rounded-lg bg-card p-4 text-2xl">
                   <p className="font-display font-bold">
-                    {job.appointment_at ? new Date(job.appointment_at).toLocaleTimeString() : "Time not recorded"} ·{" "}
-                    {job.customer_name ?? "Customer not recorded"}
+                    {job.appointment_at
+                      ? new Date(job.appointment_at).toLocaleTimeString()
+                      : "Time not recorded"}{" "}
+                    · {job.customer_name ?? "Customer not recorded"}
                   </p>
                   <p className="text-lg text-muted-foreground">
-                    {job.vehicle_label ?? "Vehicle not recorded"} · {job.requested_service ?? "Service not recorded"}
+                    {job.vehicle_label ?? "Vehicle not recorded"} ·{" "}
+                    {job.requested_service ?? "Service not recorded"}
                   </p>
                 </div>
               ))}
@@ -195,10 +244,12 @@ function TvMode() {
               {visibleJobs.map((job, i) => (
                 <div key={job.id} className="rounded-lg bg-card p-4">
                   <p className="font-display text-2xl font-bold">
-                    {job.customer_name ?? "Customer not recorded"} — {job.vehicle_label ?? "Vehicle not recorded"}
+                    {job.customer_name ?? "Customer not recorded"} —{" "}
+                    {job.vehicle_label ?? "Vehicle not recorded"}
                   </p>
                   <p className="text-lg text-muted-foreground">
-                    {job.requested_service ?? "Service not recorded"} · {job.technician ?? "Tech not assigned"} ·{" "}
+                    {job.requested_service ?? "Service not recorded"} ·{" "}
+                    {job.technician ?? "Tech not assigned"} ·{" "}
                     {page * JOB_ROWS_PER_PAGE + i >= unknownFrom
                       ? "Arrival time not recorded"
                       : waitingSince(job.arrival_at)}
@@ -210,7 +261,9 @@ function TvMode() {
                   </div>
                 </div>
               ))}
-              {jobs.length === 0 && <p className="text-xl text-muted-foreground">No unfinished job records.</p>}
+              {jobs.length === 0 && (
+                <p className="text-xl text-muted-foreground">No unfinished job records.</p>
+              )}
             </div>
           </section>
         </div>

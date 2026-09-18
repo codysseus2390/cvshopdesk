@@ -29,10 +29,14 @@ export const Route = createFileRoute("/_authenticated/tools")({
       { title: "Tools — Cedar Valley Hub" },
       {
         name: "description",
-        content: "Upload Cedar Valley reports and screenshots, review what was read, then confirm the numbers.",
+        content:
+          "Upload Cedar Valley reports and screenshots, review what was read, then confirm the numbers.",
       },
       { property: "og:title", content: "Tools — Cedar Valley Hub" },
-      { property: "og:description", content: "Upload reports and review extracted values before saving." },
+      {
+        property: "og:description",
+        content: "Upload reports and review extracted values before saving.",
+      },
     ],
   }),
   component: () => (
@@ -44,7 +48,6 @@ export const Route = createFileRoute("/_authenticated/tools")({
 
 type ScopeValue = "daily" | "mtd" | "ytd" | "invoice" | "inventory" | "jobs" | "other";
 type RecordKind = "inventory" | "jobs" | "appointments" | "customers";
-
 
 interface ExtractedRow {
   business_date: string;
@@ -84,7 +87,9 @@ function ToolsPage() {
   const [capturedAt, setCapturedAt] = useState("");
 
   const [busy, setBusy] = useState<string | null>(null);
-  const [status, setStatus] = useState<{ kind: "ok" | "warn" | "error"; text: string } | null>(null);
+  const [status, setStatus] = useState<{ kind: "ok" | "warn" | "error"; text: string } | null>(
+    null,
+  );
 
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [rows, setRows] = useState<ExtractedRow[]>([]);
@@ -94,7 +99,6 @@ function ToolsPage() {
 
   const itemColumns = Array.from(new Set(items.flatMap((item) => Object.keys(item)))).slice(0, 12);
 
-
   async function upload() {
     if (!file || !shopId) return;
     setBusy("upload");
@@ -102,10 +106,11 @@ function ToolsPage() {
     try {
       const hash = await sha256(file);
       const folder = crypto.randomUUID();
-      const path = `${shopId}/${folder}/${file.name.replace(/[^\w.\-]+/g, "_")}`;
-      const { error: upErr } = await supabase.storage
-        .from("shop-uploads")
-        .upload(path, file, { contentType: file.type || "application/octet-stream", upsert: false });
+      const path = `${shopId}/${folder}/${file.name.replace(/[^\w.-]+/g, "_")}`;
+      const { error: upErr } = await supabase.storage.from("shop-uploads").upload(path, file, {
+        contentType: file.type || "application/octet-stream",
+        upsert: false,
+      });
       if (upErr) throw new Error(`The file could not be stored: ${upErr.message}`);
 
       const result = await register({
@@ -122,7 +127,6 @@ function ToolsPage() {
         },
       });
 
-
       if (result.duplicate) {
         await supabase.storage.from("shop-uploads").remove([path]);
         setStatus({
@@ -130,7 +134,10 @@ function ToolsPage() {
           text: `This exact file was already uploaded${result.existing?.uploaded_at ? ` on ${new Date(result.existing.uploaded_at).toLocaleString()}` : ""}. Nothing was added again.`,
         });
       } else {
-        setStatus({ kind: "ok", text: "File saved. Now read it and review the values before they count." });
+        setStatus({
+          kind: "ok",
+          text: "File saved. Now read it and review the values before they count.",
+        });
         setFile(null);
       }
       await queryClient.invalidateQueries({ queryKey: ["imports"] });
@@ -153,7 +160,10 @@ function ToolsPage() {
       }
       openReview(importId, result.extraction as Record<string, unknown>);
     } catch (err) {
-      setStatus({ kind: "error", text: err instanceof Error ? err.message : "Reading the file failed." });
+      setStatus({
+        kind: "error",
+        text: err instanceof Error ? err.message : "Reading the file failed.",
+      });
     } finally {
       setBusy(null);
     }
@@ -165,13 +175,17 @@ function ToolsPage() {
     setRows(
       raw.map((r) => ({
         business_date: String(r["business_date"] ?? ""),
-        scope: (["daily", "mtd", "ytd"].includes(String(r["scope"])) ? String(r["scope"]) : "daily") as
-          | "daily"
-          | "mtd"
-          | "ytd",
-        gross_profit: r["gross_profit"] === null || r["gross_profit"] === undefined ? "" : String(r["gross_profit"]),
-        tires_sold: r["tires_sold"] === null || r["tires_sold"] === undefined ? "" : String(r["tires_sold"]),
-        car_count: r["car_count"] === null || r["car_count"] === undefined ? "" : String(r["car_count"]),
+        scope: (["daily", "mtd", "ytd"].includes(String(r["scope"]))
+          ? String(r["scope"])
+          : "daily") as "daily" | "mtd" | "ytd",
+        gross_profit:
+          r["gross_profit"] === null || r["gross_profit"] === undefined
+            ? ""
+            : String(r["gross_profit"]),
+        tires_sold:
+          r["tires_sold"] === null || r["tires_sold"] === undefined ? "" : String(r["tires_sold"]),
+        car_count:
+          r["car_count"] === null || r["car_count"] === undefined ? "" : String(r["car_count"]),
         confidence: String(r["confidence"] ?? "unknown"),
       })),
     );
@@ -181,7 +195,6 @@ function ToolsPage() {
       setRecordKind(suggested as RecordKind);
     }
     setUnreadable((extraction?.["unreadable"] as string[] | undefined) ?? []);
-
   }
 
   async function confirmMetrics() {
@@ -199,7 +212,8 @@ function ToolsPage() {
           car_count: r.car_count.trim() === "" ? null : Math.round(Number(r.car_count)),
           flags: r.confidence === "high" ? [] : [`confidence:${r.confidence}`],
         }));
-      if (!payload.length) throw new Error("Add a valid business date to at least one row before saving.");
+      if (!payload.length)
+        throw new Error("Add a valid business date to at least one row before saving.");
       const result = await accept({ data: { importId: reviewId, rows: payload } });
       setStatus({ kind: "ok", text: `${result.savedRows} row(s) saved to the shop records.` });
       setReviewId(null);
@@ -233,7 +247,6 @@ function ToolsPage() {
       setBusy(null);
     }
   }
-
 
   return (
     <AppShell
@@ -285,15 +298,27 @@ function ToolsPage() {
               <div className="grid grid-cols-2 gap-2 md:col-span-1">
                 <div className="space-y-2">
                   <Label htmlFor="ps">Covers from</Label>
-                  <Input id="ps" type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
+                  <Input
+                    id="ps"
+                    type="date"
+                    value={periodStart}
+                    onChange={(e) => setPeriodStart(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="pe">to</Label>
-                  <Input id="pe" type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
+                  <Input
+                    id="pe"
+                    type="date"
+                    value={periodEnd}
+                    onChange={(e) => setPeriodEnd(e.target.value)}
+                  />
                 </div>
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="cap">Time the report was taken (leave blank if you do not know)</Label>
+                <Label htmlFor="cap">
+                  Time the report was taken (leave blank if you do not know)
+                </Label>
                 <Input
                   id="cap"
                   type="datetime-local"
@@ -333,7 +358,9 @@ function ToolsPage() {
             <CardContent className="space-y-4">
               {unreadable.length > 0 && (
                 <div className="rounded-md bg-muted p-3 text-sm">
-                  <p className="font-semibold">Flagged as unclear — check these against the file:</p>
+                  <p className="font-semibold">
+                    Flagged as unclear — check these against the file:
+                  </p>
                   <ul className="list-disc pl-5">
                     {unreadable.map((u, i) => (
                       <li key={i}>{u}</li>
@@ -344,12 +371,19 @@ function ToolsPage() {
               {rows.length > 0 ? (
                 <div className="space-y-3">
                   {rows.map((row, i) => (
-                    <div key={i} className="grid gap-2 rounded-md border border-border p-3 md:grid-cols-6">
+                    <div
+                      key={i}
+                      className="grid gap-2 rounded-md border border-border p-3 md:grid-cols-6"
+                    >
                       <Input
                         type="date"
                         value={row.business_date}
                         onChange={(e) =>
-                          setRows(rows.map((r, j) => (i === j ? { ...r, business_date: e.target.value } : r)))
+                          setRows(
+                            rows.map((r, j) =>
+                              i === j ? { ...r, business_date: e.target.value } : r,
+                            ),
+                          )
                         }
                       />
                       <select
@@ -358,7 +392,9 @@ function ToolsPage() {
                         onChange={(e) =>
                           setRows(
                             rows.map((r, j) =>
-                              i === j ? { ...r, scope: e.target.value as ExtractedRow["scope"] } : r,
+                              i === j
+                                ? { ...r, scope: e.target.value as ExtractedRow["scope"] }
+                                : r,
                             ),
                           )
                         }
@@ -371,24 +407,36 @@ function ToolsPage() {
                         placeholder="Gross profit"
                         value={row.gross_profit}
                         onChange={(e) =>
-                          setRows(rows.map((r, j) => (i === j ? { ...r, gross_profit: e.target.value } : r)))
+                          setRows(
+                            rows.map((r, j) =>
+                              i === j ? { ...r, gross_profit: e.target.value } : r,
+                            ),
+                          )
                         }
                       />
                       <Input
                         placeholder="Tires"
                         value={row.tires_sold}
                         onChange={(e) =>
-                          setRows(rows.map((r, j) => (i === j ? { ...r, tires_sold: e.target.value } : r)))
+                          setRows(
+                            rows.map((r, j) =>
+                              i === j ? { ...r, tires_sold: e.target.value } : r,
+                            ),
+                          )
                         }
                       />
                       <Input
                         placeholder="Cars"
                         value={row.car_count}
                         onChange={(e) =>
-                          setRows(rows.map((r, j) => (i === j ? { ...r, car_count: e.target.value } : r)))
+                          setRows(
+                            rows.map((r, j) => (i === j ? { ...r, car_count: e.target.value } : r)),
+                          )
                         }
                       />
-                      <Badge variant={row.confidence === "high" ? "default" : "secondary"}>{row.confidence}</Badge>
+                      <Badge variant={row.confidence === "high" ? "default" : "secondary"}>
+                        {row.confidence}
+                      </Badge>
                     </div>
                   ))}
                   <Button onClick={confirmMetrics} disabled={busy === reviewId}>
@@ -396,13 +444,16 @@ function ToolsPage() {
                   </Button>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">No metric rows were read from this file.</p>
+                <p className="text-sm text-muted-foreground">
+                  No metric rows were read from this file.
+                </p>
               )}
 
               {items.length > 0 && (
                 <div className="space-y-3">
                   <p className="text-sm font-semibold">
-                    {items.length} detail row(s) read from this file — edit anything that is wrong before saving
+                    {items.length} detail row(s) read from this file — edit anything that is wrong
+                    before saving
                   </p>
                   <div className="flex flex-wrap items-end gap-3">
                     <div className="space-y-1">
@@ -441,11 +492,20 @@ function ToolsPage() {
                               <td key={col} className="p-1">
                                 <Input
                                   className="h-8 min-w-24 text-xs"
-                                  value={item[col] === null || item[col] === undefined ? "" : String(item[col])}
+                                  value={
+                                    item[col] === null || item[col] === undefined
+                                      ? ""
+                                      : String(item[col])
+                                  }
                                   onChange={(e) =>
                                     setItems(
                                       items.map((row, j) =>
-                                        i === j ? { ...row, [col]: e.target.value === "" ? null : e.target.value } : row,
+                                        i === j
+                                          ? {
+                                              ...row,
+                                              [col]: e.target.value === "" ? null : e.target.value,
+                                            }
+                                          : row,
                                       ),
                                     )
                                   }
@@ -458,9 +518,10 @@ function ToolsPage() {
                     </table>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Blanks and values like N/A stay empty — they are never saved as zero. Rows without a TireShop record
-                    number are kept against this upload and marked for a check. These save existing TireShop records into
-                    this app only. Nothing is booked or created in TireShop.
+                    Blanks and values like N/A stay empty — they are never saved as zero. Rows
+                    without a TireShop record number are kept against this upload and marked for a
+                    check. These save existing TireShop records into this app only. Nothing is
+                    booked or created in TireShop.
                   </p>
                 </div>
               )}
@@ -478,15 +539,23 @@ function ToolsPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {imports.isLoading && <p className="text-muted-foreground">Loading…</p>}
-            {imports.data?.length === 0 && <p className="text-sm text-muted-foreground">No files uploaded yet.</p>}
+            {imports.data?.length === 0 && (
+              <p className="text-sm text-muted-foreground">No files uploaded yet.</p>
+            )}
             {imports.data?.map((imp) => (
-              <div key={imp.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+              <div
+                key={imp.id}
+                className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3"
+              >
                 <div>
                   <p className="font-semibold">{imp.file_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {imp.report_scope} · covers {imp.period_start ?? "?"} → {imp.period_end ?? "?"} · captured{" "}
-                    {imp.captured_at ? new Date(imp.captured_at).toLocaleString() : "time not recorded"} · uploaded{" "}
-                    {new Date(imp.uploaded_at).toLocaleString()} · {imp.status}
+                    {imp.report_scope} · covers {imp.period_start ?? "?"} → {imp.period_end ?? "?"}{" "}
+                    · captured{" "}
+                    {imp.captured_at
+                      ? new Date(imp.captured_at).toLocaleString()
+                      : "time not recorded"}{" "}
+                    · uploaded {new Date(imp.uploaded_at).toLocaleString()} · {imp.status}
                     {imp.status === "accepted" && imp.reviewed_at
                       ? ` on ${new Date(imp.reviewed_at).toLocaleString()} — locked`
                       : ""}
@@ -519,7 +588,10 @@ function ToolsPage() {
                         setStatus(null);
                         try {
                           await reject({ data: { importId: imp.id, reason: "Rejected by staff" } });
-                          setStatus({ kind: "warn", text: `${imp.file_name} was marked as rejected.` });
+                          setStatus({
+                            kind: "warn",
+                            text: `${imp.file_name} was marked as rejected.`,
+                          });
                         } catch (err) {
                           setStatus({
                             kind: "error",
@@ -531,7 +603,6 @@ function ToolsPage() {
                     >
                       Reject
                     </Button>
-
                   )}
                 </div>
               </div>
@@ -539,9 +610,11 @@ function ToolsPage() {
           </CardContent>
         </Card>
         <NotificationComposer
-          canSend={shopContext.data?.membership?.role === "owner" || shopContext.data?.membership?.role === "manager"}
+          canSend={
+            shopContext.data?.membership?.role === "owner" ||
+            shopContext.data?.membership?.role === "manager"
+          }
         />
-
       </div>
     </AppShell>
   );
@@ -551,7 +624,10 @@ function ToolsPage() {
       const { url } = await signUrl({ data: { importId } });
       window.open(url, "_blank", "noopener");
     } catch (err) {
-      setStatus({ kind: "error", text: err instanceof Error ? err.message : "The file could not be opened." });
+      setStatus({
+        kind: "error",
+        text: err instanceof Error ? err.message : "The file could not be opened.",
+      });
     }
   }
 }

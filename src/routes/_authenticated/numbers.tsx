@@ -2,7 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, Printer, PencilLine, TrendingDown, TrendingUp } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Printer,
+  PencilLine,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate } from "@/components/access-gate";
 import { usePermissions } from "@/components/use-permissions";
@@ -28,10 +36,14 @@ export const Route = createFileRoute("/_authenticated/numbers")({
       { title: "Numbers — Cedar Valley Hub" },
       {
         name: "description",
-        content: "Weekly, monthly and yearly Cedar Valley shop numbers with goals and year-over-year comparison.",
+        content:
+          "Weekly, monthly and yearly Cedar Valley shop numbers with goals and year-over-year comparison.",
       },
       { property: "og:title", content: "Numbers — Cedar Valley Hub" },
-      { property: "og:description", content: "Shop performance reporting with goals and year-over-year change." },
+      {
+        property: "og:description",
+        content: "Shop performance reporting with goals and year-over-year change.",
+      },
     ],
   }),
   component: () => (
@@ -86,7 +98,10 @@ function NumbersPage() {
   }
 
   const summary = useMemo(
-    () => (report?.rows ?? []).filter((r) => ["gross_profit", "car_count", "tires_sold", "mechanic_productivity"].includes(r.key)),
+    () =>
+      (report?.rows ?? []).filter((r) =>
+        ["gross_profit", "car_count", "tires_sold", "mechanic_productivity"].includes(r.key),
+      ),
     [report?.rows],
   );
 
@@ -128,7 +143,10 @@ function NumbersPage() {
         },
       });
       setEditing(false);
-      setResult({ ok: true, text: "Saved. The corrected numbers are now used everywhere in the app." });
+      setResult({
+        ok: true,
+        text: "Saved. The corrected numbers are now used everywhere in the app.",
+      });
       await queryClient.invalidateQueries();
     } catch (err) {
       setResult({ ok: false, text: err instanceof Error ? err.message : "Nothing was saved." });
@@ -139,7 +157,15 @@ function NumbersPage() {
 
   function exportCsv() {
     if (!report) return;
-    const header = ["Metric", "Actual", "Goal", "Variance", "Variance %", "Previous year", "YoY change"];
+    const header = [
+      "Metric",
+      "Actual",
+      "Goal",
+      "Variance",
+      "Variance %",
+      "Previous year",
+      "YoY change",
+    ];
     const lines = [header.join(",")];
     for (const row of report.rows) {
       lines.push(
@@ -165,7 +191,10 @@ function NumbersPage() {
   }
 
   return (
-    <AppShell title="Numbers" subtitle="Actual against goal and the same period last year, from confirmed records.">
+    <AppShell
+      title="Numbers"
+      subtitle="Actual against goal and the same period last year, from confirmed records."
+    >
       <div className="space-y-6">
         <div className="flex flex-wrap items-center gap-2 print:hidden">
           {KINDS.map((option) => (
@@ -180,7 +209,12 @@ function NumbersPage() {
             </Button>
           ))}
           <div className="ml-auto flex items-center gap-2">
-            <Button size="icon" variant="outline" aria-label="Previous period" onClick={() => move(-1)}>
+            <Button
+              size="icon"
+              variant="outline"
+              aria-label="Previous period"
+              onClick={() => move(-1)}
+            >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="min-w-[9rem] text-center font-display text-lg font-bold">
@@ -189,7 +223,14 @@ function NumbersPage() {
             <Button size="icon" variant="outline" aria-label="Next period" onClick={() => move(1)}>
               <ChevronRight className="h-4 w-4" />
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => { setAnchor(undefined); setEditing(false); }}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setAnchor(undefined);
+                setEditing(false);
+              }}
+            >
               Current
             </Button>
           </div>
@@ -197,7 +238,9 @@ function NumbersPage() {
 
         {query.isLoading && <p className="text-muted-foreground">Loading confirmed records…</p>}
         {query.error && (
-          <p className="text-destructive">{query.error instanceof Error ? query.error.message : "Could not load."}</p>
+          <p className="text-destructive">
+            {query.error instanceof Error ? query.error.message : "Could not load."}
+          </p>
         )}
 
         {report && (
@@ -206,10 +249,16 @@ function NumbersPage() {
               {summary.map((row) => (
                 <Card key={row.key}>
                   <CardContent className="pt-5">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{row.label}</p>
-                    <p className="mt-1 font-display text-2xl font-bold">{formatMetric(row.actual, row.format)}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {row.label}
+                    </p>
+                    <p className="mt-1 font-display text-2xl font-bold">
+                      {formatMetric(row.actual, row.format)}
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      {row.goal === null ? "No goal set" : `${formatMetric(row.goal, row.format)} goal`}
+                      {row.goal === null
+                        ? "No goal set"
+                        : `${formatMetric(row.goal, row.format)} goal`}
                       {row.variance !== null && ` · ${formatDiff(row.variance, row.format)}`}
                     </p>
                   </CardContent>
@@ -268,16 +317,21 @@ function NumbersPage() {
                     : report.basis === "monthly-rollup"
                       ? `Rolled up from the accepted monthly totals through ${report.as_of}.`
                       : report.basis === "daily-sum"
-                      ? `Sum of ${report.covered_days} confirmed day(s) through ${report.as_of}.`
-                      : "No confirmed records for this period yet. Nothing is assumed to be zero."}{" "}
+                        ? `Sum of ${report.covered_days} confirmed day(s) through ${report.as_of}.`
+                        : "No confirmed records for this period yet. Nothing is assumed to be zero."}{" "}
                   A dash means the number is not available — never treated as zero.
                 </p>
                 {result && (
-                  <p className={`text-sm ${result.ok ? "text-muted-foreground" : "text-destructive"}`}>{result.text}</p>
+                  <p
+                    className={`text-sm ${result.ok ? "text-muted-foreground" : "text-destructive"}`}
+                  >
+                    {result.text}
+                  </p>
                 )}
                 {kind === "weekly" && perms.can("edit_dashboard_numbers") && (
                   <p className="text-xs text-muted-foreground print:hidden">
-                    Weekly figures come from the saved daily records — correct a single day on the Daily entry page.
+                    Weekly figures come from the saved daily records — correct a single day on the
+                    Daily entry page.
                   </p>
                 )}
               </CardContent>
@@ -302,7 +356,8 @@ function NumbersPage() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    The previous record is kept and superseded. Gross profit % is worked out from sales and gross profit.
+                    The previous record is kept and superseded. Gross profit % is worked out from
+                    sales and gross profit.
                   </p>
                   <div className="flex gap-2">
                     <Button onClick={submitCorrection} disabled={busy}>
@@ -322,7 +377,9 @@ function NumbersPage() {
               </CardHeader>
               <CardContent>
                 {report.corrections.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No corrections recorded for {report.range.label}.</p>
+                  <p className="text-sm text-muted-foreground">
+                    No corrections recorded for {report.range.label}.
+                  </p>
                 ) : (
                   <ul className="space-y-2 text-sm">
                     {report.corrections.map((c) => (
@@ -388,7 +445,9 @@ function MetricRow({
       <td className="py-2 pr-4 text-muted-foreground">{formatMetric(row.goal, row.format)}</td>
       <td className="py-2 pr-4">
         {formatDiff(row.variance, row.format)}
-        {row.variance_pct !== null && <span className="text-muted-foreground"> / {formatPct(row.variance_pct)}</span>}
+        {row.variance_pct !== null && (
+          <span className="text-muted-foreground"> / {formatPct(row.variance_pct)}</span>
+        )}
       </td>
       <td className="py-2 pr-4 text-muted-foreground">{formatMetric(row.previous, row.format)}</td>
       <td className="py-2 pr-4">
@@ -396,7 +455,9 @@ function MetricRow({
           {up && <TrendingUp className="h-3.5 w-3.5" aria-hidden />}
           {down && <TrendingDown className="h-3.5 w-3.5" aria-hidden />}
           {formatDiff(row.yoy_diff, row.format)}
-          {row.yoy_pct !== null && <span className="text-muted-foreground"> / {formatPct(row.yoy_pct)}</span>}
+          {row.yoy_pct !== null && (
+            <span className="text-muted-foreground"> / {formatPct(row.yoy_pct)}</span>
+          )}
         </span>
       </td>
     </tr>

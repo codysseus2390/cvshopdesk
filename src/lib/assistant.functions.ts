@@ -1,7 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { resolvePermissions, type AppRole } from "@/lib/permissions";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Supa = { from: (t: string) => any };
 
 export const askAssistant = createServerFn({ method: "POST" })
@@ -24,23 +26,34 @@ export const askAssistant = createServerFn({ method: "POST" })
 
     const { data: member } = await sb
       .from("shop_members")
-      .select("shop_id")
+      .select("shop_id, role")
       .eq("user_id", userId)
       .eq("status", "approved")
       .maybeSingle();
     if (!member?.shop_id) throw new Error("You do not have access to a shop yet.");
     const shopId = member.shop_id as string;
+    const { data: overrides } = await sb
+      .from("role_permissions")
+      .select("role, permission, allowed")
+      .eq("shop_id", shopId);
+    const permissions = resolvePermissions(member.role as AppRole, (overrides ?? []) as never);
+    if (!permissions.use_assistant)
+      throw new Error("The AI assistant is not enabled for your role.");
 
     const [{ data: confirmed }, { data: imports }, { data: corrections }] = await Promise.all([
       sb
         .from("metric_snapshots")
-        .select("business_date, scope, gross_profit, tires_sold, car_count, source, note, flags, created_at")
+        .select(
+          "business_date, scope, gross_profit, tires_sold, car_count, source, note, flags, created_at",
+        )
         .eq("is_current", true)
         .order("business_date", { ascending: false })
         .limit(120),
       sb
         .from("imports")
-        .select("file_name, report_scope, period_start, period_end, status, uploaded_at, extraction_notes")
+        .select(
+          "file_name, report_scope, period_start, period_end, status, uploaded_at, extraction_notes",
+        )
         .order("uploaded_at", { ascending: false })
         .limit(30),
       sb
@@ -106,6 +119,21 @@ Staff question: ${data.question}`,
 export const listAssistantHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { userId } = context;
+    const { data: member } = await context.supabase
+      .from("shop_members")
+      .select("shop_id, role")
+      .eq("user_id", userId)
+      .eq("status", "approved")
+      .maybeSingle();
+    if (!member?.shop_id) throw new Error("You do not have access to a shop yet.");
+    const { data: overrides } = await context.supabase
+      .from("role_permissions")
+      .select("role, permission, allowed")
+      .eq("shop_id", member.shop_id);
+    const permissions = resolvePermissions(member.role as AppRole, (overrides ?? []) as never);
+    if (!permissions.use_assistant)
+      throw new Error("The AI assistant is not enabled for your role.");
     const { data, error } = await context.supabase
       .from("assistant_messages")
       .select("id, role, content, created_at")

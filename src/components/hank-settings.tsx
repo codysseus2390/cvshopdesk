@@ -15,15 +15,27 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAiSettings, saveAiSettings } from "@/lib/ai-settings.functions";
-import { SHOP_AI_MAX_PERSONALITY_CHARS, SHOP_AI_MODEL_TIERS, SHOP_AI_MODELS } from "@/lib/ai/model-config";
+import {
+  SHOP_AI_MAX_PERSONALITY_CHARS,
+  SHOP_AI_MODEL_TIERS,
+  SHOP_AI_MODELS,
+} from "@/lib/ai/model-config";
 import { ASSISTANT_SETTINGS_DEFAULTS, type AssistantSettings } from "@/lib/ai/persona";
 import { HankVoiceSettings } from "@/components/hank-voice-settings";
 import { HANK_VOICE_DEFAULTS } from "@/lib/ai/voice-config";
 
 const BEHAVIOR: { key: keyof AssistantSettings; label: string; hint: string }[] = [
-  { key: "casualLanguage", label: "Casual language", hint: "Talks like someone in the shop, not a manual." },
+  {
+    key: "casualLanguage",
+    label: "Casual language",
+    hint: "Talks like someone in the shop, not a manual.",
+  },
   { key: "humor", label: "Humor", hint: "Light jokes when they fit." },
-  { key: "mildProfanity", label: "Mild profanity", hint: "Everyday shop language. Never aimed at a person." },
+  {
+    key: "mildProfanity",
+    label: "Mild profanity",
+    hint: "Everyday shop language. Never aimed at a person.",
+  },
   { key: "shopBanter", label: "Playful shop banter", hint: "A little back and forth with staff." },
   {
     key: "customerFacingProfessional",
@@ -74,7 +86,10 @@ export function HankSettings({ canEdit }: { canEdit: boolean }) {
       await queryClient.invalidateQueries({ queryKey: ["ai-settings"] });
       setStatus({ ok: true, message: "Saved. Hank uses these instructions on his next answer." });
     } catch (err) {
-      setStatus({ ok: false, message: err instanceof Error ? err.message : "That could not be saved." });
+      setStatus({
+        ok: false,
+        message: err instanceof Error ? err.message : "That could not be saved.",
+      });
     } finally {
       setSaving(false);
     }
@@ -90,7 +105,8 @@ export function HankSettings({ canEdit }: { canEdit: boolean }) {
     <div className="space-y-6">
       {!canEdit && (
         <p className="flex items-center gap-2 rounded-xl border border-border bg-muted/50 p-3 text-xs text-muted-foreground">
-          <Lock className="h-3.5 w-3.5" /> Only the owner and admins can change these. You can see how Hank is set up.
+          <Lock className="h-3.5 w-3.5" /> Only the owner and admins can change these. You can see
+          how Hank is set up.
         </p>
       )}
 
@@ -138,8 +154,9 @@ export function HankSettings({ canEdit }: { canEdit: boolean }) {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            Standing instructions for Hank. Saved with the shop and sent behind the scenes on every conversation — nobody
-            has to paste them into chat, and they are never shown in the chat itself.
+            Standing instructions for Hank. Saved with the shop and sent behind the scenes on every
+            conversation — nobody has to paste them into chat, and they are never shown in the chat
+            itself.
           </p>
           <Textarea
             value={form.personality}
@@ -149,8 +166,11 @@ export function HankSettings({ canEdit }: { canEdit: boolean }) {
             placeholder="How Hank should talk, what he should always check, what he should never do…"
             className="min-h-[240px]"
           />
-          <p className={`text-right text-[11px] ${personalityOver ? "text-destructive" : "text-muted-foreground"}`}>
-            {form.personality.length.toLocaleString()} / {SHOP_AI_MAX_PERSONALITY_CHARS.toLocaleString()} characters
+          <p
+            className={`text-right text-[11px] ${personalityOver ? "text-destructive" : "text-muted-foreground"}`}
+          >
+            {form.personality.length.toLocaleString()} /{" "}
+            {SHOP_AI_MAX_PERSONALITY_CHARS.toLocaleString()} characters
           </p>
         </CardContent>
       </Card>
@@ -183,8 +203,10 @@ export function HankSettings({ canEdit }: { canEdit: boolean }) {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            Current model: <span className="font-medium text-foreground">{SHOP_AI_MODELS.fast}</span>. Tiers are set up
-            here so Fast, Standard and Deep can be pointed at different models later without touching the chat.
+            Current model:{" "}
+            <span className="font-medium text-foreground">{SHOP_AI_MODELS.fast}</span>. Tiers are
+            set up here so Fast, Standard and Deep can be pointed at different models later without
+            touching the chat.
           </p>
           <div className="grid gap-2 sm:grid-cols-3">
             {SHOP_AI_MODEL_TIERS.map((tier) => (
@@ -194,7 +216,9 @@ export function HankSettings({ canEdit }: { canEdit: boolean }) {
                 disabled={!canEdit}
                 onClick={() => set("modelTier", tier.key)}
                 className={`rounded-xl border p-3 text-left transition-colors ${
-                  form.modelTier === tier.key ? "border-primary bg-primary/5" : "border-border hover:bg-muted/60"
+                  form.modelTier === tier.key
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:bg-muted/60"
                 }`}
               >
                 <p className="text-sm font-semibold">{tier.label}</p>
@@ -255,8 +279,8 @@ export function HankSettings({ canEdit }: { canEdit: boolean }) {
             {writeTools.length === 0 && <p className="text-xs text-muted-foreground">None.</p>}
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Turning something on here never skips sign-in, permissions, validation or the confirmation step. Everyone
-            still only does what their own account allows.
+            Turning something on here never skips sign-in, permissions, validation or the
+            confirmation step. Everyone still only does what their own account allows.
           </p>
         </CardContent>
       </Card>
@@ -286,8 +310,8 @@ export function HankSettings({ canEdit }: { canEdit: boolean }) {
             {data?.attachments.maxFiles ?? 0} per message.
           </p>
           <p className="text-xs text-muted-foreground">
-            OpenAI connection: {data?.apiKeyConfigured ? "configured" : "not configured yet"}. The key itself is kept in
-            secure server settings and is never shown here.
+            OpenAI connection: {data?.apiKeyConfigured ? "configured" : "not configured yet"}. The
+            key itself is kept in secure server settings and is never shown here.
           </p>
         </CardContent>
       </Card>
@@ -315,7 +339,8 @@ export function HankSettings({ canEdit }: { canEdit: boolean }) {
           </CardHeader>
           <CardContent>
             <p className="text-xs text-muted-foreground">
-              Reliable usage figures are not available yet, so nothing is shown rather than an estimate.
+              Reliable usage figures are not available yet, so nothing is shown rather than an
+              estimate.
             </p>
           </CardContent>
         </Card>

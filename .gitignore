@@ -16,6 +16,12 @@ dist-ssr
 .nitro
 *.local
 
+# Existing tracked .env contains Lovable's public settings. Ignore new env files.
+.env*
+!.env.example
+backups/
+*.dump
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

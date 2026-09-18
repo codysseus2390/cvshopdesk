@@ -74,9 +74,15 @@ function mapFailure(status: number, body: string): VoiceServiceError {
     );
   }
   if (status === 422 || status === 400) {
-    return new VoiceServiceError("Those voice settings were not accepted. Try resetting them to the voice defaults.", "invalid_settings");
+    return new VoiceServiceError(
+      "Those voice settings were not accepted. Try resetting them to the voice defaults.",
+      "invalid_settings",
+    );
   }
-  return new VoiceServiceError("Hank's voice service could not be reached just now. His written answer is unaffected.", "unavailable");
+  return new VoiceServiceError(
+    "Hank's voice service could not be reached just now. His written answer is unaffected.",
+    "unavailable",
+  );
 }
 
 async function call(path: string, init: RequestInit): Promise<Response> {
@@ -87,7 +93,10 @@ async function call(path: string, init: RequestInit): Promise<Response> {
       headers: { ...(init.headers ?? {}), "xi-api-key": apiKey() },
     });
   } catch {
-    throw new VoiceServiceError("Hank's voice service could not be reached. Check the connection and try again.", "unavailable");
+    throw new VoiceServiceError(
+      "Hank's voice service could not be reached. Check the connection and try again.",
+      "unavailable",
+    );
   }
   if (!response.ok) {
     const body = await response.text().catch(() => "");
@@ -168,7 +177,10 @@ export async function synthesizeSpeech(input: SpeakInput): Promise<ArrayBuffer> 
     throw new VoiceServiceError("There is nothing to read out.", "invalid_settings");
   }
   if (!input.voiceId) {
-    throw new VoiceServiceError("No voice has been chosen for Hank yet. Pick one in Hank Settings.", "voice_unavailable");
+    throw new VoiceServiceError(
+      "No voice has been chosen for Hank yet. Pick one in Hank Settings.",
+      "voice_unavailable",
+    );
   }
 
   // The streaming endpoint starts returning audio while it is still speaking.

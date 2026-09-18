@@ -80,7 +80,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Cedar Valley Hub" },
       {
         name: "description",
-        content: "Staff hub for Cedar Valley Tire & Auto Service: daily numbers, imports and shop records.",
+        content:
+          "Staff hub for Cedar Valley Tire & Auto Service: daily numbers, imports and shop records.",
       },
       { name: "robots", content: "noindex, nofollow" },
       { property: "og:title", content: "Cedar Valley Hub" },

@@ -28,6 +28,7 @@ export class ConfirmationRequiredError extends Error {}
 
 export interface ShopAiToolContext {
   /** Authenticated Supabase client for the signed-in staff member (RLS applies). */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any;
   shopId: string;
   userId: string;
@@ -104,13 +105,15 @@ export function shopAiToolCatalogue() {
 
 /** Serialises the registry into OpenAI Responses API tool definitions. */
 export function shopAiToolDefinitions(disabled: string[] = []) {
-  return SHOP_AI_TOOLS.filter((tool) => !(tool.mutating && disabled.includes(tool.name))).map((tool) => ({
-    type: "function" as const,
-    name: tool.name,
-    description: tool.requiresConfirmation
-      ? `${tool.description} Consequential: call it with confirmed=true only after the user has agreed to the exact change you described.`
-      : tool.description,
-    parameters: tool.parameters,
-    strict: false,
-  }));
+  return SHOP_AI_TOOLS.filter((tool) => !(tool.mutating && disabled.includes(tool.name))).map(
+    (tool) => ({
+      type: "function" as const,
+      name: tool.name,
+      description: tool.requiresConfirmation
+        ? `${tool.description} Consequential: call it with confirmed=true only after the user has agreed to the exact change you described.`
+        : tool.description,
+      parameters: tool.parameters,
+      strict: false,
+    }),
+  );
 }

@@ -8,7 +8,10 @@ export interface DashboardWeek {
   car_count: number | null;
   gp_per_car: number | null;
   mechanic_productivity: number | null;
-  goals: Record<"gross_profit" | "tires_sold" | "car_count" | "mechanic_productivity", number | null>;
+  goals: Record<
+    "gross_profit" | "tires_sold" | "car_count" | "mechanic_productivity",
+    number | null
+  >;
 }
 
 /** Projects the shared weekly Numbers report into the four dashboard cards. */
@@ -21,11 +24,13 @@ export function dashboardWeekFromReport(report: NumbersReport): DashboardWeek {
 
   return {
     from: report.range.from,
-    through: report.as_of ?? (report.shopToday < report.range.to ? report.shopToday : report.range.to),
+    through:
+      report.as_of ?? (report.shopToday < report.range.to ? report.shopToday : report.range.to),
     gross_profit: grossProfit,
     tires_sold: tiresSold,
     car_count: carCount,
-    gp_per_car: grossProfit !== null && carCount !== null && carCount > 0 ? grossProfit / carCount : null,
+    gp_per_car:
+      grossProfit !== null && carCount !== null && carCount > 0 ? grossProfit / carCount : null,
     mechanic_productivity: mechanicProductivity,
     goals: {
       gross_profit: row("gross_profit")?.goal ?? null,

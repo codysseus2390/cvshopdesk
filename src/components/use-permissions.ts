@@ -6,7 +6,11 @@ import { resolvePermissions, type AppRole, type PermissionKey } from "@/lib/perm
 /** Role, overrides and the effective permissions for the signed-in employee. */
 export function usePermissions() {
   const fetchConfig = useServerFn(getAdminConfig);
-  const query = useQuery({ queryKey: ["admin-config"], queryFn: () => fetchConfig(), staleTime: 30_000 });
+  const query = useQuery({
+    queryKey: ["admin-config"],
+    queryFn: () => fetchConfig(),
+    staleTime: 30_000,
+  });
 
   const role = (query.data?.role ?? null) as AppRole | null;
   const overrides = query.data?.overrides ?? [];

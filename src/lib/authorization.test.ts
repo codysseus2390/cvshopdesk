@@ -163,7 +163,9 @@ dbTest("atomic shop bootstrap", () => {
     expect(def).toContain("insert into public.shop_members");
     expect(def).toContain("on conflict (shop_id, user_id) do update");
     // Same routine, one transaction: a shop can never exist without its owner row.
-    expect(def.indexOf("insert into public.shops")).toBeLessThan(def.indexOf("insert into public.shop_members"));
+    expect(def.indexOf("insert into public.shops")).toBeLessThan(
+      def.indexOf("insert into public.shop_members"),
+    );
   });
 
   it("is callable by signed-in users only, never anonymously", async () => {

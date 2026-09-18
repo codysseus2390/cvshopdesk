@@ -8,8 +8,12 @@ const permissionKeys = PERMISSIONS.map((p) => p.key) as [string, ...string[]];
 const assignableRoles = ["manager", "staff", "display"] as const;
 
 type Supa = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   from: (t: string) => any;
-  rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+  rpc: (
+    fn: string,
+    args?: Record<string, unknown>,
+  ) => Promise<{ data: unknown; error: { message: string } | null }>;
 };
 
 async function currentMembership(supabase: unknown, userId: string) {
@@ -27,7 +31,11 @@ async function currentMembership(supabase: unknown, userId: string) {
 export interface ShopSettingsPayload {
   hidden_widgets: string[];
   targets: Record<string, number | null>;
-  technician_goals: { technician: string; cars_per_month: number | null; gp_per_month: number | null }[];
+  technician_goals: {
+    technician: string;
+    cars_per_month: number | null;
+    gp_per_month: number | null;
+  }[];
 }
 
 /** Everything the Settings screens need: role, overrides, dashboard settings. */
@@ -38,7 +46,10 @@ export const getAdminConfig = createServerFn({ method: "GET" })
     const membership = await currentMembership(context.supabase, context.userId);
 
     const [{ data: overrides }, { data: settings }] = await Promise.all([
-      sb.from("role_permissions").select("role, permission, allowed").eq("shop_id", membership.shop_id),
+      sb
+        .from("role_permissions")
+        .select("role, permission, allowed")
+        .eq("shop_id", membership.shop_id),
       sb.from("shop_settings").select("*").eq("shop_id", membership.shop_id).maybeSingle(),
     ]);
 
@@ -50,7 +61,8 @@ export const getAdminConfig = createServerFn({ method: "GET" })
         hidden_widgets: (settings?.hidden_widgets ?? []) as string[],
         targets: (settings?.targets ?? {}) as Record<string, number | null>,
         goal_rules: (settings?.goal_rules ?? {}) as GoalRules,
-        technician_goals: (settings?.technician_goals ?? []) as ShopSettingsPayload["technician_goals"],
+        technician_goals: (settings?.technician_goals ??
+          []) as ShopSettingsPayload["technician_goals"],
         updated_at: (settings?.updated_at ?? null) as string | null,
       },
     };

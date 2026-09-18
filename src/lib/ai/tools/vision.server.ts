@@ -35,7 +35,12 @@ export interface DetectedProposal {
   records: {
     label: string | null;
     tool: string;
-    fields: { label: string; value: string | null; confidence: (typeof CONFIDENCE)[number]; note: string | null }[];
+    fields: {
+      label: string;
+      value: string | null;
+      confidence: (typeof CONFIDENCE)[number];
+      note: string | null;
+    }[];
   }[];
 }
 
@@ -49,16 +54,21 @@ export const VISION_TOOLS: ShopAiTool[] = [
     parameters: {
       type: "object",
       properties: {
-        title: { type: "string", description: "Short heading, e.g. 'Detected from daily report screenshot'." },
+        title: {
+          type: "string",
+          description: "Short heading, e.g. 'Detected from daily report screenshot'.",
+        },
         source: { type: "string", enum: ["image", "document", "text"] },
         question: {
           type: "string",
-          description: "Ask here when an important value is ambiguous. Do not guess it in the fields.",
+          description:
+            "Ask here when an important value is ambiguous. Do not guess it in the fields.",
         },
         warnings: {
           type: "array",
           items: { type: "string" },
-          description: "Anything cropped, cut off, unreadable or possibly a different report scope.",
+          description:
+            "Anything cropped, cut off, unreadable or possibly a different report scope.",
         },
         records: {
           type: "array",
@@ -66,7 +76,10 @@ export const VISION_TOOLS: ShopAiTool[] = [
           items: {
             type: "object",
             properties: {
-              label: { type: "string", description: "e.g. 'Daily numbers 2026-09-16' or 'Technician: Josh'." },
+              label: {
+                type: "string",
+                description: "e.g. 'Daily numbers 2026-09-16' or 'Technician: Josh'.",
+              },
               tool: { type: "string", description: "The action tool that will save this record." },
               fields: {
                 type: "array",
@@ -74,7 +87,10 @@ export const VISION_TOOLS: ShopAiTool[] = [
                   type: "object",
                   properties: {
                     label: { type: "string" },
-                    value: { type: "string", description: "Exactly as read. Leave empty when unreadable." },
+                    value: {
+                      type: "string",
+                      description: "Exactly as read. Leave empty when unreadable.",
+                    },
                     confidence: { type: "string", enum: [...CONFIDENCE] },
                     note: { type: "string" },
                   },
@@ -95,7 +111,9 @@ export const VISION_TOOLS: ShopAiTool[] = [
       const input = z
         .object({
           title: z.string().min(2).max(160),
-          source: z.enum(["image", "document", "text"]).default(ctx.sourceType === "image" ? "image" : "text"),
+          source: z
+            .enum(["image", "document", "text"])
+            .default(ctx.sourceType === "image" ? "image" : "text"),
           question: z.string().max(400).optional(),
           warnings: z.array(z.string().max(300)).max(10).default([]),
           records: z.array(recordSchema).min(1).max(25),
@@ -114,7 +132,8 @@ export const VISION_TOOLS: ShopAiTool[] = [
           fields: record.fields.map((field) => ({
             label: field.label,
             value: field.value && field.value.trim().length > 0 ? field.value.trim() : null,
-            confidence: field.value && field.value.trim().length > 0 ? field.confidence : "unreadable",
+            confidence:
+              field.value && field.value.trim().length > 0 ? field.confidence : "unreadable",
             note: field.note ?? null,
           })),
         })),

@@ -23,7 +23,11 @@ import { AccessGate } from "@/components/access-gate";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { ThinkingIndicator, ToolActivity, type ToolActivityItem } from "@/components/shop-ai/tool-activity";
+import {
+  ThinkingIndicator,
+  ToolActivity,
+  type ToolActivityItem,
+} from "@/components/shop-ai/tool-activity";
 import {
   ACCEPTED_ATTACHMENT_TYPES,
   AttachmentStrip,
@@ -39,7 +43,11 @@ import {
   type DetectedProposalView,
 } from "@/lib/shop-ai.functions";
 import { getAiSettings } from "@/lib/ai-settings.functions";
-import { SHOP_AI_COUNTER_THRESHOLD, SHOP_AI_MAX_MESSAGE_CHARS, ASSISTANT_DEFAULTS } from "@/lib/ai/model-config";
+import {
+  SHOP_AI_COUNTER_THRESHOLD,
+  SHOP_AI_MAX_MESSAGE_CHARS,
+  ASSISTANT_DEFAULTS,
+} from "@/lib/ai/model-config";
 
 export const Route = createFileRoute("/_authenticated/shop-ai")({
   head: () => ({
@@ -47,10 +55,14 @@ export const Route = createFileRoute("/_authenticated/shop-ai")({
       { title: "Hank — Cedar Valley Hub" },
       {
         name: "description",
-        content: "Ask Hank about automotive service, tires and shop operations from inside Cedar Valley Hub.",
+        content:
+          "Ask Hank about automotive service, tires and shop operations from inside Cedar Valley Hub.",
       },
       { property: "og:title", content: "Hank — Cedar Valley Hub" },
-      { property: "og:description", content: "Cedar Valley shop assistant for service advisors and technicians." },
+      {
+        property: "og:description",
+        content: "Cedar Valley shop assistant for service advisors and technicians.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -157,7 +169,8 @@ function ShopAiPage() {
         {
           id: `err-${Date.now()}`,
           role: "assistant",
-          content: err instanceof Error ? err.message : `${assistantName} could not answer just now.`,
+          content:
+            err instanceof Error ? err.message : `${assistantName} could not answer just now.`,
           failed: true,
         },
       ]);
@@ -168,7 +181,8 @@ function ShopAiPage() {
   const lastId = messages[messages.length - 1]?.id;
   const isLast = (message: ChatMessage) => message.id === lastId;
   const lastMessage = messages[messages.length - 1];
-  const lastAssistantText = lastMessage?.role === "assistant" && !lastMessage.failed ? lastMessage.content : "";
+  const lastAssistantText =
+    lastMessage?.role === "assistant" && !lastMessage.failed ? lastMessage.content : "";
 
   // Voice is a layer on top of the written answer: if it fails, the text stands.
   const speech = useHankSpeech();
@@ -282,24 +296,36 @@ function ShopAiPage() {
     >
       <div className="mx-auto flex h-[calc(100vh-180px)] w-full max-w-3xl flex-col">
         <div className="mb-3 flex shrink-0 items-center justify-end">
-          <Button variant="outline" size="sm" onClick={reset} disabled={mutation.isPending} className="rounded-xl">
-            <RotateCcw className="mr-2 h-3.5 w-3.5" /> New conversation
-          </Button>
+          {(config?.role === "owner" || config?.role === "manager") && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={reset}
+              disabled={mutation.isPending}
+              className="rounded-xl"
+            >
+              <RotateCcw className="mr-2 h-3.5 w-3.5" /> New conversation
+            </Button>
+          )}
         </div>
 
         <Card className="flex min-h-0 flex-1 flex-col">
           <CardContent ref={messagesRef} className="flex-1 space-y-5 overflow-y-auto p-4 sm:p-6">
-            {isLoading && <p className="text-sm text-muted-foreground">Loading your conversation…</p>}
+            {isLoading && (
+              <p className="text-sm text-muted-foreground">Loading your conversation…</p>
+            )}
 
             {!isLoading && messages.length === 0 && (
               <div className="py-6 text-center">
                 <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <Bot className="h-6 w-6" />
                 </span>
-                <h2 className="mt-3 font-display text-xl font-bold">How can {assistantName} help?</h2>
+                <h2 className="mt-3 font-display text-xl font-bold">
+                  How can {assistantName} help?
+                </h2>
                 <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                  Ask about diagnostics, tires, maintenance intervals, customer wording or shop process. It will not
-                  guess at customer, inventory or sales records.
+                  Ask about diagnostics, tires, maintenance intervals, customer wording or shop
+                  process. It will not guess at customer, inventory or sales records.
                 </p>
                 <div className="mt-4 grid gap-2 text-left sm:grid-cols-3">
                   {SUGGESTIONS.map((suggestion) => (
@@ -401,9 +427,14 @@ function ShopAiPage() {
                             {speech.loadingId === message.id ? "Preparing…" : "Listen"}
                           </Button>
                         )}
-                        {speech.error && speech.playingId === null && speech.loadingId === null && isLast(message) && (
-                          <span className="text-[11px] text-muted-foreground">{speech.error}</span>
-                        )}
+                        {speech.error &&
+                          speech.playingId === null &&
+                          speech.loadingId === null &&
+                          isLast(message) && (
+                            <span className="text-[11px] text-muted-foreground">
+                              {speech.error}
+                            </span>
+                          )}
                       </div>
                     )}
                     {isLast(message) &&
@@ -510,12 +541,12 @@ function ShopAiPage() {
             }}
           />
 
-
           {draft.length >= SHOP_AI_COUNTER_THRESHOLD && (
             <p
               className={`mt-1 text-right text-[11px] ${overLimit ? "font-medium text-destructive" : "text-muted-foreground"}`}
             >
-              {draft.length.toLocaleString()} / {SHOP_AI_MAX_MESSAGE_CHARS.toLocaleString()} characters
+              {draft.length.toLocaleString()} / {SHOP_AI_MAX_MESSAGE_CHARS.toLocaleString()}{" "}
+              characters
             </p>
           )}
 
@@ -531,7 +562,8 @@ function ShopAiPage() {
                 }}
               />
               <p className="truncate text-[11px] text-muted-foreground">
-                Paste or attach screenshots. {assistantName} asks before changing anything already saved.
+                Paste or attach screenshots. {assistantName} asks before changing anything already
+                saved.
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
@@ -553,7 +585,11 @@ function ShopAiPage() {
               </Button>
               <Button
                 type="submit"
-                disabled={mutation.isPending || overLimit || (draft.trim().length === 0 && attachments.length === 0)}
+                disabled={
+                  mutation.isPending ||
+                  overLimit ||
+                  (draft.trim().length === 0 && attachments.length === 0)
+                }
                 className="rounded-xl"
               >
                 <Send className="mr-2 h-4 w-4" /> Send
@@ -569,7 +605,11 @@ function ShopAiPage() {
           busy={mutation.isPending}
           speaking={speech.playingId !== null || speech.loadingId !== null}
           inputMode={
-            config?.voice?.wakeEnabled ? "wake" : (config?.voice?.inputMode === "wake" ? "auto" : config?.voice?.inputMode ?? "auto")
+            config?.voice?.wakeEnabled
+              ? "wake"
+              : config?.voice?.inputMode === "wake"
+                ? "auto"
+                : (config?.voice?.inputMode ?? "auto")
           }
           autoListen={config?.voice?.autoListen !== false}
           wakePhrase={config?.voice?.wakePhrase?.trim() || "Hey Hank"}

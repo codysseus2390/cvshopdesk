@@ -41,7 +41,10 @@ export const OWNER_ONLY_PERMISSIONS: PermissionKey[] = PERMISSIONS.filter(
 ).map((p) => p.key);
 
 function all(value: boolean): Record<PermissionKey, boolean> {
-  return Object.fromEntries(PERMISSIONS.map((p) => [p.key, value])) as Record<PermissionKey, boolean>;
+  return Object.fromEntries(PERMISSIONS.map((p) => [p.key, value])) as Record<
+    PermissionKey,
+    boolean
+  >;
 }
 
 /** Starting point before any owner override. */

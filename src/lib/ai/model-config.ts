@@ -17,8 +17,16 @@ export type ShopAiModelKey = keyof typeof SHOP_AI_MODELS;
 
 export const SHOP_AI_MODEL_TIERS: { key: ShopAiModelKey; label: string; description: string }[] = [
   { key: "fast", label: "Fast", description: "Everyday shop chat. Lowest cost, quickest answers." },
-  { key: "standard", label: "Standard", description: "Reserved for heavier questions. Not routed separately yet." },
-  { key: "deep", label: "Deep", description: "Reserved for long analysis. Not routed separately yet." },
+  {
+    key: "standard",
+    label: "Standard",
+    description: "Reserved for heavier questions. Not routed separately yet.",
+  },
+  {
+    key: "deep",
+    label: "Deep",
+    description: "Reserved for long analysis. Not routed separately yet.",
+  },
 ];
 
 export const SHOP_AI_DEFAULT_MODEL_KEY: ShopAiModelKey = "fast";

@@ -9,7 +9,13 @@ export interface DraftAttachment {
   size: number;
 }
 
-export const ACCEPTED_ATTACHMENT_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "application/pdf"];
+export const ACCEPTED_ATTACHMENT_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+  "application/pdf",
+];
 export const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024;
 export const MAX_ATTACHMENTS = 4;
 
@@ -32,7 +38,8 @@ export function readAttachment(file: File): Promise<DraftAttachment> {
 
 /** Returns an error message when a file cannot be attached. */
 export function validateAttachment(file: File, current: number): string | null {
-  if (current >= MAX_ATTACHMENTS) return `Hank takes up to ${MAX_ATTACHMENTS} attachments per message.`;
+  if (current >= MAX_ATTACHMENTS)
+    return `Hank takes up to ${MAX_ATTACHMENTS} attachments per message.`;
   if (!ACCEPTED_ATTACHMENT_TYPES.includes(file.type)) {
     return `${file.name || "That file"} is not supported. Attach a PNG, JPG, WEBP image or a PDF.`;
   }
@@ -60,17 +67,15 @@ export function AttachmentStrip({
           className="group relative flex items-center gap-2 rounded-xl border border-border bg-muted/60 p-1.5 pr-2"
         >
           {item.mimeType.startsWith("image/") ? (
-            <img
-              src={item.dataUrl}
-              alt={item.name}
-              className="h-12 w-12 rounded-lg object-cover"
-            />
+            <img src={item.dataUrl} alt={item.name} className="h-12 w-12 rounded-lg object-cover" />
           ) : (
             <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-background text-muted-foreground">
               <FileText className="h-5 w-5" />
             </span>
           )}
-          <span className="max-w-[9rem] truncate text-[11px] font-medium text-foreground">{item.name}</span>
+          <span className="max-w-[9rem] truncate text-[11px] font-medium text-foreground">
+            {item.name}
+          </span>
           {onRemove && (
             <button
               type="button"

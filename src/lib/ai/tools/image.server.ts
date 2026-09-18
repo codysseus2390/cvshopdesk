@@ -22,7 +22,8 @@ const CREATE_IMAGE: ShopAiTool = {
     properties: {
       prompt: {
         type: "string",
-        description: "Full description of the picture to create, including any words that must appear in it.",
+        description:
+          "Full description of the picture to create, including any words that must appear in it.",
       },
     },
     required: ["prompt"],
@@ -36,7 +37,10 @@ const CREATE_IMAGE: ShopAiTool = {
 
     const key = process.env["OPENAI_API_KEY"];
     if (!key) {
-      throw new AiUnavailableError("Image creation is not configured — the OpenAI key is missing.", "not_configured");
+      throw new AiUnavailableError(
+        "Image creation is not configured — the OpenAI key is missing.",
+        "not_configured",
+      );
     }
 
     const res = await fetch(OPENAI_IMAGES_URL, {
@@ -61,7 +65,11 @@ const CREATE_IMAGE: ShopAiTool = {
     const json = (await res.json()) as { data?: { b64_json?: string }[] };
     const base64 = json.data?.[0]?.b64_json;
     if (!base64) {
-      return { data: { error: "The image service returned no picture. Try again or reword the description." } };
+      return {
+        data: {
+          error: "The image service returned no picture. Try again or reword the description.",
+        },
+      };
     }
 
     const binary = atob(base64);

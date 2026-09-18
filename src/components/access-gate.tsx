@@ -28,7 +28,9 @@ export function AccessGate({ children }: { children: ReactNode }) {
     return <Centered>Checking your staff access…</Centered>;
   }
   if (error) {
-    return <Centered>{error instanceof Error ? error.message : "Access could not be checked."}</Centered>;
+    return (
+      <Centered>{error instanceof Error ? error.message : "Access could not be checked."}</Centered>
+    );
   }
   if (data?.membership?.status === "approved") {
     return <>{children}</>;
@@ -103,10 +105,14 @@ export function AccessGate({ children }: { children: ReactNode }) {
             </p>
           )}
           {data?.membership?.status === "revoked" && (
-            <p className="text-sm text-muted-foreground">Your access was removed. Contact the owner.</p>
+            <p className="text-sm text-muted-foreground">
+              Your access was removed. Contact the owner.
+            </p>
           )}
           {problem && <p className="text-sm text-destructive">{problem}</p>}
-          {data?.email && <p className="text-xs text-muted-foreground">Signed in as {data.email}</p>}
+          {data?.email && (
+            <p className="text-xs text-muted-foreground">Signed in as {data.email}</p>
+          )}
         </CardContent>
       </Card>
     </Centered>
@@ -116,7 +122,9 @@ export function AccessGate({ children }: { children: ReactNode }) {
 function Centered({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-6 py-12 text-center">
-      <div className="flex w-full max-w-md flex-col items-center gap-4 text-muted-foreground">{children}</div>
+      <div className="flex w-full max-w-md flex-col items-center gap-4 text-muted-foreground">
+        {children}
+      </div>
     </div>
   );
 }

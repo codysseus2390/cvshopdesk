@@ -3,8 +3,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 type Supa = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   from: (t: string) => any;
-  rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+  rpc: (
+    fn: string,
+    args?: Record<string, unknown>,
+  ) => Promise<{ data: unknown; error: { message: string } | null }>;
 };
 
 async function membership(supabase: unknown, userId: string) {
@@ -97,13 +101,21 @@ export const createNotification = createServerFn({ method: "POST" })
         user_id,
       })),
       ...(toDisplay
-        ? [{ notification_id: created.id, shop_id: member.shop_id, target: "display", user_id: null }]
+        ? [
+            {
+              notification_id: created.id,
+              shop_id: member.shop_id,
+              target: "display",
+              user_id: null,
+            },
+          ]
         : []),
     ];
 
     if (rows.length > 0) {
       const { error: recipientError } = await sb.from("notification_recipients").insert(rows);
-      if (recipientError) throw new Error(`Saved, but recipients failed: ${recipientError.message}`);
+      if (recipientError)
+        throw new Error(`Saved, but recipients failed: ${recipientError.message}`);
     }
 
     await sb.rpc("log_audit_event", {
@@ -122,7 +134,9 @@ export const listMyNotifications = createServerFn({ method: "GET" })
     const sb = context.supabase as unknown as Supa;
     const { data, error } = await sb
       .from("notification_recipients")
-      .select("id, read_at, target, notification:notifications(id, title, message, priority, created_at, audience)")
+      .select(
+        "id, read_at, target, notification:notifications(id, title, message, priority, created_at, audience)",
+      )
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false })
       .limit(50);
@@ -170,7 +184,13 @@ export const listDisplayNotifications = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return (data ?? []) as {
       id: string;
-      notification: { id: string; title: string; message: string; priority: string; created_at: string } | null;
+      notification: {
+        id: string;
+        title: string;
+        message: string;
+        priority: string;
+        created_at: string;
+      } | null;
     }[];
   });
 

@@ -12,9 +12,15 @@ export const Route = createFileRoute("/_authenticated/customers")({
   head: () => ({
     meta: [
       { title: "Customers — Cedar Valley Hub" },
-      { name: "description", content: "Search Cedar Valley customers and their vehicles from confirmed imports." },
+      {
+        name: "description",
+        content: "Search Cedar Valley customers and their vehicles from confirmed imports.",
+      },
       { property: "og:title", content: "Customers — Cedar Valley Hub" },
-      { property: "og:description", content: "Customer and vehicle history from confirmed imports." },
+      {
+        property: "og:description",
+        content: "Customer and vehicle history from confirmed imports.",
+      },
     ],
   }),
   component: () => (
@@ -42,7 +48,10 @@ function CustomersPage() {
   });
 
   return (
-    <AppShell title="Customers" subtitle="Only customers that arrived through confirmed imports appear here.">
+    <AppShell
+      title="Customers"
+      subtitle="Only customers that arrived through confirmed imports appear here."
+    >
       <Input
         className="mb-6 max-w-sm"
         placeholder="Search name, phone or email"
@@ -70,7 +79,7 @@ function CustomersPage() {
                     {v.plate ? ` · ${v.plate}` : ""}
                   </li>
                 ))}
-                {(((customer.vehicles as Vehicle[] | null) ?? []).length === 0) && (
+                {((customer.vehicles as Vehicle[] | null) ?? []).length === 0 && (
                   <li className="text-muted-foreground">No vehicle recorded</li>
                 )}
               </ul>

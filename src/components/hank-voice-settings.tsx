@@ -87,7 +87,15 @@ export function HankVoiceSettings({
     const term = search.trim().toLowerCase();
     if (!term) return voices;
     return voices.filter((voice) =>
-      [voice.name, voice.category, voice.accent, voice.gender, voice.age, voice.description, voice.useCase]
+      [
+        voice.name,
+        voice.category,
+        voice.accent,
+        voice.gender,
+        voice.age,
+        voice.description,
+        voice.useCase,
+      ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
@@ -97,7 +105,9 @@ export function HankVoiceSettings({
 
   const selected = voices.find((voice) => voice.voiceId === form.voiceId) ?? null;
   const savedVoiceMissing =
-    Boolean(form.voiceId) && voices.length > 0 && !voices.some((voice) => voice.voiceId === form.voiceId);
+    Boolean(form.voiceId) &&
+    voices.length > 0 &&
+    !voices.some((voice) => voice.voiceId === form.voiceId);
 
   const set = <K extends keyof HankVoiceSettings>(key: K, value: HankVoiceSettings[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -149,7 +159,10 @@ export function HankVoiceSettings({
       }
       playUrl(`data:${result.mimeType};base64,${result.audioBase64}`);
     } catch (err) {
-      setStatus({ ok: false, message: err instanceof Error ? err.message : "That sample could not be produced." });
+      setStatus({
+        ok: false,
+        message: err instanceof Error ? err.message : "That sample could not be produced.",
+      });
     } finally {
       setBusy(null);
     }
@@ -182,7 +195,10 @@ export function HankVoiceSettings({
       await queryClient.invalidateQueries({ queryKey: ["ai-settings"] });
       setStatus({ ok: true, message: "Saved. Hank uses this voice from his next answer on." });
     } catch (err) {
-      setStatus({ ok: false, message: err instanceof Error ? err.message : "That could not be saved." });
+      setStatus({
+        ok: false,
+        message: err instanceof Error ? err.message : "That could not be saved.",
+      });
     } finally {
       setBusy(null);
     }
@@ -192,15 +208,15 @@ export function HankVoiceSettings({
     <div className="space-y-6">
       {!canEdit && (
         <p className="flex items-center gap-2 rounded-xl border border-border bg-muted/50 p-3 text-xs text-muted-foreground">
-          <Lock className="h-3.5 w-3.5" /> Only the owner and admins can change Hank's voice. You can still tap the
-          speaker on any of his answers.
+          <Lock className="h-3.5 w-3.5" /> Only the owner and admins can change Hank's voice. You
+          can still tap the speaker on any of his answers.
         </p>
       )}
 
       {!configured && (
         <p className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs font-medium text-destructive">
-          <TriangleAlert className="h-3.5 w-3.5" /> The voice account is not connected yet, so Hank cannot speak.
-          Everything else about him keeps working.
+          <TriangleAlert className="h-3.5 w-3.5" /> The voice account is not connected yet, so Hank
+          cannot speak. Everything else about him keeps working.
         </p>
       )}
 
@@ -214,7 +230,9 @@ export function HankVoiceSettings({
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-medium">Enable Hank Voice</p>
-              <p className="text-xs text-muted-foreground">Adds a speaker button to each of Hank's answers.</p>
+              <p className="text-xs text-muted-foreground">
+                Adds a speaker button to each of Hank's answers.
+              </p>
             </div>
             <Switch
               checked={form.enabled}
@@ -227,8 +245,8 @@ export function HankVoiceSettings({
             <div>
               <p className="text-sm font-medium">Auto-speak responses</p>
               <p className="text-xs text-muted-foreground">
-                Reads out each new answer as it arrives. Older messages in a conversation are never read out on their
-                own.
+                Reads out each new answer as it arrives. Older messages in a conversation are never
+                read out on their own.
               </p>
             </div>
             <Switch
@@ -251,9 +269,21 @@ export function HankVoiceSettings({
             <div className="grid gap-2 sm:grid-cols-3">
               {(
                 [
-                  { key: "auto", label: "Automatic conversation", hint: "Hank listens whenever he is not talking." },
-                  { key: "push", label: "Push-to-talk", hint: "Hold the microphone to speak. Better in a noisy bay." },
-                  { key: "wake", label: "Wake word", hint: "He waits quietly until he hears his phrase." },
+                  {
+                    key: "auto",
+                    label: "Automatic conversation",
+                    hint: "Hank listens whenever he is not talking.",
+                  },
+                  {
+                    key: "push",
+                    label: "Push-to-talk",
+                    hint: "Hold the microphone to speak. Better in a noisy bay.",
+                  },
+                  {
+                    key: "wake",
+                    label: "Wake word",
+                    hint: "He waits quietly until he hears his phrase.",
+                  },
                 ] as const
               ).map((option) => (
                 <button
@@ -268,7 +298,9 @@ export function HankVoiceSettings({
                   } ${canEdit ? "" : "opacity-60"}`}
                 >
                   <span className="block text-xs font-semibold">{option.label}</span>
-                  <span className="mt-0.5 block text-[11px] text-muted-foreground">{option.hint}</span>
+                  <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                    {option.hint}
+                  </span>
                 </button>
               ))}
             </div>
@@ -295,7 +327,8 @@ export function HankVoiceSettings({
                   <Mic className="h-3.5 w-3.5" /> Wake word
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Hands-free start. In Voice Mode he waits quietly, then perks up when he hears his phrase.
+                  Hands-free start. In Voice Mode he waits quietly, then perks up when he hears his
+                  phrase.
                 </p>
               </div>
               <Switch
@@ -324,15 +357,17 @@ export function HankVoiceSettings({
                     onChange={(event) => set("wakePhrase", event.target.value)}
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    Two or three words work best — “Hey Hank”, “Okay Hank”. A single short word is triggered more often
-                    by ordinary shop talk.
+                    Two or three words work best — “Hey Hank”, “Okay Hank”. A single short word is
+                    triggered more often by ordinary shop talk.
                   </p>
                 </div>
 
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-sm font-medium">Activation sound</p>
-                    <p className="text-xs text-muted-foreground">A short chime when he starts listening.</p>
+                    <p className="text-xs text-muted-foreground">
+                      A short chime when he starts listening.
+                    </p>
                   </div>
                   <Switch
                     checked={form.wakeSound}
@@ -360,7 +395,9 @@ export function HankVoiceSettings({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <Label className="text-xs">Conversation timeout</Label>
-                    <span className="text-xs text-muted-foreground">{form.wakeTimeoutSeconds}s</span>
+                    <span className="text-xs text-muted-foreground">
+                      {form.wakeTimeoutSeconds}s
+                    </span>
                   </div>
                   <Slider
                     value={[form.wakeTimeoutSeconds]}
@@ -368,7 +405,9 @@ export function HankVoiceSettings({
                     max={HANK_WAKE_TIMEOUT_LIMITS.max}
                     step={HANK_WAKE_TIMEOUT_LIMITS.step}
                     disabled={!canEdit}
-                    onValueChange={([value]) => set("wakeTimeoutSeconds", value ?? HANK_WAKE_TIMEOUT_LIMITS.min)}
+                    onValueChange={([value]) =>
+                      set("wakeTimeoutSeconds", value ?? HANK_WAKE_TIMEOUT_LIMITS.min)
+                    }
                   />
                   <p className="text-[11px] text-muted-foreground">
                     After this much quiet he stops the conversation and waits for the phrase again.
@@ -376,28 +415,34 @@ export function HankVoiceSettings({
                 </div>
 
                 <p className="rounded-lg border border-border bg-card p-2.5 text-[11px] text-muted-foreground">
-                  Wake word listening happens on this device using the browser's own listening feature, so room audio is
-                  never sent to Hank's answering or speaking services just to catch his name. It works while Voice Mode
-                  is open in Chrome or Edge on a desktop, laptop or phone. A web page cannot listen in the background,
-                  after the tab is closed, or while the device is asleep — that needs a future installed Windows or phone
-                  version. He also ignores the phrase while he is talking, so his own voice cannot set him off.
+                  Wake word listening happens on this device using the browser's own listening
+                  feature, so room audio is never sent to Hank's answering or speaking services just
+                  to catch his name. It works while Voice Mode is open in Chrome or Edge on a
+                  desktop, laptop or phone. A web page cannot listen in the background, after the
+                  tab is closed, or while the device is asleep — that needs a future installed
+                  Windows or phone version. He also ignores the phrase while he is talking, so his
+                  own voice cannot set him off.
                 </p>
               </div>
             )}
           </div>
 
-
-
           <div className="rounded-xl border border-border bg-muted/40 p-3">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Currently selected</p>
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+              Currently selected
+            </p>
             <p className="text-sm font-semibold">
               {selected?.name ?? form.voiceName ?? "No voice chosen yet"}
             </p>
-            {selected && <p className="text-xs text-muted-foreground">{voiceLabels(selected) || selected.category}</p>}
+            {selected && (
+              <p className="text-xs text-muted-foreground">
+                {voiceLabels(selected) || selected.category}
+              </p>
+            )}
             {savedVoiceMissing && (
               <p className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-destructive">
-                <TriangleAlert className="h-3.5 w-3.5" /> This voice is no longer in the ElevenLabs account. Pick another
-                one — Hank has not been switched for you.
+                <TriangleAlert className="h-3.5 w-3.5" /> This voice is no longer in the ElevenLabs
+                account. Pick another one — Hank has not been switched for you.
               </p>
             )}
           </div>
@@ -456,7 +501,9 @@ export function HankVoiceSettings({
                 <TriangleAlert className="h-3.5 w-3.5" /> {listMessage}
               </p>
             )}
-            {voicesQuery.isLoading && <p className="text-xs text-muted-foreground">Loading voices…</p>}
+            {voicesQuery.isLoading && (
+              <p className="text-xs text-muted-foreground">Loading voices…</p>
+            )}
 
             <div className="max-h-[22rem] space-y-2 overflow-y-auto pr-1">
               {filtered.map((voice) => {
@@ -522,10 +569,23 @@ export function HankVoiceSettings({
             <CardTitle>Test Hank's voice</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Input value={phrase} onChange={(e) => setPhrase(e.target.value)} aria-label="Test phrase" />
+            <Input
+              value={phrase}
+              onChange={(e) => setPhrase(e.target.value)}
+              aria-label="Test phrase"
+            />
             <div className="flex items-center gap-2">
-              <Button type="button" onClick={speakTest} disabled={busy === "test" || !configured} className="rounded-xl">
-                {busy === "test" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+              <Button
+                type="button"
+                onClick={speakTest}
+                disabled={busy === "test" || !configured}
+                className="rounded-xl"
+              >
+                {busy === "test" ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="mr-2 h-4 w-4" />
+                )}
                 Speak
               </Button>
               {speaking && (
@@ -535,7 +595,8 @@ export function HankVoiceSettings({
               )}
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Uses the voice, speed and advanced settings shown here, saved or not, so you can try before you save.
+              Uses the voice, speed and advanced settings shown here, saved or not, so you can try
+              before you save.
             </p>
           </CardContent>
         </Card>
@@ -551,7 +612,9 @@ export function HankVoiceSettings({
                 className="flex w-full items-center justify-between gap-2 text-left"
               >
                 Advanced voice settings
-                <ChevronDown className={`h-4 w-4 transition-transform ${advanced ? "rotate-180" : ""}`} />
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${advanced ? "rotate-180" : ""}`}
+                />
               </button>
             </CardTitle>
           </CardHeader>
@@ -582,7 +645,9 @@ export function HankVoiceSettings({
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-medium">Speaker boost</p>
-                  <p className="text-xs text-muted-foreground">Clearer, slightly closer to the original voice.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Clearer, slightly closer to the original voice.
+                  </p>
                 </div>
                 <Switch
                   checked={form.speakerBoost}
@@ -621,15 +686,17 @@ export function HankVoiceSettings({
         </CardHeader>
         <CardContent>
           <p className="text-xs text-muted-foreground">
-            With Hank Voice on, the voice button beside the message box opens Voice Mode. It works with a desktop or
-            phone microphone and with Bluetooth headsets — the browser and device choose the microphone as usual.
+            With Hank Voice on, the voice button beside the message box opens Voice Mode. It works
+            with a desktop or phone microphone and with Bluetooth headsets — the browser and device
+            choose the microphone as usual.
           </p>
         </CardContent>
       </Card>
 
-
       {status && (
-        <p className={`flex items-center gap-2 text-sm ${status.ok ? "text-primary" : "font-medium text-destructive"}`}>
+        <p
+          className={`flex items-center gap-2 text-sm ${status.ok ? "text-primary" : "font-medium text-destructive"}`}
+        >
           {!status.ok && <TriangleAlert className="h-4 w-4" />} {status.message}
         </p>
       )}

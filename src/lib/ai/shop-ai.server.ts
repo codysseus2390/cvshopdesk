@@ -4,7 +4,11 @@
  */
 import { AiUnavailableError } from "@/lib/ai.server";
 import { SHOP_AI_MAX_TOOL_ROUNDS, resolveShopAiModel } from "./model-config";
-import { ASSISTANT_SETTINGS_DEFAULTS, personaInstructions, type AssistantSettings } from "./persona";
+import {
+  ASSISTANT_SETTINGS_DEFAULTS,
+  personaInstructions,
+  type AssistantSettings,
+} from "./persona";
 import {
   ConfirmationRequiredError,
   findShopAiTool,
@@ -128,7 +132,14 @@ export async function runShopAiTurn(options: {
         ? { role: "assistant", content: [{ type: "output_text", text: message.content }] }
         : { role: "user", content: userContent(message) },
     ),
-    { role: "user", content: userContent({ role: "user", content: options.question, attachments: options.attachments ?? [] }) },
+    {
+      role: "user",
+      content: userContent({
+        role: "user",
+        content: options.question,
+        attachments: options.attachments ?? [],
+      }),
+    },
   ];
 
   for (let round = 0; round <= SHOP_AI_MAX_TOOL_ROUNDS; round++) {
@@ -156,7 +167,12 @@ export async function runShopAiTurn(options: {
       if (outcome.changed) dataChanged = true;
       if (outcome.proposal) proposals.push(outcome.proposal);
       if (outcome.image) images.push(outcome.image);
-      toolActivity.push({ name, sourceLabel: toolSourceLabel(name), ok: outcome.ok, changed: outcome.changed });
+      toolActivity.push({
+        name,
+        sourceLabel: toolSourceLabel(name),
+        ok: outcome.ok,
+        changed: outcome.changed,
+      });
       input.push({ type: "function_call_output", call_id: callId, output: outcome.payload });
     }
   }
@@ -181,7 +197,11 @@ async function executeTool(
 }> {
   const tool = findShopAiTool(name);
   if (!tool) {
-    return { ok: false, changed: false, payload: JSON.stringify({ error: `Tool ${name} is not connected.` }) };
+    return {
+      ok: false,
+      changed: false,
+      payload: JSON.stringify({ error: `Tool ${name} is not connected.` }),
+    };
   }
 
   const log = async (entry: {
@@ -198,7 +218,8 @@ async function executeTool(
       user_id: ctx.userId,
       tool: name,
       status: entry.status,
-      confirmation_required: Boolean(tool.requiresConfirmation) || entry.status === "confirmation_requested",
+      confirmation_required:
+        Boolean(tool.requiresConfirmation) || entry.status === "confirmation_requested",
       confirmed: args["confirmed"] === true,
       target_table: entry.targetTable ?? null,
       target_id: entry.targetId ?? null,
@@ -302,7 +323,10 @@ async function callResponses(key: string, body: Record<string, unknown>) {
         quota ? "no_credits" : "rate_limited",
       );
     }
-    throw new AiUnavailableError(`Shop AI request failed (${res.status}). ${detail.slice(0, 300)}`, "upstream");
+    throw new AiUnavailableError(
+      `Shop AI request failed (${res.status}). ${detail.slice(0, 300)}`,
+      "upstream",
+    );
   }
 
   return await readStream(res.body);
@@ -349,8 +373,10 @@ async function readStream(body: ReadableStream<Uint8Array>) {
           "upstream",
         );
       } else if (event.type === "response.completed") {
-        if (typeof event.response?.output_text === "string") completedText = event.response.output_text;
-        if (Array.isArray(event.response?.output)) output = event.response.output as ResponsesItem[];
+        if (typeof event.response?.output_text === "string")
+          completedText = event.response.output_text;
+        if (Array.isArray(event.response?.output))
+          output = event.response.output as ResponsesItem[];
       }
     }
   }

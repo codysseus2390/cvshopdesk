@@ -4,15 +4,17 @@ import { z } from "zod";
 import { normalizeRows, splitBoard } from "./import-records";
 import { shopToday } from "./metrics-math";
 
-
-
 export const listInventory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ search: z.string().max(120).default("") }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ search: z.string().max(120).default("") }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     let query = context.supabase
       .from("inventory_items")
-      .select("id, external_id, description, brand, size, quantity, price, cost, snapshot_date, needs_review, flags")
+      .select(
+        "id, external_id, description, brand, size, quantity, price, cost, snapshot_date, needs_review, flags",
+      )
       .order("snapshot_date", { ascending: false })
       .limit(200);
     if (data.search.trim()) {
@@ -26,11 +28,15 @@ export const listInventory = createServerFn({ method: "POST" })
 
 export const listCustomers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ search: z.string().max(120).default("") }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ search: z.string().max(120).default("") }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     let query = context.supabase
       .from("customers")
-      .select("id, external_id, name, phone, email, first_seen_at, needs_review, flags, vehicles(id, year, make, model, vin, plate, needs_review)")
+      .select(
+        "id, external_id, name, phone, email, first_seen_at, needs_review, flags, vehicles(id, year, make, model, vin, plate, needs_review)",
+      )
       .order("name", { ascending: true })
       .limit(200);
     if (data.search.trim()) {
@@ -69,10 +75,12 @@ export const listBoard = createServerFn({ method: "GET" })
       timezone,
       shopToday: shopToday(timezone),
       fetchedAt: new Date().toISOString(),
-      lastSnapshot: rows.reduce<string | null>((acc, r) => (!acc || r.snapshot_at > acc ? r.snapshot_at : acc), null),
+      lastSnapshot: rows.reduce<string | null>(
+        (acc, r) => (!acc || r.snapshot_at > acc ? r.snapshot_at : acc),
+        null,
+      ),
     };
   });
-
 
 /** Local-only status and note. Never written back to TireShop. */
 export const updateJobLocalState = createServerFn({ method: "POST" })
@@ -125,6 +133,7 @@ export const acceptImportRecords = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const rows = normalizeRows(data.kind, data.items, data.importId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = context.supabase as unknown as { rpc: (f: string, a?: unknown) => any };
     const { data: result, error } = await sb.rpc("accept_import_records", {
       p_import_id: data.importId,
@@ -136,4 +145,3 @@ export const acceptImportRecords = createServerFn({ method: "POST" })
     const summary = (result ?? {}) as { saved?: number; needs_review?: number };
     return { saved: summary.saved ?? 0, needsReview: summary.needs_review ?? 0 };
   });
-

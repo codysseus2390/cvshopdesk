@@ -42,7 +42,10 @@ const monthlyProps = {
   gross_profit: { type: "number", description: "Gross profit / order profit for the month." },
   tires_sold: { type: "integer" },
   car_count: { type: "integer" },
-  note: { type: "string", description: "Where the numbers came from, e.g. 'From monthly report screenshot'." },
+  note: {
+    type: "string",
+    description: "Where the numbers came from, e.g. 'From monthly report screenshot'.",
+  },
 };
 
 export const MONTHLY_NUMBER_TOOLS: ShopAiTool[] = [
@@ -58,11 +61,15 @@ export const MONTHLY_NUMBER_TOOLS: ShopAiTool[] = [
       additionalProperties: false,
     },
     execute: async (ctx, args) => {
-      const { year } = z.object({ year: z.number().int().min(2000).max(2100).optional() }).parse(args);
+      const { year } = z
+        .object({ year: z.number().int().min(2000).max(2100).optional() })
+        .parse(args);
       const y = year ?? Number(ctx.today.slice(0, 4));
       const { data, error } = await ctx.supabase
         .from("metric_snapshots")
-        .select("business_date, scope, sales, gross_profit, tires_sold, car_count, created_at, note, source")
+        .select(
+          "business_date, scope, sales, gross_profit, tires_sold, car_count, created_at, note, source",
+        )
         .eq("is_current", true)
         .gte("business_date", `${y}-01-01`)
         .lte("business_date", `${y}-12-31`);
@@ -114,11 +121,15 @@ export const MONTHLY_NUMBER_TOOLS: ShopAiTool[] = [
             additionalProperties: false,
           },
         },
-        note: { type: "string", description: "Note applied to every month that has no note of its own." },
+        note: {
+          type: "string",
+          description: "Note applied to every month that has no note of its own.",
+        },
         ...{
           confirmed: {
             type: "boolean",
-            description: "Set true only after the user explicitly approved these exact monthly numbers.",
+            description:
+              "Set true only after the user explicitly approved these exact monthly numbers.",
           },
         },
       },
@@ -157,7 +168,9 @@ export const MONTHLY_NUMBER_TOOLS: ShopAiTool[] = [
         .eq("is_current", true)
         .in("business_date", dates);
       if (readError) throw new Error(readError.message);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const existingByMonth = new Map<string, any>(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ((existingRows ?? []) as any[]).map((r) => [String(r.business_date).slice(0, 7), r]),
       );
 
@@ -177,7 +190,9 @@ export const MONTHLY_NUMBER_TOOLS: ShopAiTool[] = [
                   row.car_count ?? "unchanged"
                 })`,
             )
-            .join("; ")}. Describe this to the user and call the tool again with confirmed=true only after they agree.`,
+            .join(
+              "; ",
+            )}. Describe this to the user and call the tool again with confirmed=true only after they agree.`,
         );
       }
 
