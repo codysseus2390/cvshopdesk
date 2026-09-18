@@ -31,7 +31,7 @@ handed off. The next agent should read this before starting any work.
 
 **Agent:** Claude Code (Sonnet 4.6)
 **Branch:** `audit/lovable-dependency-audit`
-**Commit:** _(see below — commit pending push)_
+**Commit:** `f025a48`
 
 **What was audited:**
 Performed a complete Lovable dependency audit across all source files, configuration,
