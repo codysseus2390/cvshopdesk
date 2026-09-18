@@ -16,7 +16,6 @@ import { getDashboard } from "@/lib/metrics.functions";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate, useShopContext } from "@/components/access-gate";
 import { MetricCard } from "@/components/metric-card";
-import { DashboardMiddleRow, SystemSettingsPanel } from "@/components/dashboard-panels";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCount, formatCurrency, gpPerCar } from "@/lib/metrics-math";
@@ -27,6 +26,7 @@ import {
   type DashboardChartMetric,
 } from "@/lib/dashboard-chart";
 import { formatDashboardWeekRange, weeklyGoalNote } from "@/lib/dashboard-week";
+import { formatProductivity } from "@/lib/productivity-math";
 
 export const Route = createFileRoute("/_authenticated/hub")({
   head: () => ({
@@ -169,9 +169,9 @@ function Dashboard() {
       {error && <p className="text-destructive">{error instanceof Error ? error.message : "Could not load."}</p>}
 
       {data && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <section aria-label="Dashboard KPIs">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                 {shows("today") && <span className="flex items-center gap-2">
                 <CalendarDays className="h-5 w-5 text-primary" />
@@ -195,20 +195,52 @@ function Dashboard() {
               <MetricCard appearance="dashboard" label="Car count" {...kpiProps("car_count", false)} />
               <MetricCard appearance="dashboard" label="GP per car" {...kpiProps("gp_per_car", true)} />
             </div>
-            <div className="mt-3 space-y-1 text-xs leading-relaxed text-muted-foreground">
+            <div className="mt-2 space-y-1 text-xs leading-relaxed text-muted-foreground">
               {shows("today") && !today && <p>No confirmed entry for the previous day yet. Nothing is assumed to be zero.</p>}
               {shows("mtd") && monthlySummary && <p>{monthlySummary}</p>}
             </div>
           </section>
 
-          <DashboardMiddleRow mechanics={data.mechanics} />
-
-
+          <section aria-labelledby="mechanic-production-heading">
+            <Card className="rounded-xl border border-primary/25 bg-card shadow-card">
+              <CardContent className="p-3 sm:p-3">
+                <h2 id="mechanic-production-heading" className="mb-2 flex items-center gap-2 text-sm font-semibold tracking-tight">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground"><Trophy className="h-4 w-4" /></span>
+                  Mechanic production
+                </h2>
+                <div className="overflow-x-auto">
+                  <table className="w-full table-fixed text-xs sm:table-auto">
+                    <thead>
+                      <tr className="border-b border-border text-left text-muted-foreground">
+                        <th className="pb-1.5 pr-2 font-medium">Mechanic</th>
+                        <th className="pb-1.5 pr-2 text-right font-medium">Previous day</th>
+                        <th className="pb-1.5 pr-2 text-right font-medium">This week</th>
+                        <th className="pb-1.5 text-right font-medium">Month to date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.mechanics.names.map((technician) => (
+                        <tr key={technician} className="border-b border-border/60 last:border-0">
+                          <th className="py-1 pr-2 text-left font-semibold">{technician}</th>
+                          <td className="py-1 pr-2 text-right tabular-nums">{formatProductivity(data.mechanics.previous_day[technician] ?? null)}</td>
+                          <td className="py-1 pr-2 text-right tabular-nums">{formatProductivity(data.mechanics.week[technician] ?? null)}</td>
+                          <td className="py-1 text-right tabular-nums">{formatProductivity(data.mechanics.month[technician] ?? null)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Production percentages entered for each reporting period. A dash means not updated.
+                </p>
+              </CardContent>
+            </Card>
+          </section>
 
           {(shows("monthly_chart") || shows("ytd")) && (
-          <section className="grid items-start gap-4 xl:grid-cols-12">
+          <section className="grid items-start gap-3 lg:grid-cols-[minmax(0,2.35fr)_minmax(18rem,.9fr)]">
             {shows("monthly_chart") && (
-            <Card className="min-w-0 rounded-xl border-secondary/25 xl:col-span-7">
+            <Card className="min-w-0 rounded-xl border-secondary/25 bg-card lg:col-span-1">
               <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 p-4 pb-2 sm:p-4 sm:pb-2">
                 <CardTitle className="flex items-center gap-2 font-body text-base font-semibold"><BarChart3 className="h-5 w-5 text-secondary" />Monthly {chartMetricDef.label === "Gross profit" ? "Gross Profit" : chartMetricDef.label}</CardTitle>
                 <select
@@ -224,7 +256,7 @@ function Dashboard() {
                   ))}
                 </select>
               </CardHeader>
-              <CardContent className="px-4 pb-4 sm:px-4 sm:pb-4">
+              <CardContent className="px-4 pb-3 sm:px-4 sm:pb-3">
                 {!monthlyByYear ? (
                   <p className="rounded-lg border border-dashed border-border bg-muted/20 px-3 py-5 text-sm text-muted-foreground">
                     No monthly totals yet. They appear as daily entries and reports are confirmed.
@@ -246,7 +278,7 @@ function Dashboard() {
                       </p>
                     )}
                   </div>
-                  <div className="h-60 sm:h-64">
+                  <div className="h-48 sm:h-52">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart accessibilityLayer data={monthlyByYear.rows} margin={{ top: 8, right: 12, left: 0, bottom: 6 }}>
                       <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 5" strokeOpacity={0.65} vertical={false} />
@@ -292,7 +324,7 @@ function Dashboard() {
             )}
 
             {shows("ytd") && (
-            <Card className="min-w-0 rounded-xl border-primary/25 xl:col-span-2">
+            <Card className="min-w-0 rounded-xl border-primary/25 bg-card">
               <CardHeader className="p-4 pb-2 sm:p-4 sm:pb-2">
                 <CardTitle className="flex items-center gap-2 font-body text-base font-semibold"><Trophy className="h-5 w-5 text-primary" />Year to date</CardTitle>
               </CardHeader>
@@ -324,8 +356,6 @@ function Dashboard() {
               </CardContent>
             </Card>
             )}
-
-            {shows("settings") && <div className="xl:col-span-3"><SystemSettingsPanel /></div>}
           </section>
           )}
 
@@ -402,4 +432,5 @@ function MonthlyChartTooltip({
     </div>
   );
 }
+
 
