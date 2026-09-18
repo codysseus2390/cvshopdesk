@@ -20,9 +20,7 @@ export function useTheme() {
     const initial: Theme =
       stored === "dark" || stored === "light"
         ? stored
-        : window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
+        : "dark";
     setTheme(initial);
     apply(initial);
   }, []);
