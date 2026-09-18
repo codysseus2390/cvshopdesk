@@ -28,7 +28,7 @@ handed off. The next agent should read this before starting any work.
 
 **Agent:** Claude Code (Sonnet 4.6)
 **Branch:** `docs/agent-rules-review`
-**Commit:** _(see latest commit SHA after push)_
+**Commit:** `3208961`
 
 **Completed this session:**
 - Audited `AGENTS.md` against the full standing rules list — all 13 core rules confirmed present
