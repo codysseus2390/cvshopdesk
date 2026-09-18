@@ -115,7 +115,7 @@ function NotificationsTvPanel() {
         </div>
         <div className="flex min-w-0 flex-col">
           <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl bg-muted">
-            <img src="/tv-promo.png" alt="Good tires, brighter tomorrows" className="h-full w-full object-cover" />
+            <img src="/tv-promo.jpg" alt="Good tires, brighter tomorrows" className="h-full w-full object-cover" />
           </div>
           <Button asChild variant="outline" className="mt-2 h-9 rounded-xl text-xs"><Link to="/tv"><Monitor className="mr-1.5 h-3.5 w-3.5" />Open TV mode</Link></Button>
         </div>
