@@ -235,13 +235,13 @@ function MechanicProductivityPanel({ mechanics }: { mechanics: DashboardMechanic
                       {name}
                     </th>
                     <td className="px-2 py-2 text-right font-semibold tabular-nums">
-                      {formatProductivity(mechanics.previous_day[name])}
+                      {formatProductivity(mechanics.previous_day[name] ?? null)}
                     </td>
                     <td className="px-2 py-2 text-right font-semibold tabular-nums">
-                      {formatProductivity(mechanics.week[name])}
+                      {formatProductivity(mechanics.week[name] ?? null)}
                     </td>
                     <td className="px-3 py-2 text-right font-semibold tabular-nums">
-                      <span className="block">{formatProductivity(value)}</span>
+                      <span className="block">{formatProductivity(value ?? null)}</span>
                       {numeric !== null && (
                         <span className="mt-1 ml-auto block h-1.5 w-14 overflow-hidden rounded-full bg-muted">
                           <span
