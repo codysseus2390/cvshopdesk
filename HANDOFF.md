@@ -31,7 +31,7 @@ handed off. The next agent should read this before starting any work.
 
 **Agent:** Claude Code (Sonnet 4.6)
 **Branch:** `docs/context-update`
-**Commit:** _(see latest commit SHA after push)_
+**Commit:** `e5b8068`
 
 **Completed this session:**
 - Received comprehensive project briefing from the owner
