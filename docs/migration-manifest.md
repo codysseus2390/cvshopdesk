@@ -37,10 +37,9 @@ Recommendation: do not migrate data yet. First ask the owner to either add the a
 ## Vercel deployment and backend targets
 
 - Project: `cvshopdesk-dashboard-preview`.
-- Current ready deployment: `waczZ5USA25pbswAnhLAyuUZUtYc`.
+- Earlier manually deployed artifact: `waczZ5USA25pbswAnhLAyuUZUtYc`.
 - Current assigned preview URL: https://cvshopdesk-dashboard-preview.vercel.app.
-- The deployment page identifies its source as `vercel deploy`, so this artifact was manually deployed. Vercel did not expose a provider-recorded Git branch or SHA for the deployment.
-- The artifact was prepared from the audited feature branch; the exact provider-recorded commit remains unverified.
+- GitHub commit status now reports successful Vercel deployments for the auth/runtime commits, including latest branch head `dd9d088ccd0c256f800d362600378e5d90288a6f` (Vercel target `6YPzYNErf4jxEAvSWcwuDVWX4yFN`). This verifies Git-triggered preview builds for this branch; the Vercel account connector still cannot read deployment metadata or provider-recorded env values.
 - Vercel environment-variable names and scopes visible in the dashboard:
   - `SUPABASE_URL`: Production and Preview
   - `VITE_SUPABASE_URL`: Production and Preview
@@ -48,7 +47,7 @@ Recommendation: do not migrate data yet. First ask the owner to either add the a
   - `VITE_SUPABASE_PUBLISHABLE_KEY`: Production and Preview
   - `SUPABASE_SERVICE_ROLE_KEY`: Production only
 - Values were not revealed. The preview's exact Supabase project cannot therefore be identified from the current dashboard session.
-- Vercel Git automatic deployment status is unverified. The project exposes a Connect/Git settings page, but the current deployment's “vercel deploy” source is not evidence of Git-triggered deployment.
+- Git automatic preview deployment is now evidenced by the successful Vercel status attached to each new branch commit. Exact Preview backend target remains unverified because environment values are masked and the Vercel API connector is not authorized for deployment-detail reads.
 
 No database write tests were run against the preview because its backend target has not been confirmed as staging.
 
@@ -122,7 +121,7 @@ No application redesign or production migration should begin until that inventor
 - Commit `f7d62ea06edb1a126cb665142f387a27a4b62a7e` removes the Lovable preview session-storage broker from the Supabase client and replaces the Lovable-specific missing-variable message. The independent preview now uses Supabase JS browser persistence directly.
 - Commit `2d53b60b9f848f3ebf2533f9a2a6305a456447a2` clarifies the server-only Admin client error. `SUPABASE_SERVICE_ROLE_KEY` is required for trusted server routes and must be supplied only in the staging Preview environment.
 - Staging Auth Site URL is `https://cvshopdesk-dashboard-preview.vercel.app`; the allowlist contains that origin's `/auth` callback and localhost. Google provider credentials are still disabled because they require the owner's Google Cloud OAuth client.
-- GitHub reports a successful Vercel status for this commit (deployment target URL is recorded in the commit status), but the Vercel account connector did not authorize deployment-detail reads. The preview alias remains `https://cvshopdesk-dashboard-preview.vercel.app`; verify its deployment is running this SHA before sign-in testing.
+- GitHub reports a successful Vercel status for the latest branch head (deployment target URL is recorded in the commit status), but the Vercel account connector did not authorize deployment-detail reads. The preview alias remains `https://cvshopdesk-dashboard-preview.vercel.app`; the browser loaded the refreshed dashboard before sign-out, and unauthenticated `/hub` redirected to `/auth`.
 - Vercel Preview must be confirmed to use staging `SUPABASE_URL`/publishable key and a staging-only `SUPABASE_SERVICE_ROLE_KEY` before write tests. The current dashboard showed the service-role variable in Production scope only; do not copy a production secret into Preview.
 - OpenAI and ElevenLabs keys should be entered directly in Vercel Settings → Environment Variables (Preview scope for staging, server-only names such as `OPENAI_API_KEY` and `ELEVENLABS_API_KEY`; never use a `VITE_` prefix) and/or the Supabase Edge Function secret store if the function reads them. Never send key values through chat.
 
