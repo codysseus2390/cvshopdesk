@@ -16,11 +16,57 @@ handed off. The next agent should read this before starting any work.
 
 ## Current Branch
 
-`docs/agent-rules-review` (open PR pending merge; see log entry below)
+`feat/dashboard-panels-integration` (open, ready for PR)
 
 ---
 
 ## Handoff Log
+
+---
+
+### Session: 2026-09-18 — Dashboard panels wired into hub layout
+
+**Agent:** Claude Code (Sonnet 4.6)
+**Branch:** `feat/dashboard-panels-integration`
+**Commit:** `48af86b0712287ab1c33330aec87dfac6946b139`
+
+**Completed this session:**
+- Full inspection of Codex branch (`codex/github-development-safeguards`) dashboard implementation
+- Inspected Figma reference design (page: "Dashboard — Reference review")
+- Identified that `dashboard-panels.tsx` components were built but never wired into `hub.tsx`
+- Fixed the structural gap: replaced inline mechanic table with `DashboardMiddleRow` (3-column middle row: Recent Imports | Notifications & TV | Mechanic Productivity)
+- Expanded bottom row from 2 → 3 columns and added `SystemSettingsPanel`
+- Removed unused `formatProductivity` import from `hub.tsx`
+- Merged `origin/main` (documentation) into the task branch cleanly
+
+**Files modified:**
+- `src/routes/_authenticated/hub.tsx` — 7 insertions, 39 deletions (net simplification)
+
+**Key facts for next agent:**
+- Branch is based on `origin/codex/github-development-safeguards` + merge of `origin/main`
+- `dashboard-panels.tsx` components are now fully connected: `DashboardMiddleRow` and `SystemSettingsPanel`
+- All data integrity rules intact (null handling, sparklines, partial-month chart, productivity math)
+- TypeScript passes (only pre-existing `vite/client` ambient type error in container environment)
+- `NotificationsTvPanel` in `dashboard-panels.tsx` references `/tv-promo.jpg` — verify this exists in `public/`
+
+**Remaining work:**
+- Open PR for `feat/dashboard-panels-integration`
+- Open browser preview, verify 3-column middle row and System Settings appear
+- Audit remaining visual details against Figma (spacing, typography sizing, card proportions)
+- Then proceed per ROADMAP.md
+
+**Known issues / blockers:**
+- None introduced by this session.
+
+**Validation status:**
+- TypeScript: clean (only pre-existing container-environment ambient type error)
+- Lint: environment issue in container (missing packages), not a code defect
+- No browser verification done (no browser access in this environment)
+
+**Next recommended step:**
+Open a PR for `feat/dashboard-panels-integration`. Preview the running app and compare the
+dashboard side-by-side with the Figma "Dashboard — Reference review" page. Address any
+remaining spacing, proportion, or typography differences before declaring Priority 1 done.
 
 ---
 
