@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   Monitor,
   PackageSearch,
+  Search,
   Settings,
   Sparkles,
   UserRound,
