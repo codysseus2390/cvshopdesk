@@ -67,3 +67,27 @@ describe("dashboard current-month chart treatment", () => {
   });
 });
 
+
+describe("monthly chart integrity", () => {
+  it("orders all twelve calendar months regardless of source order", () => {
+    const chart = buildDashboardChart([...months].reverse(), "gross_profit", "2026-09-16");
+    expect(chart?.rows.map((row) => row.month)).toEqual(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]);
+  });
+  it("excludes future records, including future years", () => {
+    const chart = buildDashboardChart([...months, { month: "2026-12", totals: totals(99_000) }, { month: "2027-01", totals: totals(99_000) }], "gross_profit", "2026-09-16");
+    expect(chart?.years).toEqual(["2025", "2026"]);
+    expect(chart?.rows[11]?.["2026"]).toBeNull();
+    expect(buildDashboardChart([{ month: "2027-01", totals: totals(99_000) }], "gross_profit", "2026-09-16")).toBeNull();
+  });
+  it("keeps real zero and renders absent or invalid values as gaps", () => {
+    const chart = buildDashboardChart([
+      { month: "2025-01", totals: totals(0) },
+      { month: "2025-03", totals: { ...totals(1), gross_profit: Number.NaN } },
+      { month: "2025-04", totals: { ...totals(1), gross_profit: Number.POSITIVE_INFINITY } },
+    ], "gross_profit", "2026-09-16");
+    expect(chart?.rows[0]?.["2025"]).toBe(0);
+    expect(chart?.rows[1]?.["2025"]).toBeNull();
+    expect(chart?.rows[2]?.["2025"]).toBeNull();
+    expect(chart?.rows[3]?.["2025"]).toBeNull();
+  });
+});

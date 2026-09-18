@@ -3,14 +3,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
-  Area,
-  AreaChart,
   CartesianGrid,
-  ComposedChart,
-  Legend,
+  LineChart,
   Line,
   ResponsiveContainer,
-  Scatter,
   Tooltip as ChartTooltip,
   XAxis,
   YAxis,
@@ -145,12 +141,17 @@ function Dashboard() {
   }, [data, chartMetric]);
 
   const YEAR_COLORS = [
-    "var(--color-chart-1)",
+    "var(--color-secondary)",
     "var(--color-chart-2)",
     "var(--color-chart-3)",
     "var(--color-chart-4)",
     "var(--color-chart-5)",
   ];
+
+  const yearColor = (year: string, index: number) => year === monthlyByYear?.currentYear
+    ? "var(--color-primary)" : YEAR_COLORS[index % YEAR_COLORS.length];
+  const partialMonth = monthlyByYear?.rows.find((row) => row.monthKey === monthlyByYear.currentMonth);
+  const partialValue = partialMonth?.[`${monthlyByYear?.currentYear}__mtd`];
 
   return (
     <AppShell title="Dashboard" appearance="dashboard">
@@ -261,13 +262,31 @@ function Dashboard() {
                     No monthly totals yet. They appear as daily entries and reports are confirmed.
                   </p>
                 ) : (
-                  <div className="h-52 sm:h-56">
+                  <>
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                    <ul aria-label="Chart legend" className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      {monthlyByYear.years.map((year, i) => (
+                        <li key={year} className="flex items-center gap-2">
+                          <span aria-hidden="true" className="h-0.5 w-5 rounded-full" style={{ backgroundColor: yearColor(year, i) }} />
+                          {year}{year === monthlyByYear.currentYear ? " · completed months" : ""}
+                        </li>
+                      ))}
+                    </ul>
+                    {typeof partialValue === "number" && (
+                      <p className="rounded-md border border-primary/25 bg-primary/5 px-2 py-1 text-xs text-muted-foreground">
+                        {partialMonth?.month} {monthlyByYear.currentYear} · partial MTD <strong className="ml-1 tabular-nums text-foreground">{chartMetricDef.currency ? formatCurrency(partialValue) : formatCount(partialValue)}</strong>
+                      </p>
+                    )}
+                  </div>
+                  <div className="h-60 sm:h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={monthlyByYear.rows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                      <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 5" vertical={false} />
-                      <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }} tickLine={false} axisLine={false} minTickGap={8} />
+                    <LineChart accessibilityLayer data={monthlyByYear.rows} margin={{ top: 8, right: 12, left: 0, bottom: 6 }}>
+                      <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 5" strokeOpacity={0.65} vertical={false} />
+                      <XAxis dataKey="month" interval={0} angle={-45} textAnchor="end" height={38} tickMargin={8} padding={{ left: 6, right: 6 }} tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }} tickLine={false} axisLine={false} />
                       <YAxis
-                        width={52}
+                        width={48}
+                        tickCount={5}
+                        domain={[0, "auto"]}
                         tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
                         tickLine={false}
                         axisLine={false}
@@ -277,39 +296,28 @@ function Dashboard() {
                         content={<MonthlyChartTooltip currency={chartMetricDef.currency} />}
                         cursor={{ stroke: "var(--color-muted-foreground)", strokeDasharray: "3 4", strokeOpacity: 0.4 }}
                       />
-                      <Legend wrapperStyle={{ fontSize: 12 }} />
                       {monthlyByYear.years.map((year, i) => (
                         <Line
                           key={year}
                           type="linear"
                           dataKey={year}
                           name={year}
-                          stroke={YEAR_COLORS[i % YEAR_COLORS.length]}
-                          strokeWidth={2.5}
+                          stroke={yearColor(year, i)}
+                          strokeWidth={3}
                           dot={{ r: 3, strokeWidth: 2, fill: "var(--color-card)" }}
                           activeDot={{ r: 5, strokeWidth: 2 }}
                           connectNulls={false}
                           isAnimationActive={false}
                         />
                       ))}
-                      {monthlyByYear.years.map((year, i) => (
-                        <Scatter
-                          key={`${year}-mtd`}
-                          dataKey={`${year}__mtd`}
-                          name={`${year} MTD`}
-                          fill={YEAR_COLORS[i % YEAR_COLORS.length]}
-                          stroke={YEAR_COLORS[i % YEAR_COLORS.length]}
-                          legendType="none"
-                          isAnimationActive={false}
-                        />
-                      ))}
-                    </ComposedChart>
+                    </LineChart>
                   </ResponsiveContainer>
                   </div>
+                  </>
                 )}
-                <p className="mt-2 text-xs text-muted-foreground">
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
                   January through December, using the same confirmed monthly records as the Numbers page. The current
-                  month is partial and shown as an isolated month-to-date point, outside the completed-month lines. Missing and future months stay blank.
+                  month is partial and shown separately above. The current-year line stops before the current month; missing and future values stay blank.
                 </p>
               </CardContent>
             </Card>
@@ -374,12 +382,12 @@ function KpiSparkline({ trend, green }: { trend: ReturnType<typeof buildDashboar
     <div className="mt-auto pt-2" aria-label={enoughData ? `Completed monthly trend for ${trend.year}; missing months are gaps` : "Monthly trend unavailable: not enough completed monthly values"}>
       {enoughData ? (
         <>
-          <div className="h-8" aria-hidden="true">
+          <div className="h-10" aria-hidden="true">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trend.points} margin={{ top: 3, right: 2, bottom: 2, left: 2 }}>
+              <LineChart data={trend.points} margin={{ top: 3, right: 2, bottom: 2, left: 2 }}>
                 <YAxis hide domain={["dataMin", "dataMax"]} />
-                <Area type="linear" dataKey="value" stroke={color} strokeWidth={1.75} fill={color} fillOpacity={0.1} dot={{ r: 1.5, fill: color, strokeWidth: 0 }} connectNulls={false} isAnimationActive={false} />
-              </AreaChart>
+                <Line type="linear" dataKey="value" stroke={color} strokeWidth={2.25} dot={{ r: 2, fill: color, strokeWidth: 0 }} connectNulls={false} isAnimationActive={false} />
+              </LineChart>
             </ResponsiveContainer>
           </div>
           <p className="text-[10px] leading-tight text-muted-foreground">Completed months · {trend.year}</p>
@@ -400,7 +408,7 @@ function MonthlyChartTooltip({
   payload?: ReadonlyArray<{ name?: string | number; value?: string | number; color?: string }>;
   currency: boolean;
 }) {
-  const visible = payload?.filter((entry) => typeof entry.value === "number") ?? [];
+  const visible = payload?.filter((entry) => typeof entry.value === "number" && Number.isFinite(entry.value)) ?? [];
   if (!active || visible.length === 0) return null;
   const mtd = visible.find((entry) => String(entry.name).endsWith(" MTD"));
   const title = mtd
@@ -414,7 +422,8 @@ function MonthlyChartTooltip({
         const name = String(entry.name).replace(" MTD", "");
         const value = typeof entry.value === "number" ? entry.value : null;
         return (
-          <p key={String(entry.name)}>
+          <p key={String(entry.name)} className="flex items-center gap-2 tabular-nums">
+            <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ backgroundColor: entry.color }} />
             {name}: {currency ? formatCurrency(value) : formatCount(value)}
             {String(entry.name).endsWith(" MTD") ? " · Month to date" : ""}
           </p>

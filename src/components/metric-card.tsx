@@ -55,7 +55,7 @@ export function MetricCard({
                 <div key={period.label}>
                   <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
                     <dt className="text-sm font-medium text-muted-foreground">{period.label}</dt>
-                    <dd className="text-base font-bold leading-tight tabular-nums text-foreground lg:text-lg">{period.value}</dd>
+                    <dd className="text-2xl font-bold leading-tight tracking-tight tabular-nums text-foreground">{period.value}</dd>
                   </div>
                   {period.hint && <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{period.hint}</p>}
                 </div>

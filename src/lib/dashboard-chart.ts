@@ -30,7 +30,7 @@ export function buildDashboardSparkline(
   shopToday: string,
 ): { year: string; points: { month: string; value: number | null }[] } | null {
   const currentMonth = shopToday.slice(0, 7);
-  const completed = monthly.filter((entry) => entry.month < currentMonth && metricValue(entry, metric) !== null);
+  const completed = monthly.filter((entry) => /^\d{4}-(0[1-9]|1[0-2])$/.test(entry.month) && entry.month < currentMonth && metricValue(entry, metric) !== null);
   const year = completed.map((entry) => entry.month.slice(0, 4)).sort().at(-1);
   if (!year) return null;
   const latestMonth = completed.filter((entry) => entry.month.startsWith(`${year}-`)).map((entry) => entry.month).sort().at(-1)!;
@@ -43,8 +43,8 @@ export function buildDashboardSparkline(
 
 function metricValue(month: DashboardMonth | undefined, metric: DashboardChartMetric): number | null {
   if (!month) return null;
-  if (metric === "gross_profit_per_car") return month.totals.gp_per_car;
-  return month.totals[metric];
+  const value = metric === "gross_profit_per_car" ? month.totals.gp_per_car : month.totals[metric];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 /**
@@ -56,11 +56,12 @@ export function buildDashboardChart(
   metric: DashboardChartMetric,
   shopToday: string,
 ): { years: string[]; rows: DashboardChartRow[]; currentYear: string; currentMonth: string } | null {
-  if (monthly.length === 0) return null;
+  const available = monthly.filter((entry) => /^\d{4}-(0[1-9]|1[0-2])$/.test(entry.month) && entry.month <= shopToday.slice(0, 7));
+  if (available.length === 0) return null;
 
   const currentYear = shopToday.slice(0, 4);
   const currentMonth = shopToday.slice(0, 7);
-  const years = Array.from(new Set(monthly.map((entry) => entry.month.slice(0, 4)))).sort();
+  const years = Array.from(new Set(available.map((entry) => entry.month.slice(0, 4)))).sort();
   const rows = MONTHS.map((monthNumber) => {
     const monthKey = `${currentYear}-${monthNumber}`;
     const label = new Date(`2000-${monthNumber}-01T00:00:00Z`).toLocaleString(undefined, {
@@ -71,7 +72,7 @@ export function buildDashboardChart(
 
     for (const year of years) {
       const recordKey = `${year}-${monthNumber}`;
-      const value = metricValue(monthly.find((entry) => entry.month === recordKey), metric);
+      const value = metricValue(available.find((entry) => entry.month === recordKey), metric);
       const isCurrentIncompleteMonth = year === currentYear && recordKey === currentMonth;
       row[year] = isCurrentIncompleteMonth ? null : value;
       row[`${year}__mtd`] = isCurrentIncompleteMonth ? value : null;
