@@ -16,11 +16,47 @@ handed off. The next agent should read this before starting any work.
 
 ## Current Branch
 
-`claude/elegant-curie-ix5vn8`
+`docs/agent-rules-review` (open PR pending merge; see log entry below)
 
 ---
 
 ## Handoff Log
+
+---
+
+### Session: 2026-09-18 — Agent rules review and hardening
+
+**Agent:** Claude Code (Sonnet 4.6)
+**Branch:** `docs/agent-rules-review`
+**Commit:** _(see latest commit SHA after push)_
+
+**Completed this session:**
+- Audited `AGENTS.md` against the full standing rules list — all 13 core rules confirmed present
+- Identified and fixed two gaps in the Low-Usage Handoff Protocol:
+  1. 15% threshold section was missing "commit and push progress" — added
+  2. No rule existed for agents that cannot see their usage counter — added note requiring
+     frequent checkpointing and immediate handoff mode whenever the user says usage is low
+     or requests a handoff
+- Updated `HANDOFF.md` current branch to reflect merged state and added this entry
+- No application code modified
+
+**Files modified:**
+- `AGENTS.md` — two additions to the Low-Usage Handoff Protocol section
+- `HANDOFF.md` — current branch updated, this entry added
+
+**Remaining work:**
+- PR for this branch needs owner review and merge
+- After merge: next work is Roadmap Priority 1 — Dashboard / Figma alignment
+
+**Known issues / blockers:**
+- None.
+
+**Validation status:**
+- Documentation-only changes; no lint/test run required.
+
+**Next recommended step:**
+Merge this PR, then start Roadmap Priority 1. Obtain the Figma design link from the
+project owner and audit the `/hub` dashboard route against it.
 
 ---
 
