@@ -14,7 +14,7 @@ The existing production database cannot currently be retained by the authenticat
 - Branch head: `80a178e53d734a773b711dc04697131da76795dc`, the independent preview auth compatibility fix.
 - Redesign commit: `45a9af7cc79fd0c89b689852e1bf57684c79658a`.
 - `main`: `1f694690b7af1f28db6009c07b12e8441dd58691`.
-- The feature branch is 28 commits ahead of `main); the redesign is not merged.
+- The feature branch is 28 commits ahead of `main`; the redesign is not merged.
 - No matching dashboard pull request was returned by the repository PR search.
 - This Codex workspace has no local repository checkout, so local uncommitted files cannot be inspected. The remote branch is clean at its recorded head.
 
@@ -22,7 +22,7 @@ Supporting files: `AGENTS.md`, `README.md`, `docs/github-development.md`, and `d
 
 ## Supabase ownership and export access
 
-- The authenticated Supabase account can see organization **Cedar Valley ShopDesk** and staging project `cvshopdesk-staging`, reference `fsmyugwrfuvqrrhufryf), region `us-east-2), status `ACTIVE_HEALTHY`.
+- The authenticated Supabase account can see organization **Cedar Valley ShopDesk** and staging project `cvshopdesk-staging`, reference `fsmyugwrfuvqrrhufryf`, region `us-east-2`, status `ACTIVE_HEALTHY`.
 - `supabase_list_projects` returns only that staging project.
 - `supabase_get_project(xbpkvbjmclokmbumhymg)` returns a permission error.
 - Therefore the current account has no verified management or export access to the production project.
