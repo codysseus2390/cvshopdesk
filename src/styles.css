@@ -65,41 +65,41 @@
 
 :root {
   --radius: 0.75rem;
-  /* Cedar Valley brand: cream #f2ece3, orange #f58020, green #7c9b3d, near-black #0a0200 */
-  --background: oklch(0.965 0.008 83);
-  --foreground: oklch(0.155 0.012 45);
+  /* Cedar Valley light dashboard: pearl gray canvas, white cards, green and orange accents */
+  --background: oklch(0.975 0.012 160);
+  --foreground: oklch(0.17 0.015 180);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.155 0.012 45);
+  --card-foreground: oklch(0.17 0.015 180);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.155 0.012 45);
-  --primary: oklch(0.712 0.176 51);
-  --primary-foreground: oklch(0.155 0.012 45);
-  --secondary: oklch(0.643 0.128 121);
+  --popover-foreground: oklch(0.17 0.015 180);
+  --primary: oklch(0.72 0.19 55);
+  --primary-foreground: oklch(0.99 0.005 90);
+  --secondary: oklch(0.59 0.15 145);
   --secondary-foreground: oklch(0.99 0.005 90);
-  --muted: oklch(0.948 0.01 83);
-  --muted-foreground: oklch(0.505 0.02 60);
-  --accent: oklch(0.703 0.135 133);
-  --accent-foreground: oklch(0.155 0.012 45);
+  --muted: oklch(0.95 0.015 160);
+  --muted-foreground: oklch(0.52 0.035 235);
+  --accent: oklch(0.68 0.14 145);
+  --accent-foreground: oklch(0.17 0.015 180);
   --destructive: oklch(0.55 0.21 27);
   --destructive-foreground: oklch(0.99 0.005 90);
-  --border: oklch(0.895 0.01 83);
-  --input: oklch(0.875 0.012 83);
-  --ring: oklch(0.712 0.176 51);
-  --chart-1: oklch(0.643 0.128 121);
-  --chart-2: oklch(0.712 0.176 51);
-  --chart-3: oklch(0.155 0.012 45);
-  --chart-4: oklch(0.703 0.135 133);
-  --chart-5: oklch(0.505 0.02 60);
-  --sidebar: oklch(0.165 0.011 145);
-  --sidebar-foreground: oklch(0.94 0.01 90);
-  --sidebar-primary: oklch(0.712 0.176 51);
+  --border: oklch(0.91 0.025 160);
+  --input: oklch(0.90 0.025 160);
+  --ring: oklch(0.72 0.19 55);
+  --chart-1: oklch(0.59 0.15 145);
+  --chart-2: oklch(0.72 0.19 55);
+  --chart-3: oklch(0.17 0.015 180);
+  --chart-4: oklch(0.68 0.14 145);
+  --chart-5: oklch(0.52 0.035 235);
+  --sidebar: oklch(0.17 0.02 175);
+  --sidebar-foreground: oklch(0.95 0.01 160);
+  --sidebar-primary: oklch(0.72 0.19 55);
   --sidebar-primary-foreground: oklch(0.99 0.005 90);
-  --sidebar-accent: oklch(0.235 0.012 145);
+  --sidebar-accent: oklch(0.26 0.025 175);
   --sidebar-accent-foreground: oklch(0.98 0.006 90);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.712 0.176 51);
-  --card-shadow: 0 1px 2px oklch(0.155 0.012 45 / 4%), 0 8px 22px oklch(0.155 0.012 45 / 7%);
-  --elevated-shadow: 0 12px 34px oklch(0.155 0.012 45 / 14%);
+  --sidebar-ring: oklch(0.72 0.19 55);
+  --card-shadow: 0 1px 2px oklch(0.17 0.015 180 / 4%), 0 8px 22px oklch(0.17 0.015 180 / 7%);
+  --elevated-shadow: 0 12px 34px oklch(0.17 0.015 180 / 14%);
   --font-display: "Oswald", ui-sans-serif, system-ui, sans-serif;
   --font-body: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
 }
@@ -149,12 +149,7 @@
 
   body {
     background-color: var(--color-background);
-    background-image: linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--color-card) 58%, var(--color-background)) 0,
-      var(--color-background) 18rem
-    );
-    background-attachment: fixed;
+    background-image: none;
     color: var(--color-foreground);
     font-family: var(--font-body);
     text-rendering: optimizeLegibility;
