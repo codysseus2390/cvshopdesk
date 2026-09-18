@@ -16,6 +16,7 @@ import { getDashboard } from "@/lib/metrics.functions";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate, useShopContext } from "@/components/access-gate";
 import { MetricCard } from "@/components/metric-card";
+import { DashboardMiddleRow, SystemSettingsPanel } from "@/components/dashboard-panels";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCount, formatCurrency, gpPerCar } from "@/lib/metrics-math";
@@ -201,46 +202,14 @@ function Dashboard() {
             </div>
           </section>
 
-          <section aria-labelledby="mechanic-production-heading">
-            <Card className="rounded-xl border border-primary/25 shadow-card">
-              <CardContent className="p-3 sm:p-3">
-                <h2 id="mechanic-production-heading" className="mb-2 flex items-center gap-2 text-sm font-semibold tracking-tight">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground"><Trophy className="h-4 w-4" /></span>
-                  Mechanic production
-                </h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full table-fixed text-xs sm:table-auto">
-                    <thead>
-                      <tr className="border-b border-border text-left text-muted-foreground">
-                        <th className="pb-1.5 pr-2 font-medium">Mechanic</th>
-                        <th className="pb-1.5 pr-2 text-right font-medium">Previous day</th>
-                        <th className="pb-1.5 pr-2 text-right font-medium">This week</th>
-                        <th className="pb-1.5 text-right font-medium">Month to date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {data.mechanics.names.map((technician) => (
-                        <tr key={technician} className="border-b border-border/60 last:border-0">
-                          <th className="py-1 pr-2 text-left font-semibold">{technician}</th>
-                          <td className="py-1 pr-2 text-right tabular-nums">{formatProductivity(data.mechanics.previous_day[technician] ?? null)}</td>
-                          <td className="py-1 pr-2 text-right tabular-nums">{formatProductivity(data.mechanics.week[technician] ?? null)}</td>
-                          <td className="py-1 text-right tabular-nums">{formatProductivity(data.mechanics.month[technician] ?? null)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Production percentages entered for each reporting period. A dash means not updated.
-                </p>
-              </CardContent>
-            </Card>
-          </section>
+          <DashboardMiddleRow mechanics={data.mechanics} />
+
+
 
           {(shows("monthly_chart") || shows("ytd")) && (
-          <section className="grid items-start gap-4 lg:grid-cols-3">
+          <section className="grid items-start gap-4 xl:grid-cols-12">
             {shows("monthly_chart") && (
-            <Card className="min-w-0 rounded-xl border-secondary/25 lg:col-span-2">
+            <Card className="min-w-0 rounded-xl border-secondary/25 xl:col-span-7">
               <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 p-4 pb-2 sm:p-4 sm:pb-2">
                 <CardTitle className="flex items-center gap-2 font-body text-base font-semibold"><BarChart3 className="h-5 w-5 text-secondary" />Monthly {chartMetricDef.label === "Gross profit" ? "Gross Profit" : chartMetricDef.label}</CardTitle>
                 <select
@@ -324,7 +293,7 @@ function Dashboard() {
             )}
 
             {shows("ytd") && (
-            <Card className="min-w-0 rounded-xl border-primary/25">
+            <Card className="min-w-0 rounded-xl border-primary/25 xl:col-span-2">
               <CardHeader className="p-4 pb-2 sm:p-4 sm:pb-2">
                 <CardTitle className="flex items-center gap-2 font-body text-base font-semibold"><Trophy className="h-5 w-5 text-primary" />Year to date</CardTitle>
               </CardHeader>
@@ -356,6 +325,8 @@ function Dashboard() {
               </CardContent>
             </Card>
             )}
+
+            {shows("settings") && <div className="xl:col-span-3"><SystemSettingsPanel /></div>}
           </section>
           )}
 
