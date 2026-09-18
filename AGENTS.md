@@ -105,7 +105,8 @@ gated UI — never duplicate or hand-code role checks.
 When you are approaching the end of an agent session or context limit:
 
 **~15% usage remaining** — Stop starting any large new task. Finish only the unit
-  currently in progress.
+  currently in progress. Commit and push all completed progress immediately so it is
+  not stranded locally if the session ends unexpectedly.
 
 **~10% usage remaining — enter handoff mode:**
 
@@ -123,6 +124,12 @@ When you are approaching the end of an agent session or context limit:
    - Validation status (did lint/tests pass?)
    - The single exact next recommended step
 6. Stop. Do not start another feature.
+
+> **Note on usage awareness:** Agents may not always have a precise reading of remaining
+> context or token usage. Regardless of what the counter shows, checkpoint frequently
+> throughout every session (commit + push after each meaningful chunk). If the user says
+> usage is low, or explicitly requests a handoff at any time, immediately enter handoff
+> mode — do not wait for an internal threshold to be reached.
 
 ---
 
