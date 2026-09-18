@@ -1,5 +1,6 @@
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import type { ReactNode } from "react";
 import {
   BarChart3,
@@ -21,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CedarLogo } from "@/components/cedar-logo";
 import { AssistantBar } from "@/components/assistant-bar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useShopContext } from "@/components/access-gate";
 import { usePermissions } from "@/components/use-permissions";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -60,6 +62,8 @@ export function AppShell({
   const { data: shopContext } = useShopContext();
   const { can, isLoading } = usePermissions();
   const pending = shopContext?.pendingCount ?? 0;
+  const [search, setSearch] = useState("");
+  const displayName = shopContext?.email?.split("@")[0] || "Shop user";
 
   // Until permissions load, show the full list rather than flashing an empty menu.
   const items = NAV.filter((item) => isLoading || !item.needs || can(item.needs));
@@ -75,11 +79,12 @@ export function AppShell({
   return (
     <div className="min-h-screen pb-28">
       <div className="flex">
-        <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-r border-sidebar-border bg-sidebar px-4 py-5 shadow-elevated md:block">
-          <Link to="/hub" className="block border-b border-sidebar-border px-2 pb-5" aria-label="Cedar Valley Hub dashboard">
+        <aside className="sticky top-0 hidden h-screen w-[212px] shrink-0 overflow-hidden border-r border-sidebar-border bg-sidebar px-3 py-5 shadow-elevated md:block">
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[47%] bg-cover bg-center opacity-95" style={{ backgroundImage: "url(/sidebar-brand-art.png)" }} aria-hidden="true" />
+          <Link to="/hub" className="relative z-10 block border-b border-sidebar-border px-2 pb-5" aria-label="Cedar Valley Hub dashboard">
             <CedarLogo className="h-12 w-auto max-w-full object-contain" />
           </Link>
-          <nav className="mt-5 space-y-1">
+          <nav className="relative z-10 mt-5 space-y-1">
             {items.map((item) => (
               <Link
                 key={item.to}
@@ -99,6 +104,7 @@ export function AppShell({
               </Link>
             ))}
           </nav>
+          <p className="absolute bottom-2 left-0 right-0 z-10 text-center text-[10px] font-semibold leading-tight text-sidebar-foreground/80">Cedar Valley ShopDesk<br />v2.0</p>
         </aside>
 
         <div className="min-w-0 flex-1">
@@ -112,10 +118,15 @@ export function AppShell({
                   <ChevronLeft className="h-3.5 w-3.5" /> Dashboard
                 </Link>
               )}
-              <h1 className={appearance === "dashboard" ? "text-2xl font-bold leading-tight tracking-tight text-foreground md:text-[1.75rem]" : "font-display text-3xl font-bold leading-none text-foreground md:text-[1.75rem]"}>{title}</h1>
-              {subtitle && <div className="mt-1 hidden text-sm text-muted-foreground md:block">{subtitle}</div>}
+              <h1 className={appearance === "dashboard" ? "text-2xl font-bold leading-tight tracking-tight text-foreground md:text-[1.75rem]" : "font-display text-3xl font-bold leading-none text-foreground md:text-[1.75rem]"}>{appearance === "dashboard" ? "Cedar Valley ShopDesk" : title}</h1>
+              {appearance === "dashboard" ? <div className="mt-1 hidden text-sm text-muted-foreground md:block">Same People. A Smoother Shop.</div> : subtitle && <div className="mt-1 hidden text-sm text-muted-foreground md:block">{subtitle}</div>}
             </div>
             <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 rounded-2xl border border-border/80 bg-card p-3 shadow-card md:mt-0 md:flex md:border-0 md:bg-transparent md:p-0 md:shadow-none">
+              {appearance === "dashboard" && <form onSubmit={(e) => e.preventDefault()} className="relative hidden min-w-0 flex-1 md:block md:max-w-[22rem] lg:max-w-[28rem]">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search customers, inventory, or jobs..." aria-label="Search customers, inventory, or jobs" className="h-10 rounded-full border-border/80 bg-card pl-9 pr-4 shadow-none" />
+              </form>}
+              {appearance === "dashboard" && <span className="hidden items-center gap-2 text-sm font-semibold text-foreground lg:flex"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-secondary-foreground">{displayName.slice(0, 1).toUpperCase()}</span><span className="max-w-24 truncate">{displayName}</span></span>}
               <Link to="/hub" className="flex min-w-0 items-center md:hidden" aria-label="Cedar Valley Hub dashboard">
                 <CedarLogo className="h-12 w-full max-w-[13rem] object-contain object-left" />
               </Link>
