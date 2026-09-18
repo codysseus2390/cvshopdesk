@@ -20,7 +20,7 @@ export function useTheme() {
     const initial: Theme =
       stored === "dark" || stored === "light"
         ? stored
-        : "dark";
+        : "light";
     setTheme(initial);
     apply(initial);
   }, []);
