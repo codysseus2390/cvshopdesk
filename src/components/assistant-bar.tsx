@@ -188,7 +188,7 @@ export function AssistantBar() {
                 void pickFile(file);
               }
             }}
-            placeholder={`Ask ${assistantName}, or paste a screenshot…`}
+            placeholder={`Ask ${assistantName} about your shop…`}
             aria-label={`Ask ${assistantName}`}
             className="h-12 min-w-0 flex-1 rounded-full border-transparent bg-muted/70 px-4 shadow-none focus-visible:border-primary/40"
           />
