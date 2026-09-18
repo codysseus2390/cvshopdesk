@@ -16,7 +16,6 @@ import { MECHANICS } from "./mechanics";
 
 type MonthTotals = PeriodValues & { gp_per_car: number | null };
 
-
 type Supa = { from: (t: string) => any; rpc: (f: string, a?: unknown) => any };
 
 async function resolveShop(supabase: Supa, userId: string) {
@@ -93,27 +92,31 @@ export const getDashboard = createServerFn({ method: "GET" })
     const year = today.slice(0, 4);
     const monthPrefix = today.slice(0, 7);
 
-    const [{ data: rows, error }, { data: productivityRows, error: productivityError }] = await Promise.all([
-      supabase
-        .from("metric_snapshots")
-        .select("id, business_date, scope, sales, gross_profit, tires_sold, car_count, source, created_at, flags, note")
-        .eq("is_current", true)
-        .gte("business_date", `${Number(year) - 1}-01-01`)
-        .order("business_date", { ascending: true }),
-      supabase
-        .from("technician_productivity")
-        .select("business_date, technician, productivity_pct, hours_billed, hours_worked, period_scope, updated_at")
-        .gte("business_date", `${Number(year) - 1}-01-01`)
-        .lte("business_date", today),
-    ]);
+    const [{ data: rows, error }, { data: productivityRows, error: productivityError }] =
+      await Promise.all([
+        supabase
+          .from("metric_snapshots")
+          .select(
+            "id, business_date, scope, sales, gross_profit, tires_sold, car_count, source, created_at, flags, note",
+          )
+          .eq("is_current", true)
+          .gte("business_date", `${Number(year) - 1}-01-01`)
+          .order("business_date", { ascending: true }),
+        supabase
+          .from("technician_productivity")
+          .select(
+            "business_date, technician, productivity_pct, hours_billed, hours_worked, period_scope, updated_at",
+          )
+          .gte("business_date", `${Number(year) - 1}-01-01`)
+          .lte("business_date", today),
+      ]);
     if (error) throw new Error(error.message);
     if (productivityError) throw new Error(productivityError.message);
 
     const all = (rows ?? []) as (MetricRow & { created_at: string; source: string })[];
     // Nothing dated after the shop's current business day counts toward current results.
     const current = all.filter((r) => r.business_date <= today);
-    const todayRow =
-      current.find((r) => r.business_date === today && r.scope === "daily") ?? null;
+    const todayRow = current.find((r) => r.business_date === today && r.scope === "daily") ?? null;
     const prevDate = new Date(`${today}T00:00:00Z`);
     prevDate.setUTCDate(prevDate.getUTCDate() - 1);
     const previousDay = prevDate.toISOString().slice(0, 10);
@@ -126,7 +129,8 @@ export const getDashboard = createServerFn({ method: "GET" })
       buildNumbersReport(supabase, shop, "monthly", today),
     ]);
     const week = dashboardWeekFromReport(weekReport);
-    const mtdProductivity = monthReport.rows.find((row) => row.key === "mechanic_productivity") ?? null;
+    const mtdProductivity =
+      monthReport.rows.find((row) => row.key === "mechanic_productivity") ?? null;
     const previousDayProductivity = overallProductivity(
       productivity,
       { from: previousDay, to: previousDay },
@@ -138,7 +142,11 @@ export const getDashboard = createServerFn({ method: "GET" })
       previous_day: Object.fromEntries(
         MECHANICS.map((technician) => [
           technician,
-          productivityValue(productivity, { from: previousDay, to: previousDay, kind: "daily" }, technician),
+          productivityValue(
+            productivity,
+            { from: previousDay, to: previousDay, kind: "daily" },
+            technician,
+          ),
         ]),
       ),
       week: Object.fromEntries(
@@ -208,7 +216,6 @@ export const getDashboard = createServerFn({ method: "GET" })
     };
   });
 
-
 export const listMetricHistory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
@@ -242,4 +249,3 @@ export const listMetricHistory = createServerFn({ method: "POST" })
 
     return { rows: rows ?? [], corrections: corrections ?? [] };
   });
-

@@ -111,7 +111,6 @@ Resolve provider access and produce a signed migration inventory containing:
 
 No application redesign or production migration should begin until that inventory is complete.
 
-
 ## Independent staging import and authentication implementation (2026-09-17)
 
 - The imported TireShop history is in the independently controlled Supabase staging project `fsmyugwrfuvqrrhufryf`; it was not re-imported in this task.

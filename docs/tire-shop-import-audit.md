@@ -35,11 +35,11 @@ The staging database has:
 
 The 12 staging rows match the supplied Store 1 values exactly:
 
-| Measure | Source total | Staging total |
-|---|---:|---:|
-| Tires | 2,423 | 2,423 |
-| Cars | 3,106 | 3,106 |
-| Gross Profit / Order Profit | $546,438.23 | $546,438.23 |
+| Measure                     | Source total | Staging total |
+| --------------------------- | -----------: | ------------: |
+| Tires                       |        2,423 |         2,423 |
+| Cars                        |        3,106 |         3,106 |
+| Gross Profit / Order Profit |  $546,438.23 |   $546,438.23 |
 
 Coverage is January through December 2025. No duplicate Store 1 2025 rows should be imported.
 
@@ -56,11 +56,11 @@ Totals across those rows are 1,669 tires, 2,339 cars, and $393,916.10 gross prof
 
 The supplied Store 2 values total:
 
-| Measure | Source total | Staging |
-|---|---:|---:|
-| Tires | 92 | Absent |
-| Cars | 197 | Absent |
-| Gross Profit / Order Profit | $114,686.20 | Absent |
+| Measure                     | Source total | Staging |
+| --------------------------- | -----------: | ------: |
+| Tires                       |           92 |  Absent |
+| Cars                        |          197 |  Absent |
+| Gross Profit / Order Profit |  $114,686.20 |  Absent |
 
 Store 2 is not present as a second shop or as a separate metric series in the accessible staging project.
 

@@ -7,7 +7,10 @@ import { MECHANICS } from "@/lib/mechanics";
 
 const periodInput = z.object({
   kind: z.enum(["weekly", "monthly", "yearly"]),
-  anchor: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  anchor: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
 });
 
 const mechanicDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -22,13 +25,23 @@ async function requirePermission(supabase: unknown, userId: string, permission: 
     .from("role_permissions")
     .select("role, permission, allowed")
     .eq("shop_id", shop.shopId);
-  if (!can(shop.role, permission, (overrides ?? []) as { role: string; permission: string; allowed: boolean }[])) {
+  if (
+    !can(
+      shop.role,
+      permission,
+      (overrides ?? []) as { role: string; permission: string; allowed: boolean }[],
+    )
+  ) {
     throw new Error("You do not have permission to do that.");
   }
   return shop;
 }
 
-function mechanicPeriodDates(previousDay: string, periodAnchor: string, occupiedDates = new Set<string>()) {
+function mechanicPeriodDates(
+  previousDay: string,
+  periodAnchor: string,
+  occupiedDates = new Set<string>(),
+) {
   const weeklyRange = resolvePeriod("weekly", periodAnchor);
   const monthlyRange = resolvePeriod("monthly", periodAnchor);
   const occupied = new Set(occupiedDates);
@@ -46,7 +59,11 @@ export const getMechanicProductivityEntry = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => mechanicPeriodInput.parse(input))
   .handler(async ({ data, context }) => {
-    const shop = await requirePermission(context.supabase, context.userId, "edit_dashboard_numbers");
+    const shop = await requirePermission(
+      context.supabase,
+      context.userId,
+      "edit_dashboard_numbers",
+    );
     const weeklyRange = resolvePeriod("weekly", data.period_anchor);
     const monthlyRange = resolvePeriod("monthly", data.period_anchor);
     const from = weeklyRange.from < monthlyRange.from ? weeklyRange.from : monthlyRange.from;
@@ -64,11 +81,15 @@ export const getMechanicProductivityEntry = createServerFn({ method: "POST" })
         .filter((row) => !row.period_scope)
         .map((row) => row.business_date),
     );
-    const { weeklyDate, monthlyDate } = mechanicPeriodDates(data.previous_day, data.period_anchor, dailyDates);
-    const dates = new Set([data.previous_day, weeklyDate, monthlyDate]);
-    return ((existing ?? []) as { business_date: string; productivity_pct: number | null }[]).filter(
-      (row) => dates.has(row.business_date) && row.productivity_pct !== null,
+    const { weeklyDate, monthlyDate } = mechanicPeriodDates(
+      data.previous_day,
+      data.period_anchor,
+      dailyDates,
     );
+    const dates = new Set([data.previous_day, weeklyDate, monthlyDate]);
+    return (
+      (existing ?? []) as { business_date: string; productivity_pct: number | null }[]
+    ).filter((row) => dates.has(row.business_date) && row.productivity_pct !== null);
   });
 
 const nullablePercent = z
@@ -94,7 +115,11 @@ export const saveMechanicProductivityEntry = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const shop = await requirePermission(context.supabase, context.userId, "edit_dashboard_numbers");
+    const shop = await requirePermission(
+      context.supabase,
+      context.userId,
+      "edit_dashboard_numbers",
+    );
     const sb = context.supabase as Supa;
     const now = new Date().toISOString();
     const weeklyRange = resolvePeriod("weekly", data.period_anchor);
@@ -103,7 +128,9 @@ export const saveMechanicProductivityEntry = createServerFn({ method: "POST" })
     const to = weeklyRange.to > monthlyRange.to ? weeklyRange.to : monthlyRange.to;
     const { data: existing, error: existingError } = await sb
       .from("technician_productivity")
-      .select("business_date, technician, period_scope, productivity_pct, hours_billed, hours_worked, cars, note, entered_by")
+      .select(
+        "business_date, technician, period_scope, productivity_pct, hours_billed, hours_worked, cars, note, entered_by",
+      )
       .eq("shop_id", shop.shopId)
       .in("technician", [...MECHANICS])
       .gte("business_date", from)
@@ -117,7 +144,11 @@ export const saveMechanicProductivityEntry = createServerFn({ method: "POST" })
         .filter((row) => !row.period_scope)
         .map((row) => row.business_date),
     );
-    const { weeklyDate, monthlyDate } = mechanicPeriodDates(data.previous_day, data.period_anchor, dailyDates);
+    const { weeklyDate, monthlyDate } = mechanicPeriodDates(
+      data.previous_day,
+      data.period_anchor,
+      dailyDates,
+    );
     const existingRows = (existing ?? []) as {
       business_date: string;
       technician: string;
@@ -128,13 +159,19 @@ export const saveMechanicProductivityEntry = createServerFn({ method: "POST" })
       note: string | null;
       entered_by: string;
     }[];
-    const existingByKey = new Map(existingRows.map((row) => [`${row.technician}|${row.business_date}`, row]));
+    const existingByKey = new Map(
+      existingRows.map((row) => [`${row.technician}|${row.business_date}`, row]),
+    );
     const rowsByKey = new Map<string, Record<string, unknown>>();
     for (const row of existingRows) {
       const inWeekly =
-        row.period_scope === "weekly" && row.business_date >= weeklyRange.from && row.business_date <= weeklyRange.to;
+        row.period_scope === "weekly" &&
+        row.business_date >= weeklyRange.from &&
+        row.business_date <= weeklyRange.to;
       const inMonthly =
-        row.period_scope === "monthly" && row.business_date >= monthlyRange.from && row.business_date <= monthlyRange.to;
+        row.period_scope === "monthly" &&
+        row.business_date >= monthlyRange.from &&
+        row.business_date <= monthlyRange.to;
       if (!inWeekly && !inMonthly) continue;
       rowsByKey.set(`${row.technician}|${row.business_date}`, {
         shop_id: shop.shopId,
@@ -152,7 +189,11 @@ export const saveMechanicProductivityEntry = createServerFn({ method: "POST" })
     }
     for (const entry of data.entries) {
       const periodRows = [
-        { business_date: data.previous_day, productivity_pct: entry.previous_day, period_scope: null },
+        {
+          business_date: data.previous_day,
+          productivity_pct: entry.previous_day,
+          period_scope: null,
+        },
         { business_date: weeklyDate, productivity_pct: entry.weekly, period_scope: "weekly" },
         { business_date: monthlyDate, productivity_pct: entry.monthly, period_scope: "monthly" },
       ];
@@ -222,7 +263,11 @@ export const saveNumbersCorrection = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const shop = await requirePermission(context.supabase, context.userId, "edit_dashboard_numbers");
+    const shop = await requirePermission(
+      context.supabase,
+      context.userId,
+      "edit_dashboard_numbers",
+    );
     const sb = context.supabase as unknown as Supa;
     const range = resolvePeriod(data.kind, data.anchor);
     const { shopToday } = await import("./metrics-math");
@@ -334,4 +379,3 @@ export const saveNumbersGoals = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
-

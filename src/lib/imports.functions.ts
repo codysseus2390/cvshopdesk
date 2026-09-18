@@ -26,8 +26,14 @@ export const registerImport = createServerFn({ method: "POST" })
         file_hash: z.string().min(16),
         file_size: z.number().int().nonnegative(),
         report_scope: z.enum(["daily", "mtd", "ytd", "invoice", "inventory", "jobs", "other"]),
-        period_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
-        period_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+        period_start: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable(),
+        period_end: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .nullable(),
         // Only a real capture time given by staff or the report itself.
         captured_at: z.string().datetime().nullable().default(null),
       })
@@ -141,18 +147,22 @@ export const extractImport = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ importId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const { AiUnavailableError, UNTRUSTED_NOTICE, callGateway, parseJsonReply } = await import("./ai.server");
+    const { AiUnavailableError, UNTRUSTED_NOTICE, callGateway, parseJsonReply } =
+      await import("./ai.server");
 
     const { data: imp, error } = await supabase
       .from("imports")
-      .select("id, file_name, storage_path, mime_type, report_scope, period_start, period_end, status")
+      .select(
+        "id, file_name, storage_path, mime_type, report_scope, period_start, period_end, status",
+      )
       .eq("id", data.importId)
       .single();
     if (error) throw new Error(error.message);
     if (imp.status === "accepted") {
       return {
         ok: false as const,
-        message: "This import was already accepted, so it cannot be read again. Upload a new file instead.",
+        message:
+          "This import was already accepted, so it cannot be read again. Upload a new file instead.",
       };
     }
 
@@ -166,7 +176,8 @@ export const extractImport = createServerFn({ method: "POST" })
       const { data: file, error: dlError } = await supabase.storage
         .from("shop-uploads")
         .download(imp.storage_path);
-      if (dlError || !file) throw new Error(dlError?.message ?? "The uploaded file could not be read.");
+      if (dlError || !file)
+        throw new Error(dlError?.message ?? "The uploaded file could not be read.");
 
       const mime = imp.mime_type || "application/octet-stream";
       const buffer = await file.arrayBuffer();
@@ -186,7 +197,10 @@ export const extractImport = createServerFn({ method: "POST" })
         block = { type: "text", text: `<document_data format="csv">\n${sheets}\n</document_data>` };
       } else if (isTextFile(mime, imp.file_name)) {
         const text = new TextDecoder().decode(buffer).slice(0, 60_000);
-        block = { type: "text", text: `<document_data format="delimited-text">\n${text}\n</document_data>` };
+        block = {
+          type: "text",
+          text: `<document_data format="delimited-text">\n${text}\n</document_data>`,
+        };
       } else {
         const bytes = new Uint8Array(buffer);
         let binary = "";
@@ -194,7 +208,10 @@ export const extractImport = createServerFn({ method: "POST" })
         const base64 = btoa(binary);
         block =
           mime === "application/pdf"
-            ? { type: "file", file: { filename: imp.file_name, file_data: `data:${mime};base64,${base64}` } }
+            ? {
+                type: "file",
+                file: { filename: imp.file_name, file_data: `data:${mime};base64,${base64}` },
+              }
             : { type: "image_url", image_url: { url: `data:${mime};base64,${base64}` } };
       }
 
@@ -226,12 +243,16 @@ Rules: never guess a number or a name you cannot read - use null and add an entr
       if (!parsed) {
         const { error: failError } = await supabase
           .from("imports")
-          .update({ status: "failed", error_message: "Nothing readable was returned for this file." })
+          .update({
+            status: "failed",
+            error_message: "Nothing readable was returned for this file.",
+          })
           .eq("id", imp.id);
         if (failError) throw new Error(failError.message);
         return {
           ok: false as const,
-          message: "Nothing readable was returned for this file. You can enter the numbers by hand.",
+          message:
+            "Nothing readable was returned for this file. You can enter the numbers by hand.",
         };
       }
 
@@ -248,7 +269,11 @@ Rules: never guess a number or a name you cannot read - use null and add an entr
       return { ok: true as const, extraction: parsed };
     } catch (err) {
       const message =
-        err instanceof AiUnavailableError ? err.message : err instanceof Error ? err.message : "Extraction failed.";
+        err instanceof AiUnavailableError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Extraction failed.";
       const { error: markError } = await supabase
         .from("imports")
         .update({ status: "failed", error_message: message })
@@ -262,7 +287,6 @@ Rules: never guess a number or a name you cannot read - use null and add an entr
       }
       return { ok: false as const, message };
     }
-
   });
 
 export const acceptImport = createServerFn({ method: "POST" })

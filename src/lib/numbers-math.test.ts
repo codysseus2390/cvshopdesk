@@ -30,8 +30,14 @@ describe("periods", () => {
   });
 
   it("resolves months and years", () => {
-    expect(resolvePeriod("monthly", "2026-09-16")).toMatchObject({ from: "2026-09-01", to: "2026-09-30" });
-    expect(resolvePeriod("yearly", "2026-09-16")).toMatchObject({ from: "2026-01-01", to: "2026-12-31" });
+    expect(resolvePeriod("monthly", "2026-09-16")).toMatchObject({
+      from: "2026-09-01",
+      to: "2026-09-30",
+    });
+    expect(resolvePeriod("yearly", "2026-09-16")).toMatchObject({
+      from: "2026-01-01",
+      to: "2026-12-31",
+    });
   });
 
   it("shifts periods and finds the comparable period last year", () => {
@@ -47,7 +53,11 @@ describe("aggregatePeriod", () => {
   const month = resolvePeriod("monthly", "2026-09-01");
 
   it("sums daily records and derives gross profit %", () => {
-    const values = aggregatePeriod([daily("2026-09-01", 1000, 400), daily("2026-09-02", 1000, 500)], month, "2026-09-30");
+    const values = aggregatePeriod(
+      [daily("2026-09-01", 1000, 400), daily("2026-09-02", 1000, 500)],
+      month,
+      "2026-09-30",
+    );
     expect(values.sales).toBe(2000);
     expect(values.gross_profit).toBe(900);
     expect(values.gp_percent).toBe(45);
@@ -92,7 +102,10 @@ describe("goals", () => {
   });
 
   it("calculates a growth goal from the comparable previous-year value", () => {
-    expect(goalFor(salesDef, { method: "growth", growth_pct: 10 }, month, 90_000)!).toBeCloseTo(99_000, 6);
+    expect(goalFor(salesDef, { method: "growth", growth_pct: 10 }, month, 90_000)!).toBeCloseTo(
+      99_000,
+      6,
+    );
     expect(goalFor(salesDef, { method: "growth", growth_pct: 10 }, month, null)).toBeNull();
   });
 
@@ -124,11 +137,43 @@ describe("yearly monthly rollup", () => {
 
   it("adds accepted monthly totals and uses daily rows only for months without one", () => {
     const rows = [
-      { business_date: "2026-01-31", scope: "mtd", sales: 90_000, gross_profit: 40_000, tires_sold: 100, car_count: 200, created_at: "2026-02-01" },
-      { business_date: "2026-02-28", scope: "mtd", sales: 80_000, gross_profit: 30_000, tires_sold: 90, car_count: 180, created_at: "2026-03-01" },
-      { business_date: "2026-03-02", scope: "daily", sales: 5_000, gross_profit: 2_000, tires_sold: 4, car_count: 9, created_at: "2026-03-02" },
+      {
+        business_date: "2026-01-31",
+        scope: "mtd",
+        sales: 90_000,
+        gross_profit: 40_000,
+        tires_sold: 100,
+        car_count: 200,
+        created_at: "2026-02-01",
+      },
+      {
+        business_date: "2026-02-28",
+        scope: "mtd",
+        sales: 80_000,
+        gross_profit: 30_000,
+        tires_sold: 90,
+        car_count: 180,
+        created_at: "2026-03-01",
+      },
+      {
+        business_date: "2026-03-02",
+        scope: "daily",
+        sales: 5_000,
+        gross_profit: 2_000,
+        tires_sold: 4,
+        car_count: 9,
+        created_at: "2026-03-02",
+      },
       // Superseded January daily rows must not be added on top of the monthly total.
-      { business_date: "2026-01-05", scope: "daily", sales: 3_000, gross_profit: 1_000, tires_sold: 3, car_count: 6, created_at: "2026-01-05" },
+      {
+        business_date: "2026-01-05",
+        scope: "daily",
+        sales: 3_000,
+        gross_profit: 1_000,
+        tires_sold: 3,
+        car_count: 6,
+        created_at: "2026-01-05",
+      },
     ] as any;
     const totals = aggregatePeriod(rows, year, "2026-03-10");
     expect(totals.basis).toBe("monthly-rollup");

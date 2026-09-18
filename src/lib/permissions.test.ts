@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { can, DEFAULT_PERMISSIONS, OWNER_ONLY_PERMISSIONS, resolvePermissions } from "./permissions";
+import {
+  can,
+  DEFAULT_PERMISSIONS,
+  OWNER_ONLY_PERMISSIONS,
+  resolvePermissions,
+} from "./permissions";
 
 describe("permission model", () => {
   it("gives the owner everything, whatever the overrides say", () => {
@@ -26,8 +31,9 @@ describe("permission model", () => {
         .approve_imports,
     ).toBe(true);
     expect(
-      resolvePermissions("staff", [{ role: "manager", permission: "approve_imports", allowed: true }])
-        .approve_imports,
+      resolvePermissions("staff", [
+        { role: "manager", permission: "approve_imports", allowed: true },
+      ]).approve_imports,
     ).toBe(false);
   });
 

@@ -54,7 +54,9 @@ export function personaInstructions(settings: AssistantSettings): string {
       ? "Talk casually, like a person in the shop, not like a manual."
       : "Keep your wording neutral and businesslike.",
   );
-  lines.push(settings.humor ? "Light humour is welcome when it fits." : "Skip jokes; stay straightforward.");
+  lines.push(
+    settings.humor ? "Light humour is welcome when it fits." : "Skip jokes; stay straightforward.",
+  );
   lines.push(
     settings.shopBanter
       ? "A little playful shop banter with staff is fine, as long as the answer is still correct and useful."
@@ -71,6 +73,7 @@ export function personaInstructions(settings: AssistantSettings): string {
     );
   }
   const personality = settings.personality.trim();
-  const persona = personality.length > 0 ? `\n\nShop owner's standing instructions for you:\n${personality}` : "";
+  const persona =
+    personality.length > 0 ? `\n\nShop owner's standing instructions for you:\n${personality}` : "";
   return `Personality and tone:\n- ${lines.join("\n- ")}${persona}`;
 }

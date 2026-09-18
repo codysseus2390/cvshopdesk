@@ -3,7 +3,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { saveMetricEntry } from "@/lib/metrics.functions";
-import { getMechanicProductivityEntry, saveMechanicProductivityEntry } from "@/lib/numbers.functions";
+import {
+  getMechanicProductivityEntry,
+  saveMechanicProductivityEntry,
+} from "@/lib/numbers.functions";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate } from "@/components/access-gate";
 import { useDashboard } from "./hub";
@@ -20,7 +23,10 @@ export const Route = createFileRoute("/_authenticated/entry")({
   head: () => ({
     meta: [
       { title: "Daily entry — Cedar Valley Hub" },
-      { name: "description", content: "Enter and confirm Cedar Valley daily, month-to-date or year-to-date numbers." },
+      {
+        name: "description",
+        content: "Enter and confirm Cedar Valley daily, month-to-date or year-to-date numbers.",
+      },
       { property: "og:title", content: "Daily entry — Cedar Valley Hub" },
       { property: "og:description", content: "Enter and confirm shop numbers by hand." },
     ],
@@ -43,7 +49,10 @@ type Draft = {
   correction_note: string;
 };
 
-type MechanicDraft = Record<MechanicName, { previous_day: string; weekly: string; monthly: string }>;
+type MechanicDraft = Record<
+  MechanicName,
+  { previous_day: string; weekly: string; monthly: string }
+>;
 
 const blankMechanics = (): MechanicDraft =>
   Object.fromEntries(
@@ -83,15 +92,19 @@ function EntryPage() {
   const gp = num(draft.gross_profit);
   const cars = num(draft.car_count);
   const invalid =
-    [draft.sales, draft.gross_profit, draft.tires_sold, draft.car_count].some((v) => v.trim() !== "" && !Number.isFinite(Number(v))) ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(date);
+    [draft.sales, draft.gross_profit, draft.tires_sold, draft.car_count].some(
+      (v) => v.trim() !== "" && !Number.isFinite(Number(v)),
+    ) || !/^\d{4}-\d{2}-\d{2}$/.test(date);
 
-  const existing = dashboard.data?.recent.find((r) => r.business_date === date && r.scope === draft.scope);
+  const existing = dashboard.data?.recent.find(
+    (r) => r.business_date === date && r.scope === draft.scope,
+  );
   const mechanicDate = dashboard.data?.previousDay ?? "";
   const mechanicPeriodAnchor = dashboard.data?.today ?? "";
   const mechanicQuery = useQuery({
     queryKey: ["mechanic-entry", mechanicDate, mechanicPeriodAnchor],
-    queryFn: () => fetchMechanics({ data: { previous_day: mechanicDate, period_anchor: mechanicPeriodAnchor } }),
+    queryFn: () =>
+      fetchMechanics({ data: { previous_day: mechanicDate, period_anchor: mechanicPeriodAnchor } }),
     enabled:
       /^\d{4}-\d{2}-\d{2}$/.test(mechanicDate) && /^\d{4}-\d{2}-\d{2}$/.test(mechanicPeriodAnchor),
     staleTime: 0,
@@ -108,8 +121,13 @@ function EntryPage() {
     }[]) {
       if (!(row.technician in next)) continue;
       const field: "previous_day" | "weekly" | "monthly" =
-        row.period_scope === "weekly" ? "weekly" : row.period_scope === "monthly" ? "monthly" : "previous_day";
-      next[row.technician][field] = row.productivity_pct === null ? "" : String(row.productivity_pct);
+        row.period_scope === "weekly"
+          ? "weekly"
+          : row.period_scope === "monthly"
+            ? "monthly"
+            : "previous_day";
+      next[row.technician][field] =
+        row.productivity_pct === null ? "" : String(row.productivity_pct);
     }
     setMechanicDraft(next);
     setMechanicStage("edit");
@@ -145,7 +163,9 @@ function EntryPage() {
           correction_note: draft.correction_note || undefined,
         },
       });
-      setSaved(`Saved to the shop records${result.flags.length ? ` — flagged: ${result.flags.join(", ")}` : ""}.`);
+      setSaved(
+        `Saved to the shop records${result.flags.length ? ` — flagged: ${result.flags.join(", ")}` : ""}.`,
+      );
       setStage("edit");
       await queryClient.invalidateQueries();
     } catch (err) {
@@ -170,7 +190,9 @@ function EntryPage() {
       setMechanicSaved(`Mechanic production saved for ${mechanicDate}.`);
       setMechanicStage("edit");
       await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-      await queryClient.invalidateQueries({ queryKey: ["mechanic-entry", mechanicDate, mechanicPeriodAnchor] });
+      await queryClient.invalidateQueries({
+        queryKey: ["mechanic-entry", mechanicDate, mechanicPeriodAnchor],
+      });
     } catch (err) {
       setMechanicProblem(err instanceof Error ? err.message : "Mechanic production was not saved.");
     } finally {
@@ -179,7 +201,10 @@ function EntryPage() {
   }
 
   return (
-    <AppShell title="Daily entry" subtitle="Manual numbers are saved with the business date, scope and your account.">
+    <AppShell
+      title="Daily entry"
+      subtitle="Manual numbers are saved with the business date, scope and your account."
+    >
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -211,7 +236,11 @@ function EntryPage() {
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Field label="Sales ($)" value={draft.sales} onChange={(v) => setDraft({ ...draft, sales: v })} />
+              <Field
+                label="Sales ($)"
+                value={draft.sales}
+                onChange={(v) => setDraft({ ...draft, sales: v })}
+              />
               <Field
                 label="Gross profit ($)"
                 value={draft.gross_profit}
@@ -222,14 +251,23 @@ function EntryPage() {
                 value={draft.tires_sold}
                 onChange={(v) => setDraft({ ...draft, tires_sold: v })}
               />
-              <Field label="Car count" value={draft.car_count} onChange={(v) => setDraft({ ...draft, car_count: v })} />
+              <Field
+                label="Car count"
+                value={draft.car_count}
+                onChange={(v) => setDraft({ ...draft, car_count: v })}
+              />
             </div>
             <p className="text-xs text-muted-foreground">
-              Leave a box empty when the number is not known — it stays "Not updated" instead of counting as zero.
+              Leave a box empty when the number is not known — it stays "Not updated" instead of
+              counting as zero.
             </p>
             <div className="space-y-2">
               <Label htmlFor="note">Note (optional)</Label>
-              <Textarea id="note" value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} />
+              <Textarea
+                id="note"
+                value={draft.note}
+                onChange={(e) => setDraft({ ...draft, note: e.target.value })}
+              />
             </div>
             {existing && (
               <div className="space-y-2 rounded-md border border-border bg-muted p-3">
@@ -237,9 +275,9 @@ function EntryPage() {
                   A confirmed record already exists for {date} ({draft.scope}).
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Current: {formatCurrency(existing.gross_profit)} GP · {formatCount(existing.tires_sold)} tires ·{" "}
-                  {formatCount(existing.car_count)} cars. Saving replaces it and keeps the old value in the correction
-                  history.
+                  Current: {formatCurrency(existing.gross_profit)} GP ·{" "}
+                  {formatCount(existing.tires_sold)} tires · {formatCount(existing.car_count)} cars.
+                  Saving replaces it and keeps the old value in the correction history.
                 </p>
                 <Label htmlFor="reason">Reason for the correction</Label>
                 <Input
@@ -252,7 +290,11 @@ function EntryPage() {
             <Button disabled={invalid} onClick={() => setStage("review")}>
               Review before saving
             </Button>
-            {invalid && <p className="text-sm text-destructive">Check the date and that every number is numeric.</p>}
+            {invalid && (
+              <p className="text-sm text-destructive">
+                Check the date and that every number is numeric.
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -262,7 +304,9 @@ function EntryPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {stage === "edit" && !saved && (
-              <p className="text-sm text-muted-foreground">Fill the form, then review here before anything is saved.</p>
+              <p className="text-sm text-muted-foreground">
+                Fill the form, then review here before anything is saved.
+              </p>
             )}
             {stage === "review" && (
               <>
@@ -300,7 +344,9 @@ function EntryPage() {
               </>
             )}
             {saved && <p className="rounded-md bg-accent/20 p-3 text-sm font-semibold">{saved}</p>}
-            {problem && <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{problem}</p>}
+            {problem && (
+              <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{problem}</p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -315,7 +361,8 @@ function EntryPage() {
               Enter the production percentage for the previous day, current week, and current month.
             </p>
             <p className="rounded-md bg-muted p-3 text-sm font-semibold">
-              Previous day: {mechanicDate || "Loading…"} · Weekly and monthly use the current periods
+              Previous day: {mechanicDate || "Loading…"} · Weekly and monthly use the current
+              periods
             </p>
             {MECHANICS.map((technician) => (
               <div key={technician} className="space-y-3 rounded-md border border-border p-3">
@@ -360,10 +407,14 @@ function EntryPage() {
             >
               Review mechanic production
             </Button>
-            {mechanicInvalid && <p className="text-sm text-destructive">Enter percentages from 0 to 100.</p>}
+            {mechanicInvalid && (
+              <p className="text-sm text-destructive">Enter percentages from 0 to 100.</p>
+            )}
             {mechanicQuery.error && (
               <p className="text-sm text-destructive">
-                {mechanicQuery.error instanceof Error ? mechanicQuery.error.message : "Could not load mechanic production."}
+                {mechanicQuery.error instanceof Error
+                  ? mechanicQuery.error.message
+                  : "Could not load mechanic production."}
               </p>
             )}
           </CardContent>
@@ -387,8 +438,10 @@ function EntryPage() {
                 <ul className="space-y-2 text-sm">
                   {mechanicValues.map((entry) => (
                     <li key={entry.technician}>
-                      <strong>{entry.technician}:</strong> previous day {formatProductivity(entry.previous_day)} · weekly{" "}
-                      {formatProductivity(entry.weekly)} · monthly {formatProductivity(entry.monthly)}
+                      <strong>{entry.technician}:</strong> previous day{" "}
+                      {formatProductivity(entry.previous_day)} · weekly{" "}
+                      {formatProductivity(entry.weekly)} · monthly{" "}
+                      {formatProductivity(entry.monthly)}
                     </li>
                   ))}
                 </ul>
@@ -402,8 +455,14 @@ function EntryPage() {
                 </div>
               </>
             )}
-            {mechanicSaved && <p className="rounded-md bg-accent/20 p-3 text-sm font-semibold">{mechanicSaved}</p>}
-            {mechanicProblem && <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{mechanicProblem}</p>}
+            {mechanicSaved && (
+              <p className="rounded-md bg-accent/20 p-3 text-sm font-semibold">{mechanicSaved}</p>
+            )}
+            {mechanicProblem && (
+              <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                {mechanicProblem}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -411,12 +470,24 @@ function EntryPage() {
   );
 }
 
-function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function Field({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      <Input inputMode="decimal" value={value} onChange={(e) => onChange(e.target.value)} placeholder="Not updated" />
+      <Input
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Not updated"
+      />
     </div>
   );
 }
-

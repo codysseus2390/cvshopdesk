@@ -37,7 +37,13 @@ export function NotificationComposer({ canSend }: { canSend: boolean }) {
     setNote(null);
     try {
       const result = await send({
-        data: { title: title.trim(), message: message.trim(), priority, audience, userIds: selected },
+        data: {
+          title: title.trim(),
+          message: message.trim(),
+          priority,
+          audience,
+          userIds: selected,
+        },
       });
       setNote({
         ok: true,
@@ -63,7 +69,8 @@ export function NotificationComposer({ canSend }: { canSend: boolean }) {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Announcements are sent by the owner and admins. Anything sent to you appears under the bell in the header.
+            Announcements are sent by the owner and admins. Anything sent to you appears under the
+            bell in the header.
           </p>
         </CardContent>
       </Card>
@@ -78,7 +85,12 @@ export function NotificationComposer({ canSend }: { canSend: boolean }) {
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="note-title">Title</Label>
-          <Input id="note-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Shop meeting" />
+          <Input
+            id="note-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Shop meeting"
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="note-message">Message</Label>
@@ -144,13 +156,21 @@ export function NotificationComposer({ canSend }: { canSend: boolean }) {
           </div>
         )}
 
-        <Button onClick={submit} disabled={busy || title.trim().length < 2 || message.trim().length < 2}>
+        <Button
+          onClick={submit}
+          disabled={busy || title.trim().length < 2 || message.trim().length < 2}
+        >
           {busy ? "Sending…" : "Send announcement"}
         </Button>
-        {note && <p className={`text-sm ${note.ok ? "text-muted-foreground" : "text-destructive"}`}>{note.text}</p>}
+        {note && (
+          <p className={`text-sm ${note.ok ? "text-muted-foreground" : "text-destructive"}`}>
+            {note.text}
+          </p>
+        )}
         <p className="text-xs text-muted-foreground">
-          These are in-app announcements saved in the shop records: employees see them under the bell, and anything
-          aimed at the TV stays in the display queue. Phone push notifications can be added later without redoing this.
+          These are in-app announcements saved in the shop records: employees see them under the
+          bell, and anything aimed at the TV stays in the display queue. Phone push notifications
+          can be added later without redoing this.
         </p>
       </CardContent>
     </Card>

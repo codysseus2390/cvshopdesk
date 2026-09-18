@@ -28,7 +28,7 @@ The entire Vite + TanStack Start + Nitro build is configured through
 
 > Do NOT add these plugins manually or the app will break with duplicate plugins:
 > TanStack devtools, tanstackStart, viteReact, tailwindcss, tsConfigPaths,
-> nitro (build-only using cloudflare as a default target), VITE_* env injection,
+> nitro (build-only using cloudflare as a default target), VITE\_\* env injection,
 > @ path alias, React/TanStack dedupe, error logger plugins, sandbox detection.
 
 **Do not manually add any of those plugins** to `vite.config.ts`. If additional Vite
@@ -40,6 +40,7 @@ shows.
 `src/integrations/lovable/index.ts` and the Supabase auth setup use
 `@lovable.dev/cloud-auth-js`. This handles the bridge between Lovable's preview
 environment and Supabase auth. Do not remove this package without:
+
 1. Understanding what it provides that plain `@supabase/supabase-js` does not.
 2. Testing that auth still works in both the Lovable preview and production.
 

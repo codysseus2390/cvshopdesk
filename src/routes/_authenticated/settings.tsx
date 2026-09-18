@@ -52,7 +52,8 @@ export const Route = createFileRoute("/_authenticated/settings")({
       { title: "Settings — Cedar Valley Hub" },
       {
         name: "description",
-        content: "Manage Cedar Valley staff, roles, permissions, dashboard goals, security and appearance.",
+        content:
+          "Manage Cedar Valley staff, roles, permissions, dashboard goals, security and appearance.",
       },
       { property: "og:title", content: "Settings — Cedar Valley Hub" },
       { property: "og:description", content: "Staff, roles, permissions and app settings." },
@@ -106,7 +107,11 @@ function SettingsPage() {
           <StaffAndRoles isAdmin={isAdmin} isOwner={isOwner} />
         </TabsContent>
         <TabsContent value="permissions">
-          <PermissionMatrix isOwner={isOwner} overrides={perms.overrides} onSaved={() => queryClient.invalidateQueries({ queryKey: ["admin-config"] })} />
+          <PermissionMatrix
+            isOwner={isOwner}
+            overrides={perms.overrides}
+            onSaved={() => queryClient.invalidateQueries({ queryKey: ["admin-config"] })}
+          />
         </TabsContent>
         <TabsContent value="dashboard">
           <DashboardSettings isAdmin={isAdmin} />
@@ -144,8 +149,16 @@ function StaffAndRoles({ isAdmin, isOwner }: { isAdmin: boolean; isOwner: boolea
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
 
-  const members = useQuery({ queryKey: ["members"], queryFn: () => fetchMembers(), enabled: isAdmin });
-  const invites = useQuery({ queryKey: ["staff-invites"], queryFn: () => fetchInvites(), enabled: isAdmin });
+  const members = useQuery({
+    queryKey: ["members"],
+    queryFn: () => fetchMembers(),
+    enabled: isAdmin,
+  });
+  const invites = useQuery({
+    queryKey: ["staff-invites"],
+    queryFn: () => fetchInvites(),
+    enabled: isAdmin,
+  });
 
   async function run(fn: () => Promise<unknown>, done: string) {
     setBusy(true);
@@ -173,7 +186,9 @@ function StaffAndRoles({ isAdmin, isOwner }: { isAdmin: boolean; isOwner: boolea
         </CardHeader>
         <CardContent className="space-y-4">
           {!isAdmin && (
-            <p className="text-sm text-muted-foreground">Only the owner and admins can add or edit employees.</p>
+            <p className="text-sm text-muted-foreground">
+              Only the owner and admins can add or edit employees.
+            </p>
           )}
           {isAdmin && (
             <>
@@ -212,10 +227,15 @@ function StaffAndRoles({ isAdmin, isOwner }: { isAdmin: boolean; isOwner: boolea
                 {busy ? "Saving…" : "Add employee"}
               </Button>
               <p className="text-xs text-muted-foreground">
-                Nothing is emailed from here and no password is created. Give them this address, they create their own
-                password, and they are let in automatically the first time they sign in.
+                Nothing is emailed from here and no password is created. Give them this address,
+                they create their own password, and they are let in automatically the first time
+                they sign in.
               </p>
-              {note && <p className={`text-sm ${note.ok ? "text-muted-foreground" : "text-destructive"}`}>{note.text}</p>}
+              {note && (
+                <p className={`text-sm ${note.ok ? "text-muted-foreground" : "text-destructive"}`}>
+                  {note.text}
+                </p>
+              )}
             </>
           )}
         </CardContent>
@@ -224,23 +244,37 @@ function StaffAndRoles({ isAdmin, isOwner }: { isAdmin: boolean; isOwner: boolea
       <Card>
         <CardHeader>
           <CardTitle className="font-display">
-            Waiting for approval {pendingMembers.length > 0 && <Badge className="ml-2">{pendingMembers.length}</Badge>}
+            Waiting for approval{" "}
+            {pendingMembers.length > 0 && <Badge className="ml-2">{pendingMembers.length}</Badge>}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {!isAdmin && <p className="text-sm text-muted-foreground">Only the owner and admins can approve people.</p>}
+          {!isAdmin && (
+            <p className="text-sm text-muted-foreground">
+              Only the owner and admins can approve people.
+            </p>
+          )}
           {isAdmin && pendingMembers.length === 0 && (
             <p className="text-sm text-muted-foreground">Nobody is waiting right now.</p>
           )}
           {isAdmin &&
             pendingMembers.map((m) => (
-              <div key={m.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
+              <div
+                key={m.id}
+                className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2"
+              >
                 <span className="font-semibold">{m.email ?? "Unknown email"}</span>
                 <div className="flex gap-2">
                   <Button
                     size="sm"
                     disabled={busy}
-                    onClick={() => run(() => decide({ data: { memberId: m.id, status: "approved", role: "staff" } }), "Approved as staff.")}
+                    onClick={() =>
+                      run(
+                        () =>
+                          decide({ data: { memberId: m.id, status: "approved", role: "staff" } }),
+                        "Approved as staff.",
+                      )
+                    }
                   >
                     Approve as staff
                   </Button>
@@ -248,7 +282,12 @@ function StaffAndRoles({ isAdmin, isOwner }: { isAdmin: boolean; isOwner: boolea
                     size="sm"
                     variant="outline"
                     disabled={busy}
-                    onClick={() => run(() => decide({ data: { memberId: m.id, status: "revoked" } }), "Request declined.")}
+                    onClick={() =>
+                      run(
+                        () => decide({ data: { memberId: m.id, status: "revoked" } }),
+                        "Request declined.",
+                      )
+                    }
                   >
                     Decline
                   </Button>
@@ -274,11 +313,20 @@ function StaffAndRoles({ isAdmin, isOwner }: { isAdmin: boolean; isOwner: boolea
           <CardTitle className="font-display">Staff and roles</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {!isAdmin && <p className="text-sm text-muted-foreground">Only the owner and admins can manage staff.</p>}
-          {isAdmin && members.data?.length === 0 && <p className="text-sm text-muted-foreground">No staff yet.</p>}
+          {!isAdmin && (
+            <p className="text-sm text-muted-foreground">
+              Only the owner and admins can manage staff.
+            </p>
+          )}
+          {isAdmin && members.data?.length === 0 && (
+            <p className="text-sm text-muted-foreground">No staff yet.</p>
+          )}
           {isAdmin &&
             members.data?.map((m) => (
-              <div key={m.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
+              <div
+                key={m.id}
+                className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2"
+              >
                 <div>
                   <p className="font-semibold">{m.email ?? "Unknown email"}</p>
                   <p className="text-xs text-muted-foreground">
@@ -286,7 +334,9 @@ function StaffAndRoles({ isAdmin, isOwner }: { isAdmin: boolean; isOwner: boolea
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={m.status === "approved" ? "default" : "secondary"}>{m.status}</Badge>
+                  <Badge variant={m.status === "approved" ? "default" : "secondary"}>
+                    {m.status}
+                  </Badge>
                   {m.role === "owner" ? (
                     <Badge variant="secondary">Owner — cannot be changed</Badge>
                   ) : (
@@ -297,7 +347,10 @@ function StaffAndRoles({ isAdmin, isOwner }: { isAdmin: boolean; isOwner: boolea
                         value={m.role}
                         onChange={(e) =>
                           run(
-                            () => changeRole({ data: { memberId: m.id, role: e.target.value as AssignableRole } }),
+                            () =>
+                              changeRole({
+                                data: { memberId: m.id, role: e.target.value as AssignableRole },
+                              }),
                             "Role updated.",
                           )
                         }
@@ -335,20 +388,31 @@ function StaffAndRoles({ isAdmin, isOwner }: { isAdmin: boolean; isOwner: boolea
                           title={`Remove ${m.email ?? "this employee"}?`}
                           description="They lose access to every shop record straight away. Their saved entries stay in the history."
                           disabled={busy}
-                          onConfirm={() => run(() => decide({ data: { memberId: m.id, status: "revoked" } }), "Access removed.")}
+                          onConfirm={() =>
+                            run(
+                              () => decide({ data: { memberId: m.id, status: "revoked" } }),
+                              "Access removed.",
+                            )
+                          }
                         />
                       )}
                     </>
-                   )}
-                 </div>
-                 <div className="w-full">
-                   <SignInDetails memberId={m.id} email={m.email} isOwnerRow={m.role === "owner"} isOwner={isOwner} />
-                 </div>
-               </div>
-             ))}
+                  )}
+                </div>
+                <div className="w-full">
+                  <SignInDetails
+                    memberId={m.id}
+                    email={m.email}
+                    isOwnerRow={m.role === "owner"}
+                    isOwner={isOwner}
+                  />
+                </div>
+              </div>
+            ))}
           {isAdmin && !isOwner && (
             <p className="text-xs text-muted-foreground">
-              Admins manage staff and TV screens. The owner account cannot be changed, removed or transferred here.
+              Admins manage staff and TV screens. The owner account cannot be changed, removed or
+              transferred here.
             </p>
           )}
         </CardContent>
@@ -458,7 +522,11 @@ function SignInDetails({
           Tell the employee their new password in person — nothing is emailed from here.
         </span>
       </div>
-      {note && <p className={`text-sm ${note.ok ? "text-muted-foreground" : "text-destructive"}`}>{note.text}</p>}
+      {note && (
+        <p className={`text-sm ${note.ok ? "text-muted-foreground" : "text-destructive"}`}>
+          {note.text}
+        </p>
+      )}
     </div>
   );
 }
@@ -497,8 +565,8 @@ function PermissionMatrix({
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          The Owner always has full access. Ownership and security controls stay with the owner and cannot be handed to
-          another role.
+          The Owner always has full access. Ownership and security controls stay with the owner and
+          cannot be handed to another role.
         </p>
         <div className="-mx-2 overflow-x-auto px-2">
           <table className="w-full min-w-[560px] text-sm">
@@ -544,8 +612,14 @@ function PermissionMatrix({
             </tbody>
           </table>
         </div>
-        {!isOwner && <p className="text-sm text-muted-foreground">Only the owner can change these switches.</p>}
-        {note && <p className={`text-sm ${note.ok ? "text-muted-foreground" : "text-destructive"}`}>{note.text}</p>}
+        {!isOwner && (
+          <p className="text-sm text-muted-foreground">Only the owner can change these switches.</p>
+        )}
+        {note && (
+          <p className={`text-sm ${note.ok ? "text-muted-foreground" : "text-destructive"}`}>
+            {note.text}
+          </p>
+        )}
       </CardContent>
     </Card>
   );
@@ -558,7 +632,9 @@ function DashboardSettings({ isAdmin }: { isAdmin: boolean }) {
 
   const [hidden, setHidden] = useState<string[]>([]);
   const [targets, setTargets] = useState<Record<string, string>>({});
-  const [goals, setGoals] = useState<{ technician: string; cars_per_month: string; gp_per_month: string }[]>([]);
+  const [goals, setGoals] = useState<
+    { technician: string; cars_per_month: string; gp_per_month: string }[]
+  >([]);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -567,14 +643,21 @@ function DashboardSettings({ isAdmin }: { isAdmin: boolean }) {
     setHidden(perms.settings.hidden_widgets ?? []);
     setTargets(
       Object.fromEntries(
-        Object.entries(perms.settings.targets ?? {}).map(([k, v]) => [k, v === null || v === undefined ? "" : String(v)]),
+        Object.entries(perms.settings.targets ?? {}).map(([k, v]) => [
+          k,
+          v === null || v === undefined ? "" : String(v),
+        ]),
       ),
     );
     setGoals(
       (perms.settings.technician_goals ?? []).map((g) => ({
         technician: g.technician,
-        cars_per_month: g.cars_per_month === null || g.cars_per_month === undefined ? "" : String(g.cars_per_month),
-        gp_per_month: g.gp_per_month === null || g.gp_per_month === undefined ? "" : String(g.gp_per_month),
+        cars_per_month:
+          g.cars_per_month === null || g.cars_per_month === undefined
+            ? ""
+            : String(g.cars_per_month),
+        gp_per_month:
+          g.gp_per_month === null || g.gp_per_month === undefined ? "" : String(g.gp_per_month),
       })),
     );
   }, [perms.settings]);
@@ -588,7 +671,9 @@ function DashboardSettings({ isAdmin }: { isAdmin: boolean }) {
       await save({
         data: {
           hidden_widgets: hidden,
-          targets: Object.fromEntries(TARGET_FIELDS.map((f) => [f.key, number(targets[f.key] ?? "")])),
+          targets: Object.fromEntries(
+            TARGET_FIELDS.map((f) => [f.key, number(targets[f.key] ?? "")]),
+          ),
           technician_goals: goals
             .filter((g) => g.technician.trim().length > 0)
             .map((g) => ({
@@ -614,7 +699,9 @@ function DashboardSettings({ isAdmin }: { isAdmin: boolean }) {
           <CardTitle className="font-display">Dashboard settings</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Only the owner and admins can change the dashboard.</p>
+          <p className="text-sm text-muted-foreground">
+            Only the owner and admins can change the dashboard.
+          </p>
         </CardContent>
       </Card>
     );
@@ -634,7 +721,9 @@ function DashboardSettings({ isAdmin }: { isAdmin: boolean }) {
                 checked={!hidden.includes(widget.key)}
                 aria-label={widget.label}
                 onCheckedChange={(checked) =>
-                  setHidden((prev) => (checked ? prev.filter((k) => k !== widget.key) : [...prev, widget.key]))
+                  setHidden((prev) =>
+                    checked ? prev.filter((k) => k !== widget.key) : [...prev, widget.key],
+                  )
                 }
               />
             </div>
@@ -674,7 +763,9 @@ function DashboardSettings({ isAdmin }: { isAdmin: boolean }) {
                 value={goal.technician}
                 placeholder="Technician name as it appears on jobs"
                 onChange={(e) =>
-                  setGoals((prev) => prev.map((g, idx) => (idx === i ? { ...g, technician: e.target.value } : g)))
+                  setGoals((prev) =>
+                    prev.map((g, idx) => (idx === i ? { ...g, technician: e.target.value } : g)),
+                  )
                 }
               />
               <Input
@@ -682,7 +773,11 @@ function DashboardSettings({ isAdmin }: { isAdmin: boolean }) {
                 value={goal.cars_per_month}
                 placeholder="Cars / month"
                 onChange={(e) =>
-                  setGoals((prev) => prev.map((g, idx) => (idx === i ? { ...g, cars_per_month: e.target.value } : g)))
+                  setGoals((prev) =>
+                    prev.map((g, idx) =>
+                      idx === i ? { ...g, cars_per_month: e.target.value } : g,
+                    ),
+                  )
                 }
               />
               <Input
@@ -690,29 +785,43 @@ function DashboardSettings({ isAdmin }: { isAdmin: boolean }) {
                 value={goal.gp_per_month}
                 placeholder="GP / month"
                 onChange={(e) =>
-                  setGoals((prev) => prev.map((g, idx) => (idx === i ? { ...g, gp_per_month: e.target.value } : g)))
+                  setGoals((prev) =>
+                    prev.map((g, idx) => (idx === i ? { ...g, gp_per_month: e.target.value } : g)),
+                  )
                 }
               />
-              <Button variant="outline" onClick={() => setGoals((prev) => prev.filter((_, idx) => idx !== i))}>
+              <Button
+                variant="outline"
+                onClick={() => setGoals((prev) => prev.filter((_, idx) => idx !== i))}
+              >
                 Remove
               </Button>
             </div>
           ))}
           <Button
             variant="outline"
-            onClick={() => setGoals((prev) => [...prev, { technician: "", cars_per_month: "", gp_per_month: "" }])}
+            onClick={() =>
+              setGoals((prev) => [
+                ...prev,
+                { technician: "", cars_per_month: "", gp_per_month: "" },
+              ])
+            }
           >
             Add a technician goal
           </Button>
           <p className="text-xs text-muted-foreground">
-            Goals are compared against the technician names that arrive on imported jobs. Nothing is invented for a
-            technician the records have not seen.
+            Goals are compared against the technician names that arrive on imported jobs. Nothing is
+            invented for a technician the records have not seen.
           </p>
           <div className="flex items-center gap-3 pt-2">
             <Button onClick={submit} disabled={busy}>
               {busy ? "Saving…" : "Save dashboard settings"}
             </Button>
-            {note && <p className={`text-sm ${note.ok ? "text-muted-foreground" : "text-destructive"}`}>{note.text}</p>}
+            {note && (
+              <p className={`text-sm ${note.ok ? "text-muted-foreground" : "text-destructive"}`}>
+                {note.text}
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -724,7 +833,11 @@ function SecuritySection({ isOwner, isAdmin }: { isOwner: boolean; isAdmin: bool
   const perms = usePermissions();
   const fetchEvents = useServerFn(listAuditEvents);
   const context = useShopContext();
-  const events = useQuery({ queryKey: ["audit-events"], queryFn: () => fetchEvents(), enabled: isAdmin });
+  const events = useQuery({
+    queryKey: ["audit-events"],
+    queryFn: () => fetchEvents(),
+    enabled: isAdmin,
+  });
   const [session, setSession] = useState<{ email: string | null; lastSignIn: string | null }>({
     email: null,
     lastSignIn: null,
@@ -753,13 +866,16 @@ function SecuritySection({ isOwner, isAdmin }: { isOwner: boolean; isAdmin: bool
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           <p>
-            Signed in as <span className="font-semibold">{session.email ?? context.data?.email ?? "—"}</span>
+            Signed in as{" "}
+            <span className="font-semibold">{session.email ?? context.data?.email ?? "—"}</span>
           </p>
           <p className="text-muted-foreground">
-            Last sign-in: {session.lastSignIn ? new Date(session.lastSignIn).toLocaleString() : "not recorded"}
+            Last sign-in:{" "}
+            {session.lastSignIn ? new Date(session.lastSignIn).toLocaleString() : "not recorded"}
           </p>
           <p className="text-muted-foreground">
-            Your role: {roleLabel(perms.role)} · every record, upload and TV screen stays behind staff sign-in.
+            Your role: {roleLabel(perms.role)} · every record, upload and TV screen stays behind
+            staff sign-in.
           </p>
           {isOwner ? (
             <ConfirmButton
@@ -770,7 +886,8 @@ function SecuritySection({ isOwner, isAdmin }: { isOwner: boolean; isAdmin: bool
             />
           ) : (
             <p className="text-xs text-muted-foreground">
-              Signing every device out is an owner action. Change your password on My account instead.
+              Signing every device out is an owner action. Change your password on My account
+              instead.
             </p>
           )}
           {note && <p className="text-sm text-muted-foreground">{note}</p>}
@@ -794,13 +911,22 @@ function SecuritySection({ isOwner, isAdmin }: { isOwner: boolean; isAdmin: bool
           <CardTitle className="font-display">Activity log</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
-          {!isAdmin && <p className="text-muted-foreground">Only the owner and admins can see the activity log.</p>}
+          {!isAdmin && (
+            <p className="text-muted-foreground">
+              Only the owner and admins can see the activity log.
+            </p>
+          )}
           {isAdmin && (events.data?.length ?? 0) === 0 && (
-            <p className="text-muted-foreground">Nothing recorded yet. Permission, goal and announcement changes appear here.</p>
+            <p className="text-muted-foreground">
+              Nothing recorded yet. Permission, goal and announcement changes appear here.
+            </p>
           )}
           {isAdmin &&
             events.data?.map((event) => (
-              <div key={event.id} className="flex flex-wrap justify-between gap-2 border-b border-border pb-2">
+              <div
+                key={event.id}
+                className="flex flex-wrap justify-between gap-2 border-b border-border pb-2"
+              >
                 <span>
                   <span className="font-semibold">{event.action.replace(/_/g, " ")}</span>
                   {event.target ? ` · ${event.target}` : ""}
@@ -828,7 +954,8 @@ function AppearanceSection() {
           <div>
             <p className="font-semibold">Dark mode</p>
             <p className="text-sm text-muted-foreground">
-              Switches the whole app to the dark Cedar Valley palette and remembers your choice on this device.
+              Switches the whole app to the dark Cedar Valley palette and remembers your choice on
+              this device.
             </p>
           </div>
           <Switch

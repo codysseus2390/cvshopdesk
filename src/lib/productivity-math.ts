@@ -24,7 +24,9 @@ export function overallProductivity(
   upTo?: string,
 ): number | null {
   const boundary = upTo && upTo < range.to ? upTo : range.to;
-  const inRange = rows.filter((row) => row.business_date >= range.from && row.business_date <= boundary);
+  const inRange = rows.filter(
+    (row) => row.business_date >= range.from && row.business_date <= boundary,
+  );
   const overrides = inRange
     .filter(
       (row) =>

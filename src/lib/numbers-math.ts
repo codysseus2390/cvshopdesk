@@ -20,7 +20,11 @@ export interface PeriodRange {
 const DAY = 86_400_000;
 
 function toUTC(date: string): number {
-  return Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, Number(date.slice(8, 10)));
+  return Date.UTC(
+    Number(date.slice(0, 4)),
+    Number(date.slice(5, 7)) - 1,
+    Number(date.slice(8, 10)),
+  );
 }
 
 function fromUTC(ms: number): string {
@@ -32,12 +36,24 @@ export function addDays(date: string, days: number): string {
 }
 
 export function daysInMonth(monthPrefix: string): number {
-  return new Date(Date.UTC(Number(monthPrefix.slice(0, 4)), Number(monthPrefix.slice(5, 7)), 0)).getUTCDate();
+  return new Date(
+    Date.UTC(Number(monthPrefix.slice(0, 4)), Number(monthPrefix.slice(5, 7)), 0),
+  ).getUTCDate();
 }
 
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 function monthLabel(monthPrefix: string): string {
@@ -48,7 +64,12 @@ function monthLabel(monthPrefix: string): string {
 export function resolvePeriod(kind: PeriodKind, anchor: string): PeriodRange {
   if (kind === "monthly") {
     const month = anchor.slice(0, 7);
-    return { kind, from: `${month}-01`, to: `${month}-${String(daysInMonth(month)).padStart(2, "0")}`, label: monthLabel(month) };
+    return {
+      kind,
+      from: `${month}-01`,
+      to: `${month}-${String(daysInMonth(month)).padStart(2, "0")}`,
+      label: monthLabel(month),
+    };
   }
   if (kind === "yearly") {
     const year = anchor.slice(0, 4);
@@ -63,7 +84,8 @@ export function resolvePeriod(kind: PeriodKind, anchor: string): PeriodRange {
 /** Move a whole period forward or back. */
 export function shiftPeriod(range: PeriodRange, delta: number): PeriodRange {
   if (range.kind === "weekly") return resolvePeriod("weekly", addDays(range.from, delta * 7));
-  if (range.kind === "yearly") return resolvePeriod("yearly", `${Number(range.from.slice(0, 4)) + delta}-06-15`);
+  if (range.kind === "yearly")
+    return resolvePeriod("yearly", `${Number(range.from.slice(0, 4)) + delta}-06-15`);
   const month = Number(range.from.slice(5, 7)) - 1 + delta;
   const year = Number(range.from.slice(0, 4)) + Math.floor(month / 12);
   const norm = ((month % 12) + 12) % 12;
@@ -116,7 +138,8 @@ function newestPerDate(rows: NumbersRow[]): NumbersRow[] {
   const byDate = new Map<string, NumbersRow>();
   for (const r of rows.filter((row) => row.scope === "daily")) {
     const existing = byDate.get(r.business_date);
-    if (!existing || (r.created_at ?? "") >= (existing.created_at ?? "")) byDate.set(r.business_date, r);
+    if (!existing || (r.created_at ?? "") >= (existing.created_at ?? ""))
+      byDate.set(r.business_date, r);
   }
   return [...byDate.values()];
 }
@@ -141,7 +164,8 @@ function sumFields(rows: NumbersRow[]): Record<(typeof SUMMED)[number], number |
 
 function withPercent(values: Omit<PeriodValues, "gp_percent">): PeriodValues {
   const { sales, gross_profit } = values;
-  const gp_percent = sales !== null && gross_profit !== null && sales > 0 ? (gross_profit / sales) * 100 : null;
+  const gp_percent =
+    sales !== null && gross_profit !== null && sales > 0 ? (gross_profit / sales) * 100 : null;
   return { ...values, gp_percent };
 }
 
@@ -150,7 +174,11 @@ function withPercent(values: Omit<PeriodValues, "gp_percent">): PeriodValues {
  * snapshot covering the period wins; otherwise the daily records are summed.
  * `upTo` (the shop's business day) keeps future-dated records out.
  */
-export function aggregatePeriod(rows: NumbersRow[], range: PeriodRange, upTo?: string): PeriodValues {
+export function aggregatePeriod(
+  rows: NumbersRow[],
+  range: PeriodRange,
+  upTo?: string,
+): PeriodValues {
   const boundary = upTo && upTo < range.to ? upTo : range.to;
   const inRange = rows.filter((r) => r.business_date >= range.from && r.business_date <= boundary);
 
@@ -176,11 +204,15 @@ export function aggregatePeriod(rows: NumbersRow[], range: PeriodRange, upTo?: s
   if (range.kind === "yearly") {
     const months = Array.from(new Set(inRange.map((r) => r.business_date.slice(0, 7)))).sort();
     const monthSnapshots = months
-      .map((month) => newest(inRange.filter((r) => r.business_date.startsWith(month) && r.scope === "mtd")))
+      .map((month) =>
+        newest(inRange.filter((r) => r.business_date.startsWith(month) && r.scope === "mtd")),
+      )
       .filter((r): r is NumbersRow => Boolean(r));
     if (monthSnapshots.length > 0) {
       const covered = new Set(monthSnapshots.map((r) => r.business_date.slice(0, 7)));
-      const dailyRows = newestPerDate(inRange.filter((r) => !covered.has(r.business_date.slice(0, 7))));
+      const dailyRows = newestPerDate(
+        inRange.filter((r) => !covered.has(r.business_date.slice(0, 7))),
+      );
       const used = [...monthSnapshots, ...dailyRows];
       const dates = used.map((r) => r.business_date).sort();
       return withPercent({
@@ -192,7 +224,9 @@ export function aggregatePeriod(rows: NumbersRow[], range: PeriodRange, upTo?: s
     }
   }
 
-  const byDate = new Map<string, NumbersRow>(newestPerDate(inRange).map((r) => [r.business_date, r]));
+  const byDate = new Map<string, NumbersRow>(
+    newestPerDate(inRange).map((r) => [r.business_date, r]),
+  );
   if (byDate.size === 0) {
     return withPercent({
       sales: null,
@@ -246,11 +280,21 @@ export const NUMBER_METRICS: MetricDef[] = [
   { key: "gp_percent", label: "Gross profit %", format: "percent", prorate: false },
   { key: "car_count", label: "Cars", format: "count", prorate: true },
   { key: "tires_sold", label: "Tires", format: "count", prorate: true },
-  { key: "mechanic_productivity", label: "Mechanic productivity", format: "percent", prorate: false },
+  {
+    key: "mechanic_productivity",
+    label: "Mechanic productivity",
+    format: "percent",
+    prorate: false,
+  },
 ];
 
 export function productivityMetric(technician: string): MetricDef {
-  return { key: `productivity:${technician}`, label: `${technician} productivity %`, format: "percent", prorate: false };
+  return {
+    key: `productivity:${technician}`,
+    label: `${technician} productivity %`,
+    format: "percent",
+    prorate: false,
+  };
 }
 
 /** The goal for one metric in one period, derived from the saved rule. */
@@ -312,7 +356,9 @@ export function buildReportRow(
 ): ReportRow {
   const variance = actual === null || goal === null ? null : actual - goal;
   const variance_pct =
-    variance === null || goal === null || goal === 0 || def.format === "percent" ? null : (variance / goal) * 100;
+    variance === null || goal === null || goal === 0 || def.format === "percent"
+      ? null
+      : (variance / goal) * 100;
   const yoy_diff = actual === null || previous === null ? null : actual - previous;
   const yoy_pct =
     yoy_diff === null || previous === null || previous === 0 || def.format === "percent"
@@ -338,7 +384,11 @@ export function buildReportRow(
 export function formatMetric(value: number | null, format: MetricFormat): string {
   if (value === null || !Number.isFinite(value)) return "—";
   if (format === "currency")
-    return value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+    return value.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    });
   if (format === "percent") return `${value.toFixed(1)}%`;
   return Math.round(value).toLocaleString("en-US");
 }

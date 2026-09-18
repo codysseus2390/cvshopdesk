@@ -33,7 +33,13 @@ function useHasCamera() {
   return hasCamera;
 }
 
-export function ComposerMenu({ disabled, onAttach, onTakePhoto, onCreateImage, size = "sm" }: Props) {
+export function ComposerMenu({
+  disabled,
+  onAttach,
+  onTakePhoto,
+  onCreateImage,
+  size = "sm",
+}: Props) {
   const box = size === "lg" ? "h-12 w-12" : "h-9 w-9";
   const hasCamera = useHasCamera();
   return (

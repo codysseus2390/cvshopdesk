@@ -16,10 +16,14 @@ export const Route = createFileRoute("/_authenticated/board")({
       { title: "Jobs & appointments — Cedar Valley Hub" },
       {
         name: "description",
-        content: "Read-only Cedar Valley job and appointment records from imports, with local staff notes.",
+        content:
+          "Read-only Cedar Valley job and appointment records from imports, with local staff notes.",
       },
       { property: "og:title", content: "Jobs & appointments — Cedar Valley Hub" },
-      { property: "og:description", content: "Imported job and appointment records with local notes." },
+      {
+        property: "og:description",
+        content: "Imported job and appointment records with local notes.",
+      },
     ],
   }),
   component: () => (
@@ -82,7 +86,8 @@ function BoardPage() {
       <div className="space-y-1 border-b border-border pb-3">
         <p className="font-semibold">{job.customer_name ?? "Customer not recorded"}</p>
         <p className="text-sm text-muted-foreground">
-          {job.vehicle_label ?? "Vehicle not recorded"} · {job.requested_service ?? "Service not recorded"} ·{" "}
+          {job.vehicle_label ?? "Vehicle not recorded"} ·{" "}
+          {job.requested_service ?? "Service not recorded"} ·{" "}
           {job.technician ?? "Tech not assigned"}
         </p>
         <div className="flex flex-wrap items-center gap-2">
@@ -118,7 +123,9 @@ function BoardPage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => setEdit({ id: job.id, status: job.local_status ?? "", note: job.local_note ?? "" })}
+            onClick={() =>
+              setEdit({ id: job.id, status: job.local_status ?? "", note: job.local_note ?? "" })
+            }
           >
             Add in-app status / note
           </Button>
@@ -132,14 +139,18 @@ function BoardPage() {
       title="Jobs & appointments"
       subtitle={
         <>
-          Imported records only — this app never books or creates anything in TireShop. Last import snapshot:{" "}
-          {data?.lastSnapshot ? new Date(data.lastSnapshot).toLocaleString() : "none yet"} · screen refreshed{" "}
-          {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : "—"}
+          Imported records only — this app never books or creates anything in TireShop. Last import
+          snapshot: {data?.lastSnapshot ? new Date(data.lastSnapshot).toLocaleString() : "none yet"}{" "}
+          · screen refreshed {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : "—"}
         </>
       }
     >
       {isLoading && <p className="text-muted-foreground">Loading…</p>}
-      {error && <p className="text-destructive">{error instanceof Error ? error.message : "Could not load."}</p>}
+      {error && (
+        <p className="text-destructive">
+          {error instanceof Error ? error.message : "Could not load."}
+        </p>
+      )}
       {problem && <p className="text-destructive">{problem}</p>}
 
       {data && (
@@ -155,20 +166,26 @@ function BoardPage() {
               {data.appointments.map((job) => (
                 <div key={job.id} className="border-b border-border pb-3">
                   <p className="font-semibold">
-                    {job.appointment_at ? new Date(job.appointment_at).toLocaleString() : "Time not recorded"} ·{" "}
-                    {job.customer_name ?? "Customer not recorded"}
+                    {job.appointment_at
+                      ? new Date(job.appointment_at).toLocaleString()
+                      : "Time not recorded"}{" "}
+                    · {job.customer_name ?? "Customer not recorded"}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {job.vehicle_label ?? "Vehicle not recorded"} · {job.requested_service ?? "Service not recorded"}
+                    {job.vehicle_label ?? "Vehicle not recorded"} ·{" "}
+                    {job.requested_service ?? "Service not recorded"}
                   </p>
                 </div>
               ))}
               {data.appointmentsWithoutTime.length > 0 && (
                 <div className="rounded-md bg-muted p-3">
-                  <p className="text-sm font-semibold">Appointment time not recorded in the import</p>
+                  <p className="text-sm font-semibold">
+                    Appointment time not recorded in the import
+                  </p>
                   {data.appointmentsWithoutTime.map((job) => (
                     <p key={job.id} className="text-sm text-muted-foreground">
-                      {job.customer_name ?? "Customer not recorded"} · {job.requested_service ?? "Service not recorded"}
+                      {job.customer_name ?? "Customer not recorded"} ·{" "}
+                      {job.requested_service ?? "Service not recorded"}
                     </p>
                   ))}
                 </div>
@@ -178,7 +195,9 @@ function BoardPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="font-display">Unfinished job queue (oldest arrival first)</CardTitle>
+              <CardTitle className="font-display">
+                Unfinished job queue (oldest arrival first)
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {data.jobs.length === 0 && data.jobsWithoutArrival.length === 0 && (
@@ -189,7 +208,9 @@ function BoardPage() {
               ))}
               {data.jobsWithoutArrival.length > 0 && (
                 <div className="space-y-3 rounded-md bg-muted p-3">
-                  <p className="text-sm font-semibold">Arrival time not recorded — waiting time cannot be shown</p>
+                  <p className="text-sm font-semibold">
+                    Arrival time not recorded — waiting time cannot be shown
+                  </p>
                   {data.jobsWithoutArrival.map((job) => (
                     <JobRow key={job.id} job={job} />
                   ))}

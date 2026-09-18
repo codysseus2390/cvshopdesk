@@ -13,7 +13,10 @@ export const Route = createFileRoute("/_authenticated/inventory")({
   head: () => ({
     meta: [
       { title: "Inventory — Cedar Valley Hub" },
-      { name: "description", content: "Look up Cedar Valley tire and parts inventory from confirmed import snapshots." },
+      {
+        name: "description",
+        content: "Look up Cedar Valley tire and parts inventory from confirmed import snapshots.",
+      },
       { property: "og:title", content: "Inventory — Cedar Valley Hub" },
       { property: "og:description", content: "Inventory lookup from confirmed import snapshots." },
     ],
@@ -34,7 +37,10 @@ function InventoryPage() {
   });
 
   return (
-    <AppShell title="Inventory" subtitle="Snapshots from confirmed imports. Each row shows the day it was captured.">
+    <AppShell
+      title="Inventory"
+      subtitle="Snapshots from confirmed imports. Each row shows the day it was captured."
+    >
       <Input
         className="mb-6 max-w-sm"
         placeholder="Search brand, size or description"

@@ -61,7 +61,8 @@ export function productivityValue(
   technician: string,
 ): number | null {
   const inRange = rows.filter(
-    (r) => r.technician === technician && r.business_date >= range.from && r.business_date <= range.to,
+    (r) =>
+      r.technician === technician && r.business_date >= range.from && r.business_date <= range.to,
   );
   const override = inRange
     .filter((r) => r.period_scope === range.kind && r.productivity_pct !== null)
@@ -105,27 +106,34 @@ export async function buildNumbersReport(
   const range = resolvePeriod(kind, anchor && /^\d{4}-\d{2}-\d{2}$/.test(anchor) ? anchor : today);
   const prev = previousYearPeriod(range);
 
-  const [{ data: settings }, { data: metricRows }, { data: prodRows }, { data: corrections }] = await Promise.all([
-    sb.from("shop_settings").select("targets, goal_rules, technician_goals").eq("shop_id", shop.shopId).maybeSingle(),
-    sb
-      .from("metric_snapshots")
-      .select("business_date, scope, sales, gross_profit, tires_sold, car_count, created_at")
-      .eq("is_current", true)
-      .gte("business_date", prev.from)
-      .lte("business_date", range.to),
-    sb
-      .from("technician_productivity")
-      .select("business_date, technician, productivity_pct, hours_billed, hours_worked, period_scope, note, updated_at")
-      .gte("business_date", prev.from)
-      .lte("business_date", range.to),
-    sb
-      .from("metric_corrections")
-      .select("id, business_date, field, previous_value, new_value, corrected_at, note")
-      .gte("business_date", range.from)
-      .lte("business_date", range.to)
-      .order("corrected_at", { ascending: false })
-      .limit(50),
-  ]);
+  const [{ data: settings }, { data: metricRows }, { data: prodRows }, { data: corrections }] =
+    await Promise.all([
+      sb
+        .from("shop_settings")
+        .select("targets, goal_rules, technician_goals")
+        .eq("shop_id", shop.shopId)
+        .maybeSingle(),
+      sb
+        .from("metric_snapshots")
+        .select("business_date, scope, sales, gross_profit, tires_sold, car_count, created_at")
+        .eq("is_current", true)
+        .gte("business_date", prev.from)
+        .lte("business_date", range.to),
+      sb
+        .from("technician_productivity")
+        .select(
+          "business_date, technician, productivity_pct, hours_billed, hours_worked, period_scope, note, updated_at",
+        )
+        .gte("business_date", prev.from)
+        .lte("business_date", range.to),
+      sb
+        .from("metric_corrections")
+        .select("id, business_date, field, previous_value, new_value, corrected_at, note")
+        .gte("business_date", range.from)
+        .lte("business_date", range.to)
+        .order("corrected_at", { ascending: false })
+        .limit(50),
+    ]);
 
   const rows = (metricRows ?? []) as NumbersRow[];
   const productivity = (prodRows ?? []) as ProductivityRow[];
@@ -150,17 +158,26 @@ export async function buildNumbersReport(
 
   const report: ReportRow[] = [];
   for (const def of NUMBER_METRICS) {
-    const actual = def.key === "mechanic_productivity"
-      ? mechanicActual
-      : actuals[def.key as keyof typeof actuals] as number | null;
-    const previousValue = def.key === "mechanic_productivity"
-      ? mechanicPrevious
-      : previous[def.key as keyof typeof previous] as number | null;
+    const actual =
+      def.key === "mechanic_productivity"
+        ? mechanicActual
+        : (actuals[def.key as keyof typeof actuals] as number | null);
+    const previousValue =
+      def.key === "mechanic_productivity"
+        ? mechanicPrevious
+        : (previous[def.key as keyof typeof previous] as number | null);
     const legacy = legacyTargets[def.key];
     const rule: GoalRule | undefined =
-      goalRules[def.key] ?? (legacy === null || legacy === undefined ? undefined : { method: "fixed", monthly: legacy });
+      goalRules[def.key] ??
+      (legacy === null || legacy === undefined ? undefined : { method: "fixed", monthly: legacy });
     report.push(
-      buildReportRow(def, actual, goalFor(def, rule, range, previousValue), previousValue, changedFields.has(def.key)),
+      buildReportRow(
+        def,
+        actual,
+        goalFor(def, rule, range, previousValue),
+        previousValue,
+        changedFields.has(def.key),
+      ),
     );
   }
   for (const technician of technicians) {
@@ -192,4 +209,3 @@ export async function buildNumbersReport(
     corrections: (corrections ?? []) as NumbersReport["corrections"],
   };
 }
-

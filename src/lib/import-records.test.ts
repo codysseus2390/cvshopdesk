@@ -17,7 +17,13 @@ import {
   parseNumericField,
   splitBoard,
 } from "./import-records";
-import { JOB_PAGE_SECONDS, JOB_ROWS_PER_PAGE, SCREEN_SECONDS, jobPageAt, screenAt } from "@/routes/_authenticated/tv";
+import {
+  JOB_PAGE_SECONDS,
+  JOB_ROWS_PER_PAGE,
+  SCREEN_SECONDS,
+  jobPageAt,
+  screenAt,
+} from "@/routes/_authenticated/tv";
 
 describe("unreadable numeric data", () => {
   it("keeps N/A and dashes null and flags them, never zero", () => {
@@ -42,7 +48,10 @@ describe("unreadable numeric data", () => {
   });
 
   it("carries the null through to a saved inventory row", () => {
-    const [row] = normalizeInventoryRows([{ external_id: "T-1", description: "Tire", quantity: "N/A" }], "imp");
+    const [row] = normalizeInventoryRows(
+      [{ external_id: "T-1", description: "Tire", quantity: "N/A" }],
+      "imp",
+    );
     expect(row!.quantity).toBeNull();
     expect(row!.flags).toContain("quantity unreadable");
     expect(row!.needs_review).toBe(true);
@@ -72,7 +81,10 @@ describe("durable row identity", () => {
   });
 
   it("keys customer vehicles without inventing a shared identity", () => {
-    const [row] = normalizeCustomerRows([{ name: "Jane Doe", make: "Ford", model: "F-150" }], "imp-1");
+    const [row] = normalizeCustomerRows(
+      [{ name: "Jane Doe", make: "Ford", model: "F-150" }],
+      "imp-1",
+    );
     expect(row!.identity_key).toBe("import:imp-1:row:0");
     expect(row!.vehicle_identity_key).toBe("import:imp-1:vehicle:0");
   });
@@ -80,13 +92,19 @@ describe("durable row identity", () => {
 
 describe("arrival times", () => {
   it("leaves arrival unknown when the file does not print one", () => {
-    const [row] = normalizeJobRows([{ external_id: "RO1", appointment_at: "2026-09-11T14:00:00Z" }], "imp");
+    const [row] = normalizeJobRows(
+      [{ external_id: "RO1", appointment_at: "2026-09-11T14:00:00Z" }],
+      "imp",
+    );
     expect(row!.arrival_at).toBeNull();
     expect(row!.appointment_at).not.toBeNull();
   });
 
   it("flags an arrival value it cannot read instead of guessing", () => {
-    const [row] = normalizeJobRows([{ external_id: "RO1", arrival_at: "sometime this morning" }], "imp");
+    const [row] = normalizeJobRows(
+      [{ external_id: "RO1", arrival_at: "sometime this morning" }],
+      "imp",
+    );
     expect(row!.arrival_at).toBeNull();
     expect(row!.flags).toContain("arrival time unreadable");
   });

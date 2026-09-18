@@ -11,7 +11,10 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — Cedar Valley Hub" },
-      { name: "description", content: "Staff sign in for the Cedar Valley Tire & Auto Service hub." },
+      {
+        name: "description",
+        content: "Staff sign in for the Cedar Valley Tire & Auto Service hub.",
+      },
       { property: "og:title", content: "Sign in — Cedar Valley Hub" },
       { property: "og:description", content: "Staff sign in for the Cedar Valley hub." },
     ],
@@ -131,7 +134,9 @@ function AuthPage() {
               className="w-full text-sm text-muted-foreground underline"
               onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
             >
-              {mode === "signin" ? "New staff member? Create an account" : "Already have an account? Sign in"}
+              {mode === "signin"
+                ? "New staff member? Create an account"
+                : "Already have an account? Sign in"}
             </button>
             <p className="text-xs text-muted-foreground">
               New accounts need approval from the shop owner before any records are visible.

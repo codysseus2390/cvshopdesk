@@ -81,11 +81,16 @@ export function sumDaily(rows: MetricRow[], expectedDays: number, upTo?: string)
   const byDate = new Map<string, MetricRow>();
   for (const r of daily) {
     const existing = byDate.get(r.business_date);
-    if (!existing || (r.created_at ?? "") >= (existing.created_at ?? "")) byDate.set(r.business_date, r);
+    if (!existing || (r.created_at ?? "") >= (existing.created_at ?? ""))
+      byDate.set(r.business_date, r);
   }
   if (byDate.size === 0) return emptyTotals(expectedDays);
 
-  const sums: Record<Field, number | null> = { gross_profit: null, tires_sold: null, car_count: null };
+  const sums: Record<Field, number | null> = {
+    gross_profit: null,
+    tires_sold: null,
+    car_count: null,
+  };
   const withValue: Record<Field, Set<string>> = {
     gross_profit: new Set(),
     tires_sold: new Set(),
@@ -156,7 +161,10 @@ function ratio(args: {
   const value = gpPerCar(grossProfit, carCount);
   if (value === null) return { value: null, note: "Car count is zero or unknown for this period" };
   if (missingDays > 0) {
-    return { value, note: `Based on ${coveredDays} saved day(s); ${missingDays} day(s) still missing` };
+    return {
+      value,
+      note: `Based on ${coveredDays} saved day(s); ${missingDays} day(s) still missing`,
+    };
   }
   return { value, note: null };
 }
@@ -189,7 +197,6 @@ function fromSnapshot(row: MetricRow, elapsedSinceAsOf: number): Totals {
   };
 }
 
-
 export interface PeriodTotals extends Totals {
   basis: "cumulative-snapshot" | "daily-sum" | "none";
   /** Business date the numbers actually describe. */
@@ -217,17 +224,29 @@ export function daysInMonth(monthPrefix: string): number {
 /** 1-based day of the year for a YYYY-MM-DD date. */
 export function dayOfYear(date: string): number {
   const start = Date.UTC(Number(date.slice(0, 4)), 0, 1);
-  const day = Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, Number(date.slice(8, 10)));
+  const day = Date.UTC(
+    Number(date.slice(0, 4)),
+    Number(date.slice(5, 7)) - 1,
+    Number(date.slice(8, 10)),
+  );
   return Math.round((day - start) / 86_400_000) + 1;
 }
 
 function daysBetween(from: string, to: string): number {
-  const a = Date.UTC(Number(from.slice(0, 4)), Number(from.slice(5, 7)) - 1, Number(from.slice(8, 10)));
+  const a = Date.UTC(
+    Number(from.slice(0, 4)),
+    Number(from.slice(5, 7)) - 1,
+    Number(from.slice(8, 10)),
+  );
   const b = Date.UTC(Number(to.slice(0, 4)), Number(to.slice(5, 7)) - 1, Number(to.slice(8, 10)));
   return Math.max(0, Math.round((b - a) / 86_400_000));
 }
 
-function latestCumulative(rows: MetricRow[], scope: "mtd" | "ytd", upTo: string): MetricRow | undefined {
+function latestCumulative(
+  rows: MetricRow[],
+  scope: "mtd" | "ytd",
+  upTo: string,
+): MetricRow | undefined {
   return rows
     .filter((r) => r.scope === scope && r.business_date <= upTo)
     .sort((a, b) =>
@@ -305,11 +324,19 @@ export function yearToDate(rows: MetricRow[], year: string, today: string): Peri
   // daily records, so the current incomplete month is counted exactly once.
   const months = Array.from(new Set(inYear.map((r) => r.business_date.slice(0, 7)))).sort();
   const monthlyRows = months
-    .map((month) => latestCumulative(inYear.filter((r) => r.business_date.startsWith(month)), "mtd", boundary))
+    .map((month) =>
+      latestCumulative(
+        inYear.filter((r) => r.business_date.startsWith(month)),
+        "mtd",
+        boundary,
+      ),
+    )
     .filter((r): r is MetricRow => Boolean(r));
   if (monthlyRows.length > 0) {
     const covered = new Set(monthlyRows.map((r) => r.business_date.slice(0, 7)));
-    const dailyRest = inYear.filter((r) => r.scope === "daily" && !covered.has(r.business_date.slice(0, 7)));
+    const dailyRest = inYear.filter(
+      (r) => r.scope === "daily" && !covered.has(r.business_date.slice(0, 7)),
+    );
     const asDaily: MetricRow[] = [
       ...monthlyRows.map((r) => ({ ...r, scope: "daily" as const })),
       ...dailyRest,
@@ -356,7 +383,11 @@ export function latestPerDateScope<T extends MetricRow & { created_at?: string }
 
 export function formatCurrency(value: number | null): string {
   if (value === null) return "Not updated";
-  return value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  return value.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
 }
 
 export function formatCount(value: number | null): string {

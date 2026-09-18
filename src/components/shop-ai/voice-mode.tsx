@@ -17,7 +17,15 @@ import { HANK_WAKE_ACKS, type HankVoiceInputMode } from "@/lib/ai/voice-config";
 import { useWakeWord } from "./use-wake-word";
 import { SoundBar, type SoundBarMode } from "./sound-bar";
 
-type Phase = "starting" | "waiting" | "ready" | "listening" | "processing" | "working" | "speaking" | "error";
+type Phase =
+  | "starting"
+  | "waiting"
+  | "ready"
+  | "listening"
+  | "processing"
+  | "working"
+  | "speaking"
+  | "error";
 
 interface Props {
   assistantName: string;
@@ -107,7 +115,6 @@ export function VoiceMode(props: Props) {
   const busy = props.busy;
   const speaking = props.speaking;
   const wakeMode = props.inputMode === "wake";
-
 
   /* ---------- recording ---------- */
 
@@ -208,7 +215,9 @@ export function VoiceMode(props: Props) {
           audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
         });
       } catch (err) {
-        const denied = err instanceof DOMException && (err.name === "NotAllowedError" || err.name === "SecurityError");
+        const denied =
+          err instanceof DOMException &&
+          (err.name === "NotAllowedError" || err.name === "SecurityError");
         setError(
           denied
             ? "Microphone access was blocked. Allow the microphone for this site, then open Voice Mode again."
@@ -278,7 +287,8 @@ export function VoiceMode(props: Props) {
     return () => {
       cancelled = true;
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-      if (recorderRef.current && recorderRef.current.state !== "inactive") recorderRef.current.stop();
+      if (recorderRef.current && recorderRef.current.state !== "inactive")
+        recorderRef.current.stop();
       streamRef.current?.getTracks().forEach((track) => track.stop());
       void ctxRef.current?.close().catch(() => {});
       streamRef.current = null;
@@ -332,17 +342,20 @@ export function VoiceMode(props: Props) {
 
   // Wake mode starts out waiting rather than listening.
   useEffect(() => {
-    if (wakeMode && phase === "ready" && heard === "" && startedAtRef.current === 0) setPhase("waiting");
+    if (wakeMode && phase === "ready" && heard === "" && startedAtRef.current === 0)
+      setPhase("waiting");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wakeMode, phase]);
 
   // After a quiet stretch the conversation ends and he waits for the phrase again.
   useEffect(() => {
     if (!wakeMode || phase !== "ready" || busy || speaking) return;
-    const timer = setTimeout(() => setPhase("waiting"), Math.max(10, props.wakeTimeoutSeconds) * 1_000);
+    const timer = setTimeout(
+      () => setPhase("waiting"),
+      Math.max(10, props.wakeTimeoutSeconds) * 1_000,
+    );
     return () => clearTimeout(timer);
   }, [wakeMode, phase, busy, speaking, props.wakeTimeoutSeconds]);
-
 
   /* ---------- controls ---------- */
 
@@ -425,7 +438,13 @@ export function VoiceMode(props: Props) {
             </p>
           )}
         </div>
-        <Button variant="ghost" size="icon" className="rounded-full" aria-label="Exit Voice Mode" onClick={props.onExit}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full"
+          aria-label="Exit Voice Mode"
+          onClick={props.onExit}
+        >
           <X className="h-5 w-5" />
         </Button>
       </div>
@@ -433,16 +452,23 @@ export function VoiceMode(props: Props) {
       <div className="flex w-full max-w-md flex-1 flex-col items-center justify-center gap-5">
         <SoundBar mode={barMode} getLevel={barLevel} className="h-28 w-full max-w-sm" />
 
-        <p aria-live="polite" className="flex items-center gap-2 text-center text-sm font-medium text-foreground">
+        <p
+          aria-live="polite"
+          className="flex items-center gap-2 text-center text-sm font-medium text-foreground"
+        >
           {(phase === "processing" || phase === "working" || phase === "starting") && (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
           )}
-          {muted && phase !== "starting" && <MicOff className="h-3.5 w-3.5 text-muted-foreground" />}
+          {muted && phase !== "starting" && (
+            <MicOff className="h-3.5 w-3.5 text-muted-foreground" />
+          )}
           {label[phase]}
         </p>
 
         {heard && phase !== "error" && (
-          <p className="line-clamp-2 text-center text-xs text-muted-foreground">You said: “{heard}”</p>
+          <p className="line-clamp-2 text-center text-xs text-muted-foreground">
+            You said: “{heard}”
+          </p>
         )}
         {props.caption && (phase === "speaking" || phase === "ready") && (
           <p className="line-clamp-3 text-center text-sm text-muted-foreground">{props.caption}</p>
@@ -454,8 +480,8 @@ export function VoiceMode(props: Props) {
         )}
         {wakeMode && !wake.supported && (
           <p className="flex items-center gap-2 text-center text-xs text-muted-foreground">
-            <TriangleAlert className="h-3.5 w-3.5" /> This browser cannot listen for a wake phrase. Use Chrome or Edge,
-            or just start talking here as usual.
+            <TriangleAlert className="h-3.5 w-3.5" /> This browser cannot listen for a wake phrase.
+            Use Chrome or Edge, or just start talking here as usual.
           </p>
         )}
         {wakeMode && wake.error && (
@@ -480,11 +506,17 @@ export function VoiceMode(props: Props) {
             onPointerLeave={holdEnd}
             onPointerCancel={holdEnd}
           >
-            <Mic className="mr-2 h-4 w-4" /> {phase === "listening" ? "Release to send" : "Hold to talk"}
+            <Mic className="mr-2 h-4 w-4" />{" "}
+            {phase === "listening" ? "Release to send" : "Hold to talk"}
           </Button>
         )}
 
-        <Button variant="outline" className="rounded-full" disabled={!speaking} onClick={props.onStopSpeaking}>
+        <Button
+          variant="outline"
+          className="rounded-full"
+          disabled={!speaking}
+          onClick={props.onStopSpeaking}
+        >
           <Square className="mr-2 h-4 w-4" /> Stop {props.assistantName}
         </Button>
         <Button variant="ghost" className="rounded-full" onClick={props.onExit}>

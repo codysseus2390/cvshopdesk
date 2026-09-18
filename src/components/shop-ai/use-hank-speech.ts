@@ -56,10 +56,14 @@ export function useHankSpeech() {
           setLoadingId(null);
           return;
         }
-        const audio = new Audio(`data:${result.mimeType ?? "audio/mpeg"};base64,${result.audioBase64}`);
+        const audio = new Audio(
+          `data:${result.mimeType ?? "audio/mpeg"};base64,${result.audioBase64}`,
+        );
         audioRef.current = audio;
         try {
-          const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+          const Ctx =
+            window.AudioContext ??
+            (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
           if (Ctx) {
             const ctx = ctxRef.current ?? new Ctx();
             ctxRef.current = ctx;
@@ -112,5 +116,13 @@ export function useHankSpeech() {
     return Math.min(1, Math.sqrt(sum / samples.length) * 4.5);
   }, []);
 
-  return { play, stop, loadingId, playingId, error, getOutputLevel, clearError: () => setError(null) };
+  return {
+    play,
+    stop,
+    loadingId,
+    playingId,
+    error,
+    getOutputLevel,
+    clearError: () => setError(null),
+  };
 }

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildDashboardChart, buildDashboardSparkline, type DashboardChartMetric, type DashboardMonth } from "./dashboard-chart";
+import {
+  buildDashboardChart,
+  buildDashboardSparkline,
+  type DashboardChartMetric,
+  type DashboardMonth,
+} from "./dashboard-chart";
 
 const totals = (value: number) => ({
   sales: value * 2,
@@ -18,7 +23,11 @@ const months: DashboardMonth[] = [
 
 describe("dashboard sparkline data", () => {
   it("excludes partial/future months and preserves missing months as gaps", () => {
-    const trend = buildDashboardSparkline([...months, { month: "2026-12", totals: totals(99_000) }], "gross_profit", "2026-09-16");
+    const trend = buildDashboardSparkline(
+      [...months, { month: "2026-12", totals: totals(99_000) }],
+      "gross_profit",
+      "2026-09-16",
+    );
     expect(trend?.year).toBe("2026");
     expect(trend?.points).toHaveLength(8);
     expect(trend?.points[0]?.value).toBe(40_000);
@@ -26,12 +35,22 @@ describe("dashboard sparkline data", () => {
     expect(trend?.points[7]?.value).toBe(50_000);
   });
   it("uses historical completed data when the current year has none, and keeps real zero", () => {
-    const trend = buildDashboardSparkline([{ month: "2025-01", totals: totals(0) }, months[3]!], "gross_profit", "2026-09-16");
+    const trend = buildDashboardSparkline(
+      [{ month: "2025-01", totals: totals(0) }, months[3]!],
+      "gross_profit",
+      "2026-09-16",
+    );
     expect(trend).toEqual({ year: "2025", points: [{ month: "2025-01", value: 0 }] });
   });
   it("does not manufacture a trend from only current-month or unavailable GP-per-car data", () => {
     expect(buildDashboardSparkline([months[3]!], "gross_profit", "2026-09-16")).toBeNull();
-    expect(buildDashboardSparkline([{ month: "2026-01", totals: { ...totals(0), gp_per_car: null } }], "gross_profit_per_car", "2026-09-16")).toBeNull();
+    expect(
+      buildDashboardSparkline(
+        [{ month: "2026-01", totals: { ...totals(0), gp_per_car: null } }],
+        "gross_profit_per_car",
+        "2026-09-16",
+      ),
+    ).toBeNull();
   });
 });
 
@@ -67,24 +86,54 @@ describe("dashboard current-month chart treatment", () => {
   });
 });
 
-
 describe("monthly chart integrity", () => {
   it("orders all twelve calendar months regardless of source order", () => {
     const chart = buildDashboardChart([...months].reverse(), "gross_profit", "2026-09-16");
-    expect(chart?.rows.map((row) => row.month)).toEqual(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]);
+    expect(chart?.rows.map((row) => row.month)).toEqual([
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ]);
   });
   it("excludes future records, including future years", () => {
-    const chart = buildDashboardChart([...months, { month: "2026-12", totals: totals(99_000) }, { month: "2027-01", totals: totals(99_000) }], "gross_profit", "2026-09-16");
+    const chart = buildDashboardChart(
+      [
+        ...months,
+        { month: "2026-12", totals: totals(99_000) },
+        { month: "2027-01", totals: totals(99_000) },
+      ],
+      "gross_profit",
+      "2026-09-16",
+    );
     expect(chart?.years).toEqual(["2025", "2026"]);
     expect(chart?.rows[11]?.["2026"]).toBeNull();
-    expect(buildDashboardChart([{ month: "2027-01", totals: totals(99_000) }], "gross_profit", "2026-09-16")).toBeNull();
+    expect(
+      buildDashboardChart(
+        [{ month: "2027-01", totals: totals(99_000) }],
+        "gross_profit",
+        "2026-09-16",
+      ),
+    ).toBeNull();
   });
   it("keeps real zero and renders absent or invalid values as gaps", () => {
-    const chart = buildDashboardChart([
-      { month: "2025-01", totals: totals(0) },
-      { month: "2025-03", totals: { ...totals(1), gross_profit: Number.NaN } },
-      { month: "2025-04", totals: { ...totals(1), gross_profit: Number.POSITIVE_INFINITY } },
-    ], "gross_profit", "2026-09-16");
+    const chart = buildDashboardChart(
+      [
+        { month: "2025-01", totals: totals(0) },
+        { month: "2025-03", totals: { ...totals(1), gross_profit: Number.NaN } },
+        { month: "2025-04", totals: { ...totals(1), gross_profit: Number.POSITIVE_INFINITY } },
+      ],
+      "gross_profit",
+      "2026-09-16",
+    );
     expect(chart?.rows[0]?.["2025"]).toBe(0);
     expect(chart?.rows[1]?.["2025"]).toBeNull();
     expect(chart?.rows[2]?.["2025"]).toBeNull();

@@ -17,7 +17,10 @@ export const Route = createFileRoute("/_authenticated/history")({
   head: () => ({
     meta: [
       { title: "History — Cedar Valley Hub" },
-      { name: "description", content: "Filter saved Cedar Valley daily records, corrections and supporting uploads." },
+      {
+        name: "description",
+        content: "Filter saved Cedar Valley daily records, corrections and supporting uploads.",
+      },
       { property: "og:title", content: "History — Cedar Valley Hub" },
       { property: "og:description", content: "Saved shop records, corrections and uploads." },
     ],
@@ -47,7 +50,10 @@ function HistoryPage() {
   }
 
   return (
-    <AppShell title="History" subtitle="Every saved snapshot, including replaced ones, with its source.">
+    <AppShell
+      title="History"
+      subtitle="Every saved snapshot, including replaced ones, with its source."
+    >
       <div className="mb-6 flex flex-wrap items-end gap-4">
         <div className="space-y-2">
           <Label htmlFor="from">From</Label>
@@ -60,7 +66,11 @@ function HistoryPage() {
       </div>
 
       {isLoading && <p className="text-muted-foreground">Loading…</p>}
-      {error && <p className="text-destructive">{error instanceof Error ? error.message : "Could not load."}</p>}
+      {error && (
+        <p className="text-destructive">
+          {error instanceof Error ? error.message : "Could not load."}
+        </p>
+      )}
 
       {data && (
         <div className="space-y-8">
@@ -103,8 +113,13 @@ function HistoryPage() {
                         </td>
                         <td>
                           {row.import_id ? (
-                            <Button variant="link" size="sm" onClick={() => openUpload(row.import_id as string)}>
-                              {(row.imports as { file_name?: string } | null)?.file_name ?? "View file"}
+                            <Button
+                              variant="link"
+                              size="sm"
+                              onClick={() => openUpload(row.import_id as string)}
+                            >
+                              {(row.imports as { file_name?: string } | null)?.file_name ??
+                                "View file"}
                             </Button>
                           ) : (
                             <span className="text-muted-foreground">Manual</span>

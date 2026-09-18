@@ -14,7 +14,6 @@ export interface ShopContext {
   pendingCount: number;
 }
 
-
 export const getShopContext = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<ShopContext> => {
@@ -23,9 +22,10 @@ export const getShopContext = createServerFn({ method: "GET" })
     const identity = await trustedIdentity(userId);
     const email = identity.email;
 
-
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { count } = await supabaseAdmin.from("shops").select("id", { count: "exact", head: true });
+    const { count } = await supabaseAdmin
+      .from("shops")
+      .select("id", { count: "exact", head: true });
 
     const { data: membership } = await supabase
       .from("shop_members")
@@ -85,15 +85,20 @@ export const claimShop = createServerFn({ method: "POST" })
       );
     }
 
-    const { data: shopId, error } = await (supabase as unknown as {
-      rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
-    }).rpc("bootstrap_shop", { p_name: data.name });
+    const { data: shopId, error } = await (
+      supabase as unknown as {
+        rpc: (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => Promise<{ data: unknown; error: { message: string } | null }>;
+      }
+    ).rpc("bootstrap_shop", { p_name: data.name });
     if (error) throw new Error(error.message);
-    if (!shopId) throw new Error("Shop setup did not complete. Nothing was saved — please try again.");
+    if (!shopId)
+      throw new Error("Shop setup did not complete. Nothing was saved — please try again.");
 
     return { shopId: shopId as string };
   });
-
 
 /**
  * Records a staff access request. One database routine decides the outcome: an
@@ -103,9 +108,11 @@ export const claimShop = createServerFn({ method: "POST" })
 export const requestAccess = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await (context.supabase as unknown as {
-      rpc: (fn: string) => Promise<{ data: unknown; error: { message: string } | null }>;
-    }).rpc("request_shop_access");
+    const { data, error } = await (
+      context.supabase as unknown as {
+        rpc: (fn: string) => Promise<{ data: unknown; error: { message: string } | null }>;
+      }
+    ).rpc("request_shop_access");
     if (error) throw new Error(error.message);
     return (data ?? { status: "pending" }) as { status: string };
   });
@@ -146,9 +153,14 @@ export const addStaffMember = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { data: result, error } = await (context.supabase as unknown as {
-      rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
-    }).rpc("add_staff_member", { p_email: data.email, p_role: data.role });
+    const { data: result, error } = await (
+      context.supabase as unknown as {
+        rpc: (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => Promise<{ data: unknown; error: { message: string } | null }>;
+      }
+    ).rpc("add_staff_member", { p_email: data.email, p_role: data.role });
     if (error) throw new Error(error.message);
     return (result ?? { status: "invited" }) as { status: "approved" | "invited" };
   });
@@ -179,7 +191,6 @@ export const decideMember = createServerFn({ method: "POST" })
       .eq("id", data.memberId)
       .neq("role", "owner");
 
-
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -188,7 +199,9 @@ export const decideMember = createServerFn({ method: "POST" })
 export const setMemberRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ memberId: z.string().uuid(), role: z.enum(["manager", "staff", "display"]) }).parse(input),
+    z
+      .object({ memberId: z.string().uuid(), role: z.enum(["manager", "staff", "display"]) })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
@@ -231,11 +244,17 @@ export const setMemberCredentials = createServerFn({ method: "POST" })
     if (readError) throw new Error(readError.message);
     if (!member) throw new Error("That employee is not part of this shop.");
 
-    const { data: isManager, error: roleError } = await (context.supabase as unknown as {
-      rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
-    }).rpc("is_shop_manager", { _shop_id: member.shop_id, _user_id: context.userId });
+    const { data: isManager, error: roleError } = await (
+      context.supabase as unknown as {
+        rpc: (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => Promise<{ data: unknown; error: { message: string } | null }>;
+      }
+    ).rpc("is_shop_manager", { _shop_id: member.shop_id, _user_id: context.userId });
     if (roleError) throw new Error(roleError.message);
-    if (isManager !== true) throw new Error("Only the owner and admins can change sign-in details.");
+    if (isManager !== true)
+      throw new Error("Only the owner and admins can change sign-in details.");
 
     if (member.role === "owner" && member.user_id !== context.userId) {
       throw new Error("The owner's sign-in details can only be changed by the owner.");
@@ -249,7 +268,10 @@ export const setMemberCredentials = createServerFn({ method: "POST" })
     }
     if (data.password) payload.password = data.password;
 
-    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(member.user_id, payload);
+    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+      member.user_id,
+      payload,
+    );
     if (authError) throw new Error(authError.message);
 
     if (data.email) {
@@ -260,9 +282,14 @@ export const setMemberCredentials = createServerFn({ method: "POST" })
       if (syncError) throw new Error(syncError.message);
     }
 
-    await (context.supabase as unknown as {
-      rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: { message: string } | null }>;
-    }).rpc("log_audit_event", {
+    await (
+      context.supabase as unknown as {
+        rpc: (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => Promise<{ error: { message: string } | null }>;
+      }
+    ).rpc("log_audit_event", {
       p_action: "staff.credentials_changed",
       p_target: member.id,
       // The password itself is never recorded — only that it was replaced.

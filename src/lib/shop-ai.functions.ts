@@ -5,7 +5,11 @@ import { SHOP_AI_HISTORY_LIMIT, SHOP_AI_MAX_MESSAGE_CHARS } from "@/lib/ai/model
 import { resolvePermissions, type AppRole, type PermissionKey } from "@/lib/permissions";
 import { shopToday } from "@/lib/metrics-math";
 
-type Supa = { from: (table: string) => any; storage: any; rpc: (fn: string, args?: unknown) => any };
+type Supa = {
+  from: (table: string) => any;
+  storage: any;
+  rpc: (fn: string, args?: unknown) => any;
+};
 
 /** Detected-information card shape, mirrored from the server-only vision tool. */
 export interface DetectedProposalView {
@@ -17,14 +21,23 @@ export interface DetectedProposalView {
   records: {
     label: string | null;
     tool: string;
-    fields: { label: string; value: string | null; confidence: "clear" | "uncertain" | "unreadable"; note: string | null }[];
+    fields: {
+      label: string;
+      value: string | null;
+      confidence: "clear" | "uncertain" | "unreadable";
+      note: string | null;
+    }[];
   }[];
 }
 
 /** Conversation key stored on each saved row's `sources` payload. */
 const SHOP_AI_THREAD = "shop-ai";
 
-import { SHOP_AI_ACCEPTED_TYPES, SHOP_AI_MAX_FILE_BYTES, SHOP_AI_MAX_FILES } from "@/lib/shop-ai.limits";
+import {
+  SHOP_AI_ACCEPTED_TYPES,
+  SHOP_AI_MAX_FILE_BYTES,
+  SHOP_AI_MAX_FILES,
+} from "@/lib/shop-ai.limits";
 
 export { SHOP_AI_ACCEPTED_TYPES, SHOP_AI_MAX_FILE_BYTES, SHOP_AI_MAX_FILES };
 /** How many past attachments are replayed so follow-up questions still see them. */
@@ -102,7 +115,10 @@ export const listShopAiMessages = createServerFn({ method: "GET" })
       .select("user_id, email")
       .eq("shop_id", membership.shopId);
     const names = new Map<string, string>(
-      ((members ?? []) as { user_id: string; email: string | null }[]).map((m) => [m.user_id, m.email ?? "Staff"]),
+      ((members ?? []) as { user_id: string; email: string | null }[]).map((m) => [
+        m.user_id,
+        m.email ?? "Staff",
+      ]),
     );
 
     const mapped = rows.map((row) => ({
@@ -128,7 +144,9 @@ export const listShopAiMessages = createServerFn({ method: "GET" })
     for (const message of mapped) {
       for (const file of message.attachments) {
         if (!file.mimeType.startsWith("image/")) continue;
-        const { data: signed } = await sb.storage.from("shop-uploads").createSignedUrl(file.path, 60 * 60);
+        const { data: signed } = await sb.storage
+          .from("shop-uploads")
+          .createSignedUrl(file.path, 60 * 60);
         file.url = (signed?.signedUrl as string | undefined) ?? null;
       }
     }
@@ -168,7 +186,10 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
           .default(""),
         attachments: z.array(attachmentSchema).max(SHOP_AI_MAX_FILES).default([]),
       })
-      .refine((v) => v.message.trim().length > 0 || v.attachments.length > 0, "Add a message or an attachment.")
+      .refine(
+        (v) => v.message.trim().length > 0 || v.attachments.length > 0,
+        "Add a message or an attachment.",
+      )
       .parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -184,7 +205,9 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
     const { loadAssistantSettings } = await import("@/lib/ai-settings.functions");
     const settings = await loadAssistantSettings(context.supabase, membership.shopId);
     if (!settings.visionEnabled && data.attachments.length > 0) {
-      throw new Error("Image and file analysis is turned off in Hank Settings. Turn it back on to send attachments.");
+      throw new Error(
+        "Image and file analysis is turned off in Hank Settings. Turn it back on to send attachments.",
+      );
     }
 
     // Keep the original file in private storage so follow-up questions can see it.
@@ -222,7 +245,11 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
         const buffer = new Uint8Array(await blob.arrayBuffer());
         let binary = "";
         for (let i = 0; i < buffer.length; i++) binary += String.fromCharCode(buffer[i]!);
-        attachments.push({ name: file.name, mimeType: file.mimeType, dataUrl: `data:${file.mimeType};base64,${btoa(binary)}` });
+        attachments.push({
+          name: file.name,
+          mimeType: file.mimeType,
+          dataUrl: `data:${file.mimeType};base64,${btoa(binary)}`,
+        });
       }
       history.push({ role, content: row.content, attachments });
     }
@@ -236,12 +263,16 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
       content: `${data.message}${attachmentNote}`.trim(),
       sources: { thread: SHOP_AI_THREAD, attachments: stored },
     });
-    if (userInsertError) throw new Error(`Your message could not be saved: ${userInsertError.message}`);
+    if (userInsertError)
+      throw new Error(`Your message could not be saved: ${userInsertError.message}`);
 
     try {
       const result = await runShopAiTurn({
         history,
-        question: data.message.trim().length > 0 ? data.message : "Look at the attachment and tell me what it shows.",
+        question:
+          data.message.trim().length > 0
+            ? data.message
+            : "Look at the attachment and tell me what it shows.",
         attachments: data.attachments.map((file) => ({
           name: file.name,
           mimeType: file.mimeType,
@@ -307,7 +338,9 @@ export const listAiActions = createServerFn({ method: "GET" })
     const sb = context.supabase as unknown as Supa;
     const { data, error } = await sb
       .from("ai_actions")
-      .select("id, tool, status, confirmation_required, confirmed, target_table, target_id, error, created_at")
+      .select(
+        "id, tool, status, confirmation_required, confirmed, target_table, target_id, error, created_at",
+      )
       .order("created_at", { ascending: false })
       .limit(25);
     if (error) throw new Error(error.message);

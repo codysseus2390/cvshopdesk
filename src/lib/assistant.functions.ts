@@ -36,18 +36,23 @@ export const askAssistant = createServerFn({ method: "POST" })
       .select("role, permission, allowed")
       .eq("shop_id", shopId);
     const permissions = resolvePermissions(member.role as AppRole, (overrides ?? []) as never);
-    if (!permissions.use_assistant) throw new Error("The AI assistant is not enabled for your role.");
+    if (!permissions.use_assistant)
+      throw new Error("The AI assistant is not enabled for your role.");
 
     const [{ data: confirmed }, { data: imports }, { data: corrections }] = await Promise.all([
       sb
         .from("metric_snapshots")
-        .select("business_date, scope, gross_profit, tires_sold, car_count, source, note, flags, created_at")
+        .select(
+          "business_date, scope, gross_profit, tires_sold, car_count, source, note, flags, created_at",
+        )
         .eq("is_current", true)
         .order("business_date", { ascending: false })
         .limit(120),
       sb
         .from("imports")
-        .select("file_name, report_scope, period_start, period_end, status, uploaded_at, extraction_notes")
+        .select(
+          "file_name, report_scope, period_start, period_end, status, uploaded_at, extraction_notes",
+        )
         .order("uploaded_at", { ascending: false })
         .limit(30),
       sb
@@ -126,7 +131,8 @@ export const listAssistantHistory = createServerFn({ method: "GET" })
       .select("role, permission, allowed")
       .eq("shop_id", member.shop_id);
     const permissions = resolvePermissions(member.role as AppRole, (overrides ?? []) as never);
-    if (!permissions.use_assistant) throw new Error("The AI assistant is not enabled for your role.");
+    if (!permissions.use_assistant)
+      throw new Error("The AI assistant is not enabled for your role.");
     const { data, error } = await context.supabase
       .from("assistant_messages")
       .select("id, role, content, created_at")
@@ -135,4 +141,3 @@ export const listAssistantHistory = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data ?? [];
   });
-

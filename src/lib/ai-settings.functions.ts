@@ -14,7 +14,10 @@ import { ASSISTANT_SETTINGS_DEFAULTS, type AssistantSettings } from "@/lib/ai/pe
 
 type Supa = {
   from: (table: string) => any;
-  rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+  rpc: (
+    fn: string,
+    args?: Record<string, unknown>,
+  ) => Promise<{ data: unknown; error: { message: string } | null }>;
 };
 
 async function membership(sb: Supa, userId: string) {
@@ -48,7 +51,10 @@ function fromRow(row: Record<string, unknown> | null | undefined): AssistantSett
 }
 
 /** Server-side read used by the assistant itself. */
-export async function loadAssistantSettings(supabase: unknown, shopId: string): Promise<AssistantSettings> {
+export async function loadAssistantSettings(
+  supabase: unknown,
+  shopId: string,
+): Promise<AssistantSettings> {
   const sb = supabase as Supa;
   const { data } = await sb.from("ai_settings").select("*").eq("shop_id", shopId).maybeSingle();
   return fromRow(data as Record<string, unknown> | null);
@@ -61,7 +67,11 @@ export const getAiSettings = createServerFn({ method: "GET" })
     const sb = context.supabase as unknown as Supa;
     const member = await membership(sb, context.userId);
     const settings = await loadAssistantSettings(context.supabase, member.shop_id);
-    const { data: voiceRow } = await sb.from("ai_settings").select("*").eq("shop_id", member.shop_id).maybeSingle();
+    const { data: voiceRow } = await sb
+      .from("ai_settings")
+      .select("*")
+      .eq("shop_id", member.shop_id)
+      .maybeSingle();
     const vr = (voiceRow ?? {}) as Record<string, unknown>;
     const { HANK_TTS_MODEL, HANK_VOICE_DEFAULTS } = await import("@/lib/ai/voice-config");
     const voice = {
@@ -81,15 +91,18 @@ export const getAiSettings = createServerFn({ method: "GET" })
           : "auto") as "auto" | "push" | "wake",
       autoListen: vr["voice_auto_listen"] !== false,
       wakeEnabled: Boolean(vr["voice_wake_enabled"]),
-      wakePhrase: ((vr["voice_wake_phrase"] as string | null) ?? HANK_VOICE_DEFAULTS.wakePhrase).trim(),
+      wakePhrase: (
+        (vr["voice_wake_phrase"] as string | null) ?? HANK_VOICE_DEFAULTS.wakePhrase
+      ).trim(),
       wakeSound: vr["voice_wake_sound"] !== false,
       wakeResponse: Boolean(vr["voice_wake_response"]),
-      wakeTimeoutSeconds: Number(vr["voice_wake_timeout_seconds"] ?? HANK_VOICE_DEFAULTS.wakeTimeoutSeconds),
+      wakeTimeoutSeconds: Number(
+        vr["voice_wake_timeout_seconds"] ?? HANK_VOICE_DEFAULTS.wakeTimeoutSeconds,
+      ),
     };
     const { shopAiToolCatalogue } = await import("@/lib/ai/tools.server");
-    const { SHOP_AI_ACCEPTED_TYPES, SHOP_AI_MAX_FILE_BYTES, SHOP_AI_MAX_FILES } = await import(
-      "@/lib/shop-ai.limits"
-    );
+    const { SHOP_AI_ACCEPTED_TYPES, SHOP_AI_MAX_FILE_BYTES, SHOP_AI_MAX_FILES } =
+      await import("@/lib/shop-ai.limits");
     return {
       role: member.role,
       settings,

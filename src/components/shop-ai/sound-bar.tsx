@@ -131,7 +131,9 @@ export function SoundBar({
       ref={canvasRef}
       aria-hidden
       className={className ?? "h-24 w-full max-w-sm"}
-      style={{ filter: "drop-shadow(0 2px 10px color-mix(in oklab, var(--primary) 25%, transparent))" }}
+      style={{
+        filter: "drop-shadow(0 2px 10px color-mix(in oklab, var(--primary) 25%, transparent))",
+      }}
     />
   );
 }

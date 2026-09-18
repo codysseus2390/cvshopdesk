@@ -32,12 +32,16 @@ function toResponsesInput(messages: GatewayMessage[]) {
     const textType = isAssistant ? "output_text" : "input_text";
 
     if (typeof message.content === "string") {
-      return { role: message.role, content: [{ type: textType, text: message.content } as ResponsesPart] };
+      return {
+        role: message.role,
+        content: [{ type: textType, text: message.content } as ResponsesPart],
+      };
     }
 
     const content: ResponsesPart[] = message.content.map((block): ResponsesPart => {
       if (block.type === "text") return { type: textType, text: block.text };
-      if (block.type === "image_url") return { type: "input_image", image_url: block.image_url.url, detail: "auto" };
+      if (block.type === "image_url")
+        return { type: "input_image", image_url: block.image_url.url, detail: "auto" };
       return { type: "input_file", filename: block.file.filename, file_data: block.file.file_data };
     });
 
@@ -95,7 +99,10 @@ export async function callGateway(messages: GatewayMessage[]): Promise<string> {
         "no_credits",
       );
     }
-    throw new AiUnavailableError(`AI request failed (${res.status}). ${text.slice(0, 300)}`, "upstream");
+    throw new AiUnavailableError(
+      `AI request failed (${res.status}). ${text.slice(0, 300)}`,
+      "upstream",
+    );
   }
 
   return await readResponsesStream(res.body);
@@ -136,7 +143,8 @@ async function readResponsesStream(body: ReadableStream<Uint8Array>): Promise<st
       if (event.type === "response.output_text.delta" && typeof event.delta === "string") {
         out += event.delta;
       } else if (event.type === "error" || event.type === "response.failed") {
-        const message = event.error?.message ?? event.response?.error?.message ?? "The AI request failed.";
+        const message =
+          event.error?.message ?? event.response?.error?.message ?? "The AI request failed.";
         throw new AiUnavailableError(`AI request failed. ${message}`, "upstream");
       } else if (event.type === "response.completed") {
         const text = event.response?.output_text;

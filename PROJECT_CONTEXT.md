@@ -56,11 +56,11 @@ See `LOVABLE_NOTES.md` for the full list of Lovable integration points.
 
 Several AI coding systems are used on this project:
 
-| Agent | Role |
-|---|---|
-| **Codex** | Primary builder; has done the most code work to date |
-| **Claude Code** | Builder + codebase reader, debugger, reviewer, refactoring/architecture |
-| **Wrench** | OpenAI API-based coding agent; future coordinator with sub-agents |
+| Agent            | Role                                                                                                            |
+| ---------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Codex**        | Primary builder; has done the most code work to date                                                            |
+| **Claude Code**  | Builder + codebase reader, debugger, reviewer, refactoring/architecture                                         |
+| **Wrench**       | OpenAI API-based coding agent; future coordinator with sub-agents                                               |
 | Free-tier agents | Kiro, Amazon Q Developer, Cursor, GitHub Copilot, Junie, Cline, and similar — used when free usage is available |
 
 Because multiple agents touch the project, the repository carries the project memory.
@@ -71,26 +71,26 @@ before doing substantial work.
 
 ## Technology Stack
 
-| Layer | Choice |
-|---|---|
-| Language | TypeScript 5.8 |
-| Runtime / package manager | Bun |
-| Framework | TanStack Start (React 19 + TanStack Router + SSR) |
-| Build tool | Vite 8 via `@lovable.dev/vite-tanstack-config` |
-| UI library | shadcn/ui (Radix UI primitives) |
-| Styling | Tailwind CSS v4 |
-| Server runtime | Nitro (Cloudflare adapter) |
-| Database / Auth | Supabase (project ID: `xbpkvbjmclokmbumhymg`) |
-| ORM / migrations | Drizzle Kit; schema types in `src/integrations/supabase/types.ts` |
-| AI — chat | OpenAI (`gpt-5.6-luna` default — see `src/lib/ai/model-config.ts`) |
-| AI — voice TTS | ElevenLabs (`src/lib/ai/elevenlabs.server.ts`) |
-| AI — image | OpenAI (`gpt-image-1`) |
-| Charts | Recharts |
-| Data fetching | TanStack Query v5 |
-| Forms | React Hook Form + Zod |
-| Date utilities | date-fns v4 |
-| File imports | `xlsx` (spreadsheet parsing) |
-| Deployment | Vercel (preview + production); Lovable live preview at `cvshopdesk.lovable.app` |
+| Layer                     | Choice                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------- |
+| Language                  | TypeScript 5.8                                                                  |
+| Runtime / package manager | Bun                                                                             |
+| Framework                 | TanStack Start (React 19 + TanStack Router + SSR)                               |
+| Build tool                | Vite 8 via `@lovable.dev/vite-tanstack-config`                                  |
+| UI library                | shadcn/ui (Radix UI primitives)                                                 |
+| Styling                   | Tailwind CSS v4                                                                 |
+| Server runtime            | Nitro (Cloudflare adapter)                                                      |
+| Database / Auth           | Supabase (project ID: `xbpkvbjmclokmbumhymg`)                                   |
+| ORM / migrations          | Drizzle Kit; schema types in `src/integrations/supabase/types.ts`               |
+| AI — chat                 | OpenAI (`gpt-5.6-luna` default — see `src/lib/ai/model-config.ts`)              |
+| AI — voice TTS            | ElevenLabs (`src/lib/ai/elevenlabs.server.ts`)                                  |
+| AI — image                | OpenAI (`gpt-image-1`)                                                          |
+| Charts                    | Recharts                                                                        |
+| Data fetching             | TanStack Query v5                                                               |
+| Forms                     | React Hook Form + Zod                                                           |
+| Date utilities            | date-fns v4                                                                     |
+| File imports              | `xlsx` (spreadsheet parsing)                                                    |
+| Deployment                | Vercel (preview + production); Lovable live preview at `cvshopdesk.lovable.app` |
 
 ---
 
@@ -182,27 +182,27 @@ on every navigation and redirects to `/auth` if absent. Server functions use
 All tables are in the `public` schema. Every table has a `shop_id` FK → `shops.id`
 for multi-tenancy. Row-level security is enforced by Supabase.
 
-| Table | Purpose |
-|---|---|
-| `shops` | One row per shop. Has `name` and `timezone`. |
-| `shop_members` | Links users to shops with a `role` (owner/manager/staff/display) and `status` (pending/approved/revoked). |
-| `shop_settings` | Per-shop config: `targets`, `technician_goals`, `goal_rules`, `hidden_widgets`. |
-| `metric_snapshots` | Core metrics per `business_date` and `report_scope` (daily/mtd/ytd/invoice/…). Fields: `sales`, `car_count`, `gross_profit`, `tires_sold`. Uses `is_current` + `superseded_by` for history. |
-| `metric_corrections` | Audit trail for every metric correction. |
-| `technician_productivity` | Per-tech rows: `hours_worked`, `hours_billed`, `cars`, `productivity_pct` for a date. |
-| `imports` | File upload records. Status lifecycle: `uploaded → extracting → extracted → accepted/rejected/failed`. |
-| `shop_jobs` | Repair orders. Supports `is_current` + `superseded_by` chain. Has local status/note overrides separate from imported data. |
-| `tire_orders` | Tire order tracking (brand, size, quantity, vendor, status). |
-| `customers` / `vehicles` | Customer + vehicle records, importable. |
-| `inventory_items` | Inventory snapshots by date. |
-| `notifications` + `notification_recipients` | Internal notifications with audience, priority, channels, expiry. |
-| `ai_settings` | Hank configuration: personality, model tier, voice settings (ElevenLabs voice_id, similarity, speed, etc.), wake word config. |
-| `assistant_messages` | Hank chat history per shop. |
-| `ai_actions` | Audit log of AI-initiated actions. |
-| `audit_events` | General app audit log. |
-| `profiles` | User display info (name, email). |
-| `role_permissions` | Per-shop overrides to the default role→permission mapping. |
-| `staff_invites` | Pending invitations (by email). |
+| Table                                       | Purpose                                                                                                                                                                                     |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shops`                                     | One row per shop. Has `name` and `timezone`.                                                                                                                                                |
+| `shop_members`                              | Links users to shops with a `role` (owner/manager/staff/display) and `status` (pending/approved/revoked).                                                                                   |
+| `shop_settings`                             | Per-shop config: `targets`, `technician_goals`, `goal_rules`, `hidden_widgets`.                                                                                                             |
+| `metric_snapshots`                          | Core metrics per `business_date` and `report_scope` (daily/mtd/ytd/invoice/…). Fields: `sales`, `car_count`, `gross_profit`, `tires_sold`. Uses `is_current` + `superseded_by` for history. |
+| `metric_corrections`                        | Audit trail for every metric correction.                                                                                                                                                    |
+| `technician_productivity`                   | Per-tech rows: `hours_worked`, `hours_billed`, `cars`, `productivity_pct` for a date.                                                                                                       |
+| `imports`                                   | File upload records. Status lifecycle: `uploaded → extracting → extracted → accepted/rejected/failed`.                                                                                      |
+| `shop_jobs`                                 | Repair orders. Supports `is_current` + `superseded_by` chain. Has local status/note overrides separate from imported data.                                                                  |
+| `tire_orders`                               | Tire order tracking (brand, size, quantity, vendor, status).                                                                                                                                |
+| `customers` / `vehicles`                    | Customer + vehicle records, importable.                                                                                                                                                     |
+| `inventory_items`                           | Inventory snapshots by date.                                                                                                                                                                |
+| `notifications` + `notification_recipients` | Internal notifications with audience, priority, channels, expiry.                                                                                                                           |
+| `ai_settings`                               | Hank configuration: personality, model tier, voice settings (ElevenLabs voice_id, similarity, speed, etc.), wake word config.                                                               |
+| `assistant_messages`                        | Hank chat history per shop.                                                                                                                                                                 |
+| `ai_actions`                                | Audit log of AI-initiated actions.                                                                                                                                                          |
+| `audit_events`                              | General app audit log.                                                                                                                                                                      |
+| `profiles`                                  | User display info (name, email).                                                                                                                                                            |
+| `role_permissions`                          | Per-shop overrides to the default role→permission mapping.                                                                                                                                  |
+| `staff_invites`                             | Pending invitations (by email).                                                                                                                                                             |
 
 ---
 
@@ -210,12 +210,12 @@ for multi-tenancy. Row-level security is enforced by Supabase.
 
 Defined in `src/lib/permissions.ts`. Four roles:
 
-| Role | Label | Default access |
-|---|---|---|
-| `owner` | Owner | All permissions, always |
-| `manager` | Admin | All except manage_permissions and manage_security |
-| `staff` | Staff | view_dashboard, edit_dashboard_numbers, upload_imports, access_tools, use_assistant |
-| `display` | TV / Display | view_dashboard only |
+| Role      | Label        | Default access                                                                      |
+| --------- | ------------ | ----------------------------------------------------------------------------------- |
+| `owner`   | Owner        | All permissions, always                                                             |
+| `manager` | Admin        | All except manage_permissions and manage_security                                   |
+| `staff`   | Staff        | view_dashboard, edit_dashboard_numbers, upload_imports, access_tools, use_assistant |
+| `display` | TV / Display | view_dashboard only                                                                 |
 
 Use `can(role, permission, overrides)` from `permissions.ts` for all checks.
 Use `<AccessGate permission="...">` in the UI. Never duplicate role checks.
@@ -262,10 +262,10 @@ Figma will be used for future screens before they are coded.
 
 Codex has done the major dashboard redesign and Figma-alignment work.
 
-| Commit | Description |
-|---|---|
+| Commit                                     | Description                                                                                                                 |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
 | `37da12bc61a4e7f921ecb612e0cf404ef24930ce` | Major light-dashboard redesign (KPI cards, sparklines, monthly chart, mechanic productivity, YTD, sidebar, header, Hank UI) |
-| `cca7923b0ca9f0e5326af9cbef543d161c459200` | Align dashboard layout with approved design (proportions, spacing, mechanic production, monthly chart sizing, YTD layout) |
+| `cca7923b0ca9f0e5326af9cbef543d161c459200` | Align dashboard layout with approved design (proportions, spacing, mechanic production, monthly chart sizing, YTD layout)   |
 
 The redesign was estimated at roughly 75%+ complete when Codex usage ran out.
 The major architecture and visual direction are in place. Remaining work is likely:
@@ -283,6 +283,7 @@ TV mode is a major planned feature. The concept is a full-screen, easily readabl
 display mounted in the shop, rotating through useful information every few seconds.
 
 **Planned rotating screens:**
+
 - Large-format shop dashboard / today's numbers
 - Today's appointment schedule
 - Mechanic productivity
@@ -292,6 +293,7 @@ display mounted in the shop, rotating through useful information every few secon
 - Important staff announcements
 
 **Design direction:** TV mode is where expressive animation is appropriate.
+
 - Animated counters and progress bars
 - Screen transitions
 - Temporary full-screen alerts
@@ -344,6 +346,7 @@ A significant GitHub development safety and staging audit was done by Codex on b
 `codex/github-development-safeguards`
 
 That work established:
+
 - Safer GitHub development practices
 - Staging/backend safeguards
 - Testing infrastructure
@@ -362,6 +365,7 @@ Never commit secrets. Server-side secrets (OpenAI, ElevenLabs) are accessed via
 `process.env` in server functions only — never returned to the browser.
 
 Key env vars:
+
 - `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` — safe for browser
 - OpenAI and ElevenLabs API keys — server-side only
 

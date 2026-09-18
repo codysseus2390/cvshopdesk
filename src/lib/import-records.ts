@@ -23,7 +23,9 @@ export interface NumericField {
 export function parseNumericField(raw: unknown): NumericField {
   if (raw === null || raw === undefined) return { value: null, unreadable: false };
   if (typeof raw === "number") {
-    return Number.isFinite(raw) ? { value: raw, unreadable: false } : { value: null, unreadable: true };
+    return Number.isFinite(raw)
+      ? { value: raw, unreadable: false }
+      : { value: null, unreadable: true };
   }
   const text = String(raw).trim();
   if (text === "") return { value: null, unreadable: false };
@@ -48,7 +50,10 @@ export function pickText(item: RawItem, keys: string[]): string | null {
   return null;
 }
 
-function pickTimestamp(item: RawItem, keys: string[]): { value: string | null; unreadable: boolean } {
+function pickTimestamp(
+  item: RawItem,
+  keys: string[],
+): { value: string | null; unreadable: boolean } {
   const text = pickText(item, keys);
   if (!text) return { value: null, unreadable: false };
   const parsed = new Date(text);
@@ -127,14 +132,26 @@ export interface JobRow {
 export function normalizeJobRows(items: RawItem[], importId: string): JobRow[] {
   return items.map((item, index) => {
     const flags: string[] = [];
-    const externalId = pickText(item, ["external_id", "ticket", "work_order", "ro", "invoice_number", "id"]);
+    const externalId = pickText(item, [
+      "external_id",
+      "ticket",
+      "work_order",
+      "ro",
+      "invoice_number",
+      "id",
+    ]);
     if (!externalId) flags.push("no TireShop record id — matched to this import row only");
 
     // Arrival is only ever a real recorded arrival time. It is never guessed
     // from the appointment time or from when the file was imported.
     const arrival = pickTimestamp(item, ["arrival_at", "arrived_at", "checked_in_at", "arrival"]);
     if (arrival.unreadable) flags.push("arrival time unreadable");
-    const appointment = pickTimestamp(item, ["appointment_at", "appointment", "scheduled_at", "promised_at"]);
+    const appointment = pickTimestamp(item, [
+      "appointment_at",
+      "appointment",
+      "scheduled_at",
+      "promised_at",
+    ]);
     if (appointment.unreadable) flags.push("appointment time unreadable");
 
     return {
@@ -238,7 +255,9 @@ const FINISHED = [
 
 /** A job counts as finished only when a status word says so. Absence is not completion. */
 export function isFinishedJob(job: { job_status?: string | null; local_status?: string | null }) {
-  const words = [job.job_status, job.local_status].filter(Boolean).map((w) => String(w).toLowerCase());
+  const words = [job.job_status, job.local_status]
+    .filter(Boolean)
+    .map((w) => String(w).toLowerCase());
   return words.some((word) => FINISHED.some((f) => word.includes(f)));
 }
 

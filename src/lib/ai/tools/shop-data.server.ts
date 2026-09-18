@@ -22,8 +22,15 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
     parameters: {
       type: "object",
       properties: {
-        period: { type: "string", enum: ["weekly", "monthly", "yearly"], description: "Reporting period. Defaults to monthly." },
-        anchor: { type: "string", description: "Any date inside the period, YYYY-MM-DD. Defaults to today." },
+        period: {
+          type: "string",
+          enum: ["weekly", "monthly", "yearly"],
+          description: "Reporting period. Defaults to monthly.",
+        },
+        anchor: {
+          type: "string",
+          description: "Any date inside the period, YYYY-MM-DD. Defaults to today.",
+        },
       },
       additionalProperties: false,
     },
@@ -31,7 +38,10 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
       const parsed = z
         .object({
           period: z.enum(["weekly", "monthly", "yearly"]).optional(),
-          anchor: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+          anchor: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .optional(),
         })
         .parse(args);
       const { buildNumbersReport } = await import("@/lib/numbers.server");
@@ -53,19 +63,24 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
     parameters: { type: "object", properties: {}, additionalProperties: false },
     execute: async (ctx) => {
       const year = ctx.today.slice(0, 4);
-      const [{ data, error }, { data: productivityRows, error: productivityError }] = await Promise.all([
-        ctx.supabase
-          .from("metric_snapshots")
-          .select("id, business_date, scope, gross_profit, tires_sold, car_count, source, note, created_at")
-          .eq("is_current", true)
-          .gte("business_date", `${year}-01-01`)
-          .order("business_date", { ascending: true }),
-        ctx.supabase
-          .from("technician_productivity")
-          .select("business_date, technician, productivity_pct, hours_billed, hours_worked, period_scope, updated_at")
-          .gte("business_date", `${Number(year) - 1}-01-01`)
-          .lte("business_date", ctx.today),
-      ]);
+      const [{ data, error }, { data: productivityRows, error: productivityError }] =
+        await Promise.all([
+          ctx.supabase
+            .from("metric_snapshots")
+            .select(
+              "id, business_date, scope, gross_profit, tires_sold, car_count, source, note, created_at",
+            )
+            .eq("is_current", true)
+            .gte("business_date", `${year}-01-01`)
+            .order("business_date", { ascending: true }),
+          ctx.supabase
+            .from("technician_productivity")
+            .select(
+              "business_date, technician, productivity_pct, hours_billed, hours_worked, period_scope, updated_at",
+            )
+            .gte("business_date", `${Number(year) - 1}-01-01`)
+            .lte("business_date", ctx.today),
+        ]);
       if (error) throw new Error(error.message);
       if (productivityError) throw new Error(productivityError.message);
       const rows = ((data ?? []) as (MetricRow & { created_at: string })[]).filter(
@@ -86,13 +101,24 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
       return {
         data: {
           shopToday: ctx.today,
-          today: rows.find((row) => row.business_date === ctx.today && row.scope === "daily") ?? null,
+          today:
+            rows.find((row) => row.business_date === ctx.today && row.scope === "daily") ?? null,
           monthToDate: monthToDate(rows, ctx.today.slice(0, 7), ctx.today),
           yearToDate: yearToDate(rows, year, ctx.today),
           recentDaily: rows.filter((row) => row.scope === "daily").slice(-14),
           mechanicProductivity: {
-            today: overallProductivity(productivity, { from: ctx.today, to: ctx.today }, "daily", ctx.today),
-            yesterday: overallProductivity(productivity, { from: yesterday, to: yesterday }, "daily", yesterday),
+            today: overallProductivity(
+              productivity,
+              { from: ctx.today, to: ctx.today },
+              "daily",
+              ctx.today,
+            ),
+            yesterday: overallProductivity(
+              productivity,
+              { from: yesterday, to: yesterday },
+              "daily",
+              yesterday,
+            ),
             thisWeek: reportProductivity(weekReport),
             thisMonth: reportProductivity(monthReport),
           },
@@ -115,10 +141,15 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
       const { search } = searchSchema.parse(args);
       let query = ctx.supabase
         .from("customers")
-        .select("id, name, phone, email, external_id, needs_review, vehicles(id, year, make, model, vin, plate)")
+        .select(
+          "id, name, phone, email, external_id, needs_review, vehicles(id, year, make, model, vin, plate)",
+        )
         .order("name", { ascending: true })
         .limit(25);
-      if (search?.trim()) query = query.or(`name.ilike.${term(search)},phone.ilike.${term(search)},email.ilike.${term(search)}`);
+      if (search?.trim())
+        query = query.or(
+          `name.ilike.${term(search)},phone.ilike.${term(search)},email.ilike.${term(search)}`,
+        );
       const { data, error } = await query;
       if (error) throw new Error(error.message);
       return { data: { customers: data ?? [] } };
@@ -132,7 +163,9 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
     permission: "view_dashboard",
     parameters: {
       type: "object",
-      properties: { search: { type: "string", description: "Description, brand or size fragment." } },
+      properties: {
+        search: { type: "string", description: "Description, brand or size fragment." },
+      },
       additionalProperties: false,
     },
     execute: async (ctx, args) => {
@@ -143,7 +176,9 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
         .order("snapshot_date", { ascending: false })
         .limit(40);
       if (search?.trim())
-        query = query.or(`description.ilike.${term(search)},brand.ilike.${term(search)},size.ilike.${term(search)}`);
+        query = query.or(
+          `description.ilike.${term(search)},brand.ilike.${term(search)},size.ilike.${term(search)}`,
+        );
       const { data, error } = await query;
       if (error) throw new Error(error.message);
       return { data: { items: data ?? [] } };
@@ -179,7 +214,10 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
       type: "object",
       properties: {
         search: { type: "string", description: "Customer, brand, model or size fragment." },
-        status: { type: "string", enum: ["draft", "ordered", "received", "installed", "cancelled"] },
+        status: {
+          type: "string",
+          enum: ["draft", "ordered", "received", "installed", "cancelled"],
+        },
       },
       additionalProperties: false,
     },
@@ -210,23 +248,32 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
   {
     name: "list_technician_productivity",
     sourceLabel: "Technician productivity",
-    description: "Reads saved technician productivity entries, newest first, optionally for one technician.",
+    description:
+      "Reads saved technician productivity entries, newest first, optionally for one technician.",
     permission: "view_productivity",
     parameters: {
       type: "object",
-      properties: { technician: { type: "string" }, from: { type: "string", description: "YYYY-MM-DD" } },
+      properties: {
+        technician: { type: "string" },
+        from: { type: "string", description: "YYYY-MM-DD" },
+      },
       additionalProperties: false,
     },
     execute: async (ctx, args) => {
       const parsed = z
         .object({
           technician: z.string().max(80).optional(),
-          from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+          from: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/)
+            .optional(),
         })
         .parse(args);
       let query = ctx.supabase
         .from("technician_productivity")
-        .select("id, business_date, technician, productivity_pct, hours_billed, hours_worked, cars, note")
+        .select(
+          "id, business_date, technician, productivity_pct, hours_billed, hours_worked, cars, note",
+        )
         .order("business_date", { ascending: false })
         .limit(60);
       if (parsed.technician?.trim()) query = query.ilike("technician", term(parsed.technician));
@@ -245,7 +292,9 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
     execute: async (ctx) => {
       const { data, error } = await ctx.supabase
         .from("ai_actions")
-        .select("id, tool, status, confirmation_required, confirmed, target_table, target_id, created_at, error")
+        .select(
+          "id, tool, status, confirmation_required, confirmed, target_table, target_id, created_at, error",
+        )
         .order("created_at", { ascending: false })
         .limit(25);
       if (error) throw new Error(error.message);

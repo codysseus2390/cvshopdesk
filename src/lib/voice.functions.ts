@@ -28,7 +28,11 @@ async function membership(sb: Supa, userId: string) {
     .eq("shop_id", data.shop_id);
   if (overrideError) throw new Error(overrideError.message);
   const permissions = resolvePermissions(data.role as AppRole, (overrides ?? []) as never);
-  return { shop_id: data.shop_id as string, role: data.role as string, canUseAssistant: permissions.use_assistant };
+  return {
+    shop_id: data.shop_id as string,
+    role: data.role as string,
+    canUseAssistant: permissions.use_assistant,
+  };
 }
 
 function requireAssistant(member: { canUseAssistant: boolean }) {
@@ -50,7 +54,9 @@ function failure(err: unknown) {
   const known = err instanceof Error && err.name === "VoiceServiceError";
   return {
     ok: false as const,
-    code: known ? ((err as unknown as { code: string }).code as "unavailable") : ("unavailable" as const),
+    code: known
+      ? ((err as unknown as { code: string }).code as "unavailable")
+      : ("unavailable" as const),
     message:
       err instanceof Error && err.message
         ? err.message
@@ -66,7 +72,12 @@ export const listHankVoices = createServerFn({ method: "GET" })
     requireManager(member.role);
     const { listElevenLabsVoices, isVoiceConfigured } = await import("@/lib/ai/elevenlabs.server");
     if (!isVoiceConfigured()) {
-      return { ok: false as const, code: "not_configured" as const, message: "The ElevenLabs account is not connected yet.", voices: [] };
+      return {
+        ok: false as const,
+        code: "not_configured" as const,
+        message: "The ElevenLabs account is not connected yet.",
+        voices: [],
+      };
     }
     try {
       return { ok: true as const, voices: await listElevenLabsVoices() };
@@ -94,15 +105,27 @@ export const speakHankText = createServerFn({ method: "POST" })
     const sb = context.supabase as unknown as Supa;
     const member = await membership(sb, context.userId);
     requireAssistant(member);
-    const { data: row } = await sb.from("ai_settings").select("*").eq("shop_id", member.shop_id).maybeSingle();
+    const { data: row } = await sb
+      .from("ai_settings")
+      .select("*")
+      .eq("shop_id", member.shop_id)
+      .maybeSingle();
     const settings = (row ?? {}) as Record<string, unknown>;
 
     if (!settings["voice_enabled"]) {
-      return { ok: false as const, code: "disabled" as const, message: "Hank's voice is turned off in Hank Settings." };
+      return {
+        ok: false as const,
+        code: "disabled" as const,
+        message: "Hank's voice is turned off in Hank Settings.",
+      };
     }
     const voiceId = (settings["voice_id"] as string | null) ?? "";
     if (!voiceId) {
-      return { ok: false as const, code: "voice_unavailable" as const, message: "No voice has been chosen for Hank yet." };
+      return {
+        ok: false as const,
+        code: "voice_unavailable" as const,
+        message: "No voice has been chosen for Hank yet.",
+      };
     }
 
     const { synthesizeSpeech } = await import("@/lib/ai/elevenlabs.server");
@@ -172,7 +195,11 @@ export const transcribeHankSpeech = createServerFn({ method: "POST" })
     const { HANK_STT_MAX_BYTES } = await import("@/lib/ai/voice-config");
     const audio = Buffer.from(data.audioBase64, "base64");
     if (audio.byteLength < 1_200) {
-      return { ok: false as const, code: "audio" as const, message: "That recording was empty. Try speaking again." };
+      return {
+        ok: false as const,
+        code: "audio" as const,
+        message: "That recording was empty. Try speaking again.",
+      };
     }
     if (audio.byteLength > HANK_STT_MAX_BYTES) {
       return {
@@ -224,7 +251,10 @@ export const saveHankVoiceSettings = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Supa & {
-      rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ error: { message: string } | null }>;
+      rpc: (
+        fn: string,
+        args?: Record<string, unknown>,
+      ) => Promise<{ error: { message: string } | null }>;
     };
     const member = await membership(sb, context.userId);
     requireManager(member.role);

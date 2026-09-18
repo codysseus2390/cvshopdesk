@@ -39,7 +39,10 @@ const EXTENSIONS: Record<string, string> = {
  * Turns a recorded clip into text. Nothing is stored: the audio is forwarded
  * once and discarded.
  */
-export async function transcribeAudio(input: { audio: Uint8Array; mimeType: string }): Promise<string> {
+export async function transcribeAudio(input: {
+  audio: Uint8Array;
+  mimeType: string;
+}): Promise<string> {
   const key = process.env["OPENAI_API_KEY"];
   if (!key) {
     throw new TranscribeError(
@@ -50,13 +53,20 @@ export async function transcribeAudio(input: { audio: Uint8Array; mimeType: stri
   const base = input.mimeType.split(";")[0]!.trim().toLowerCase();
   const extension = EXTENSIONS[base];
   if (!extension) {
-    throw new TranscribeError("That recording format cannot be read. Try a different microphone or browser.", "audio");
+    throw new TranscribeError(
+      "That recording format cannot be read. Try a different microphone or browser.",
+      "audio",
+    );
   }
 
   const form = new FormData();
   form.append("model", HANK_STT_MODEL);
   // The file name must match the real container, or the audio is rejected.
-  form.append("file", new Blob([input.audio as unknown as BlobPart], { type: base }), `speech.${extension}`);
+  form.append(
+    "file",
+    new Blob([input.audio as unknown as BlobPart], { type: base }),
+    `speech.${extension}`,
+  );
   // Steers spelling of shop words, tire sizes and names. It never adds content.
   form.append("prompt", HANK_STT_PROMPT);
 
@@ -68,21 +78,36 @@ export async function transcribeAudio(input: { audio: Uint8Array; mimeType: stri
       body: form,
     });
   } catch {
-    throw new TranscribeError("Could not reach the listening service. Check the connection and try again.", "unavailable");
+    throw new TranscribeError(
+      "Could not reach the listening service. Check the connection and try again.",
+      "unavailable",
+    );
   }
 
   if (!response.ok) {
     const status = response.status;
     if (status === 401 || status === 403) {
-      throw new TranscribeError("The OpenAI key was rejected, so Voice Mode cannot listen right now.", "credentials");
+      throw new TranscribeError(
+        "The OpenAI key was rejected, so Voice Mode cannot listen right now.",
+        "credentials",
+      );
     }
     if (status === 429) {
-      throw new TranscribeError("The OpenAI account is rate limited or out of credit. Try again in a moment.", "quota");
+      throw new TranscribeError(
+        "The OpenAI account is rate limited or out of credit. Try again in a moment.",
+        "quota",
+      );
     }
     if (status === 400 || status === 413 || status === 422) {
-      throw new TranscribeError("That recording could not be understood. Try speaking again, a little closer to the microphone.", "audio");
+      throw new TranscribeError(
+        "That recording could not be understood. Try speaking again, a little closer to the microphone.",
+        "audio",
+      );
     }
-    throw new TranscribeError("The listening service had a problem. Hank's typed chat still works normally.", "unavailable");
+    throw new TranscribeError(
+      "The listening service had a problem. Hank's typed chat still works normally.",
+      "unavailable",
+    );
   }
 
   const payload = (await response.json().catch(() => null)) as { text?: string } | null;
