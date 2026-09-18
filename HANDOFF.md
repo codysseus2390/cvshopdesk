@@ -16,7 +16,7 @@ handed off. The next agent should read this before starting any work.
 
 ## Current Branch
 
-`docs/context-update` (open PR pending merge; see log entry below)
+`audit/lovable-dependency-audit` (open PR pending review; see log entry below)
 
 **Also note:** Codex has a separate draft PR on `codex/github-development-safeguards`
 (staging/safety infrastructure work) that has not yet been merged into `main`.
@@ -24,6 +24,62 @@ handed off. The next agent should read this before starting any work.
 ---
 
 ## Handoff Log
+
+---
+
+### Session: 2026-09-18 — Lovable dependency audit
+
+**Agent:** Claude Code (Sonnet 4.6)
+**Branch:** `audit/lovable-dependency-audit`
+**Commit:** _(see below — commit pending push)_
+
+**What was audited:**
+Performed a complete Lovable dependency audit across all source files, configuration,
+package manifests, deployment assumptions, and backend integrations. Every Lovable-related
+item was found, classified, and documented.
+
+**Files created/modified:**
+- `docs/lovable-dependency-audit.md` — new; full audit report (16 findings)
+- `HANDOFF.md` — this entry
+
+**Risky findings (act on these before removing anything):**
+
+1. **Cedar Valley logo may be broken on Vercel** (`src/assets/cedar-valley-logo.jpg.asset.json`).
+   The logo is served from `/__l5e/assets-v1/...`, a Lovable CDN path. This URL likely
+   returns 404 outside of `cvshopdesk.lovable.app`. **Check the logo on the Vercel deployment
+   before anything else.**
+
+2. **Supabase OAuth redirect URIs may be Lovable-only.**
+   If the Supabase project's allowed redirect URLs were configured only for `*.lovable.app`
+   domains, Google OAuth will fail on the Vercel deployment. **Inspect Supabase Auth →
+   URL Configuration → Redirect URLs for project `xbpkvbjmclokmbumhymg`.**
+
+3. **`cvshopdesk.lovable.app` may be the primary production URL.**
+   It is unclear whether a Vercel URL or custom domain is in active use. Confirm this
+   before any step that would sever the Lovable integration.
+
+**Classification summary:**
+- NEEDS MIGRATION: `@lovable.dev/vite-tanstack-config`, `@lovable.dev/cloud-auth-js`,
+  `src/integrations/lovable/index.ts`, `src/routes/auth.tsx` (Google OAuth call)
+- KEEP FOR NOW: `.lovable/project.json`, Lovable hosting, `LOVABLE_NOTES.md`
+- SAFE TO REMOVE LATER: `previewAuthStorage.ts`, `lovable-error-reporting.ts`,
+  `__root.tsx` partial, three Lovable-Cloud error strings, `.lovable/plan/*.md`,
+  `bunfig.toml` exclusions, `README.md` Lovable references
+- UNCERTAIN / NEEDS VERIFICATION: `cedar-valley-logo.jpg.asset.json` (CDN URL),
+  `mcp-js`/`email-js`/`webhooks-js` in bunfig.toml, Supabase OAuth redirect URIs
+
+**No application code was modified.**
+
+**Validation status:**
+Documentation-only changes; no lint/test run required.
+
+**Next recommended step:**
+Open `docs/lovable-dependency-audit.md` and immediately action the two risky findings:
+(1) verify whether the Cedar Valley logo loads on the Vercel deployment, and
+(2) check Supabase Auth → URL Configuration to confirm the Vercel domain is in the
+redirect URI allowlist. Both are read-only checks that can be done without any code
+changes, but they determine whether production is already broken and shape the
+migration priority order.
 
 ---
 
