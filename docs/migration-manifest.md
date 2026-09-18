@@ -11,7 +11,7 @@ The existing production database cannot currently be retained by the authenticat
 
 - Repository: `codysseus2390/cvshopdesk`.
 - Audited branch: `codex/github-development-safeguards`.
-- Branch head: `257f015870ddc1c0ab9ab70bce163bb3745222d3`, the direct Supabase OAuth implementation on top of the independent preview auth compatibility fix.
+- Branch head: `2d53b60b9f848f3ebf2533f9a2a6305a456447a2`, the direct Supabase OAuth implementation plus removal of the Lovable preview storage bridge.
 - Redesign commit: `45a9af7cc79fd0c89b689852e1bf57684c79658a`.
 - `main`: `1f694690b7af1f28db6009c07b12e8441dd58691`.
 - The feature branch is 28 commits ahead of `main`; the redesign is not merged.
@@ -120,6 +120,7 @@ No application redesign or production migration should begin until that inventor
 - The staging project has one shop, two Auth users, two approved members, and one approved owner. Custom `role_permissions`, `shop_settings`, and `ai_settings` rows are empty; defaults remain in effect. The private `shop-uploads` bucket exists, but no valuable file set was verified in this audit.
 - Commit `257f015870ddc1c0ab9ab70bce163bb3745222d3` changes the auth page to call `supabase.auth.signInWithOAuth({ provider: "google" })` directly and keeps email/password sign-in. The callback is `{origin}/auth`, so no Lovable auth bridge is required by the page.
 - Commit `f7d62ea06edb1a126cb665142f387a27a4b62a7e` removes the Lovable preview session-storage broker from the Supabase client and replaces the Lovable-specific missing-variable message. The independent preview now uses Supabase JS browser persistence directly.
+- Commit `2d53b60b9f848f3ebf2533f9a2a6305a456447a2` clarifies the server-only Admin client error. `SUPABASE_SERVICE_ROLE_KEY` is required for trusted server routes and must be supplied only in the staging Preview environment.
 - Staging Auth Site URL is `https://cvshopdesk-dashboard-preview.vercel.app`; the allowlist contains that origin's `/auth` callback and localhost. Google provider credentials are still disabled because they require the owner's Google Cloud OAuth client.
 - GitHub reports a successful Vercel status for this commit (deployment target URL is recorded in the commit status), but the Vercel account connector did not authorize deployment-detail reads. The preview alias remains `https://cvshopdesk-dashboard-preview.vercel.app`; verify its deployment is running this SHA before sign-in testing.
 - Vercel Preview must be confirmed to use staging `SUPABASE_URL`/publishable key and a staging-only `SUPABASE_SERVICE_ROLE_KEY` before write tests. The current dashboard showed the service-role variable in Production scope only; do not copy a production secret into Preview.
