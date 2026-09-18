@@ -1,0 +1,21 @@
+{
+  "recommendations": [
+    "bradlc.vscode-tailwindcss",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "yoavbls.pretty-ts-errors",
+    "usernamehw.errorlens",
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+    "prisma.prisma",
+    "mikestead.dotenv",
+    "eamodio.gitlens",
+    "editorconfig.editorconfig",
+    "csstools.postcss",
+    "unifiedjs.vscode-mdx"
+  ],
+  "unwantedRecommendations": [
+    "hookyqr.beautify",
+    "coenraads.bracket-pair-colorizer"
+  ]
+}

@@ -1,9 +1,8 @@
 # AGENTS.md — Shared Rulebook for AI Coding Agents
 
 This file is the authoritative operating guide for every AI coding agent working on the
-Cedar Valley ShopDesk repository: Codex, Claude Code, Wrench, Lovable, and any others.
-Read this file before making substantial changes. Supplement with `PROJECT_CONTEXT.md`,
-`ROADMAP.md`, and `HANDOFF.md` for full situational awareness.
+Cedar Valley ShopDesk repository. Read this file before making substantial changes.
+Supplement with `PROJECT_CONTEXT.md`, `ROADMAP.md`, and `HANDOFF.md`.
 
 ---
 
@@ -13,12 +12,10 @@ Read this file before making substantial changes. Supplement with `PROJECT_CONTE
 - Use one branch per task or feature. Name branches clearly (e.g., `feat/tv-mode-polish`).
 - Commit after every meaningful, self-contained unit of completed work.
 - Push regularly — do not accumulate large local-only histories.
-- **Do not rewrite published Git history.** No force-push, no rebase, no amend, no squash
-  of commits that are already pushed. This rule is enforced especially hard here because the
-  Lovable editor tracks history on the connected branch and history rewrites corrupt its
-  project record. See `LOVABLE_NOTES.md` for context.
+- Do not rewrite published Git history unless the owner explicitly asks.
 - Do not merge to `main` unless explicitly instructed by the project owner.
 - Before picking up a task, check `HANDOFF.md` for in-progress work and known issues.
+- Do not use the Lovable editor or treat Lovable as a deployment path.
 
 ---
 
@@ -45,7 +42,7 @@ Read this file before making substantial changes. Supplement with `PROJECT_CONTE
   accessed server-side only (never returned to the browser).
 - Do not introduce security vulnerabilities (XSS, SQL injection, command injection, etc.).
 - TypeScript: keep the codebase strictly typed. Do not use `any` to bypass type errors.
-- Formatting: use Prettier (`npm run format` / `bun run format`). ESLint must pass.
+- Formatting: use Prettier (`bun run format`). ESLint must pass.
 - Tests live in `*.test.ts` files alongside their subjects. Run `vitest` to verify.
 
 ---
@@ -55,13 +52,9 @@ Read this file before making substantial changes. Supplement with `PROJECT_CONTE
 These are business-critical invariants. Do not violate them.
 
 - **Missing daily dashboard values must stay missing.** A metric field that has no data
-  for a given day must display as absent/empty, not as zero. Silently coercing `null` to
-  `0` misrepresents performance.
-- **Partial current-month data must not visually imply a full-month downturn.** When MTD
-  figures exist for only part of a month, charts and comparisons must make the partial
-  nature clear rather than suggesting the month closed at a lower number.
-- **Do not replace real or missing data with fake/placeholder values.** If data is absent,
-  show it as absent.
+  for a given day must display as absent/empty, not as zero.
+- **Partial current-month data must not visually imply a full-month downturn.**
+- **Do not replace real or missing data with fake/placeholder values.**
 - Metric snapshots use `is_current`, `superseded_at`, and `superseded_by` to track history.
   When writing or correcting snapshots, preserve the full audit chain — never delete old
   snapshots.
@@ -72,11 +65,9 @@ These are business-critical invariants. Do not violate them.
 
 ## UI / Design
 
-- Follow approved Figma designs when provided. Do not deviate from Figma specs
-  without explicit owner approval.
+- Follow approved Figma designs when provided.
 - Do not add features or UI elements that are not in the current task scope.
 - Keep production and staging concerns separate.
-- Test the golden path and edge cases in a real browser before declaring UI work done.
 - Preserve existing working functionality unless you are explicitly asked to change it.
 
 ---
@@ -84,15 +75,13 @@ These are business-critical invariants. Do not violate them.
 ## Role and Permission Model
 
 The app has four roles: `owner`, `manager`, `staff`, `display`.
-Permission logic lives in `src/lib/permissions.ts`. Check there before adding any
-gated UI — never duplicate or hand-code role checks.
+Permission logic lives in `src/lib/permissions.ts`.
 
 ---
 
 ## AI / Hank
 
-- Hank is the shop assistant (OpenAI, `gpt-5.6-luna` by default). His configuration is in
-  `src/lib/ai/model-config.ts` and `src/lib/ai/persona.ts`.
+- Hank is the shop assistant. Configuration is in `src/lib/ai/model-config.ts` and `src/lib/ai/persona.ts`.
 - Voice is handled by ElevenLabs (`src/lib/ai/elevenlabs.server.ts`). The API key must
   never appear in browser code or logs.
 - Hank's tools are in `src/lib/ai/tools/`. Adding a tool requires registering it in
@@ -105,8 +94,7 @@ gated UI — never duplicate or hand-code role checks.
 When you are approaching the end of an agent session or context limit:
 
 **~15% usage remaining** — Stop starting any large new task. Finish only the unit
-currently in progress. Commit and push all completed progress immediately so it is
-not stranded locally if the session ends unexpectedly.
+currently in progress. Commit and push all completed progress immediately.
 
 **~10% usage remaining — enter handoff mode:**
 
@@ -114,31 +102,6 @@ not stranded locally if the session ends unexpectedly.
 2. Run quick validation if practical (`bun run lint`, `vitest run`).
 3. Commit all completed work with a clear message.
 4. Push the branch to origin.
-5. Update `HANDOFF.md` with:
-   - Current branch name
-   - Latest commit SHA (`git rev-parse HEAD`)
-   - What was completed in this session
-   - What still needs to be done (specific, actionable)
-   - Files touched / most relevant to the next agent
-   - Known issues or blockers
-   - Validation status (did lint/tests pass?)
-   - The single exact next recommended step
+5. Update `HANDOFF.md` with branch, SHA, completed work, remaining work, files, blockers,
+   validation, and the single next step.
 6. Stop. Do not start another feature.
-
-> **Note on usage awareness:** Agents may not always have a precise reading of remaining
-> context or token usage. Regardless of what the counter shows, checkpoint frequently
-> throughout every session (commit + push after each meaningful chunk). If the user says
-> usage is low, or explicitly requests a handoff at any time, immediately enter handoff
-> mode — do not wait for an internal threshold to be reached.
-
----
-
-## Lovable Compatibility
-
-See `LOVABLE_NOTES.md` for full context. Summary:
-
-- The main branch is connected to the Lovable editor. Every push to it syncs back.
-- History rewrites on any pushed branch break Lovable's project history.
-- Do not remove or break `@lovable.dev/vite-tanstack-config` — it drives the entire build.
-- Do not remove `@lovable.dev/cloud-auth-js` without a migration plan.
-- Do not delete `.lovable/project.json`.
