@@ -189,7 +189,6 @@ function NotificationsTvPanel() {
             </Link>
           </Button>
         </div>
-      </div>
       </CardContent>
     </Card>
   );
