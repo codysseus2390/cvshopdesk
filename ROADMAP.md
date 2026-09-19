@@ -33,26 +33,23 @@ immediate in-progress state.
 - [x] Figma-alignment pass by Codex (`cca7923b0ca9f0e5326af9cbef543d161c459200`)
   - Proportions, spacing, mechanic production, monthly chart sizing, YTD layout
 - [x] Multi-agent context infrastructure (AGENTS.md, PROJECT_CONTEXT.md, ROADMAP.md, HANDOFF.md, LOVABLE_NOTES.md, CLAUDE.md)
-- [x] GitHub development safeguards and staging environment (Codex, branch: `codex/github-development-safeguards` — draft PR open, not yet merged)
+- [x] Hub panels integration landed via PR #5 (live hub on `main`)
+- [x] Roster / lead docs (PR #12) — Grok = lead; Cody = overseer
 
 ---
 
-## Priority 1 — Finish dashboard / Figma alignment (active)
+## Priority 1 — Fresh hub Figma pass off `main` (active)
 
-The major redesign is estimated ~75% complete. The architecture and visual direction are
-in place. What remains is likely design matching, spacing, responsive cleanup, and final
-verification — not a rebuild.
+**Do not merge PR #10.** It is parked: wrong base (`audit/lovable-dependency-audit`), conflicts with live HANDOFF truth, and the live hub already includes PR #5. Do not continue `feat/dashboard-panels-integration` as the product line.
 
-**Before touching the dashboard:**
+**Next sequence (after Grok week reset; see issue #15):**
 
-1. Read the Figma file: `https://www.figma.com/design/1GarIodYxJ1rBaTeuFYSVp`
-   (page: **Dashboard — Reference review**)
-2. Compare the running app against the Figma design screen by screen
-3. List what actually differs before making any changes
-4. Verify that data-integrity rules are intact (null values, partial months, productivity math)
-
-**Design direction:** light, clean, modern, readable, polished, restrained Cedar Valley
-branding. A professional shop application, not a generic admin template.
+1. **Cedar** — numbered diff of the **live hub on current `main`** vs Figma page **Dashboard — Reference review** (`https://www.figma.com/design/1GarIodYxJ1rBaTeuFYSVp`). Real screen changes only — no vibe brief.
+2. **Bay** — sanity-check copy on that list.
+3. **Pixel** — implement that list only on a **new** branch `feat/hub-figma-pass` cut from **current `main`**.
+4. **Gauge** — review before merge ask.
+5. **Vercel preview** — Cody looks.
+6. **Lovable package removal** — later, own Iron ticket, **not this week**.
 
 **Data rules that must be preserved:**
 
@@ -62,6 +59,12 @@ branding. A professional shop application, not a generic admin template.
 - No fake/placeholder data in any part of the UI
 
 Once the dashboard matches the approved design, **stop redesigning it.**
+
+**Also parked / do not treat as next merge:**
+
+- PR #7 — closed; do not merge / reopen
+- PR #1 — stays draft (Codex staging/safeguards)
+- PR #16 — docs HANDOFF rewrite (#13); merge when Cody/Grok glance
 
 ---
 
@@ -95,6 +98,8 @@ For each dependency, determine: **keep temporarily → migrate → remove**
 
 Do not remove anything without understanding exactly what it provides.
 See `LOVABLE_NOTES.md` for the full inventory and migration considerations.
+
+**Not this week** for package removal — own Iron ticket after the hub Figma pass.
 
 ---
 
@@ -176,3 +181,4 @@ Page transitions, chart animations, loading states, success/error states to foll
 - The desktop dashboard should remain visually restrained. Expressive animation belongs in TV mode.
 - New screen designs go through Figma before they are coded.
 - Update this file when a priority ships or a new one is added.
+- Never push to main. Never rewrite published git history.
