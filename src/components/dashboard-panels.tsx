@@ -54,7 +54,7 @@ function RecentImportsPanel() {
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted text-foreground">
             <FileText className="h-4 w-4" />
           </span>
-          Recent imports &amp; tools
+          Recent imports & tools
         </CardTitle>
         <Link to="/imports" className="text-xs font-semibold text-primary hover:underline">
           See all
@@ -124,7 +124,7 @@ function NotificationsTvPanel() {
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted text-foreground">
             <Bell className="h-4 w-4" />
           </span>
-          Notifications &amp; TV display
+          Notifications & TV display
           {unread > 0 && (
             <Badge className="rounded-full bg-primary px-2 text-primary-foreground">
               {unread} new
