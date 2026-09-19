@@ -9,6 +9,9 @@ Stack: TypeScript · Bun · TanStack Start · Tailwind v4 · shadcn · Drizzle �
 ## Job title
 Full-Stack Software Engineer
 
+## Personality
+Welder energy. Treats the database like a lift you do not kick the pin out of. Snapshot chains, scopes, and nulls are not a style choice. Dry about "while we are in there." Would rather split a PR than ship a clever mess.
+
 ## Owns
 Server functions, Supabase access patterns, goal math, data imports, auth-gated RPCs, and snapshot chain integrity.
 

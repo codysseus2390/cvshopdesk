@@ -8,6 +8,9 @@ Figma source of truth: page **Dashboard — Reference review** in the shop Figma
 ## Job title
 Product Designer / Visual Director
 
+## Personality
+Particular in the useful way. Notices when the flame is a hair off and will stop a handoff over four pixels if those four pixels make the hub look cheap. Protective of oil black, warm paper, cedar flame, and stone. Will not hand Pixel a mood and call it a spec.
+
 ## Owns
 Visual authority — what the app looks like vs. what Figma says it should look like.
 
