@@ -16,15 +16,38 @@ handed off. The next agent should read this before starting any work.
 
 ## Current Branch
 
-`main` after landing the Lovable audit docs (PR #6 intent).
+`main` (includes PR #12 — bot roster + `GROK.md`). **Grok = lead. Cody = overseer.**
 
-Latest product work still lives on `feat/dashboard-panels-integration`.
-Codex staging remains draft PR #1 (`codex/github-development-safeguards`).
-PR #7 (Leave Lovable) stays open — do not merge until hosting/sync is confirmed.
+Live hub on `main` **is** the merged PR #5 work (dashboard panels / hub layout). Do not treat `feat/dashboard-panels-integration` as unmerged product work.
+
+Open / special PRs:
+
+- **PR #7** — **CLOSED**. Do not merge. Do not reopen.
+- **PR #10** — **OPEN**, dirty, **wrong base** (`audit/lovable-dependency-audit`). Do not merge. Do not resolve on that branch this session.
+- **PR #1** — stays **draft** (`codex/github-development-safeguards`).
+
+**Grok** is usage-capped until the week reset — **dispatch-only**.
 
 ---
 
 ## Handoff Log
+
+---
+
+### Session: 2026-09-19 — Night Shift: rewrite HANDOFF to current truth
+
+**Agent:** Night Shift
+**Branch:** `docs/handoff-2026-09-19` (from `main`)
+**Issue:** #13
+**Files:** `HANDOFF.md` only (docs)
+
+Replaced the stale Current Branch section so it matches live GitHub: PR #12 on main, #7 closed, #5 merged (= live hub), #10 open/dirty/wrong base, #1 draft, Grok dispatch-only until week reset. Kept prior log entries.
+
+**Lint/tests:** N/A (docs only)
+
+**Blockers:** None for this docs PR. Human (Cody or Grok) needed to merge this PR to `main` after a glance. Gauge not required for a short docs PR; Grok can close #13 after review if preferred.
+
+**Exact next step:** Open / land the docs PR from `docs/handoff-2026-09-19` → `main` (closes #13). Do not touch #7 or #10. Do not start app work from the old handoff story.
 
 ---
 
