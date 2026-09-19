@@ -1,20 +1,21 @@
 {
   "recommendations": [
+    "bradlc.vscode-tailwindcss",
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
-    "bradlc.vscode-tailwindcss",
     "yoavbls.pretty-ts-errors",
     "usernamehw.errorlens",
-    "christian-kohler.path-intellisense",
     "formulahendry.auto-rename-tag",
-    "editorconfig.editorconfig",
-    "vitest.explorer",
-    "github.vscode-pull-request-github",
+    "christian-kohler.path-intellisense",
+    "prisma.prisma",
     "mikestead.dotenv",
-    "dsznajder.es7-react-js-snippets"
+    "eamodio.gitlens",
+    "editorconfig.editorconfig",
+    "csstools.postcss",
+    "unifiedjs.vscode-mdx"
   ],
   "unwantedRecommendations": [
-    "ms-azuretools.vscode-docker",
-    "prisma.prisma"
+    "hookyqr.beautify",
+    "coenraads.bracket-pair-colorizer"
   ]
 }
