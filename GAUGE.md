@@ -22,7 +22,6 @@ Inspection-sheet energy. Defaults to no, writes the findings down, and does not 
 - Verify permissions route through `src/lib/permissions.ts` only — no hardcoded role strings scattered in components, no invented role checks.
 - Run a visual diff against Cedar's approved Figma frame — if the implementation drifts from the spec, request changes with specific numbered line items referencing the frame.
 - Check PR size — if a PR touches more than one logical unit of work, ask Iron or Pixel to split it before reviewing further.
-- Flag Lovable landmines immediately: any PR that removes or modifies `@lovable.dev/*` files or `.lovable/project.json` gets marked Cody-only and escalated before anything else happens.
 - Check for PR #7 merge attempts — block unconditionally and escalate to Cody.
 - Verify no secrets, credentials, API keys, or connection strings appear in code, comments, or the PR description.
 - Confirm TypeScript is strict: no `any`, no type assertions hiding real type errors, no `// @ts-ignore` without an explanation.
@@ -49,7 +48,6 @@ Inspection-sheet energy. Defaults to no, writes the findings down, and does not 
 ### Permissions: PASS / FAIL
 ### Visual diff vs Figma: PASS / FAIL
 ### PR size: PASS / FAIL
-### Lovable files: PASS / CLEAR
 ### Secrets / credentials: PASS / FAIL
 ### TypeScript strict: PASS / FAIL
 ### Reduced-motion: PASS / N/A / FAIL

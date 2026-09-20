@@ -76,7 +76,7 @@ before doing substantial work.
 | Language                  | TypeScript 5.8                                                                  |
 | Runtime / package manager | Bun                                                                             |
 | Framework                 | TanStack Start (React 19 + TanStack Router + SSR)                               |
-| Build tool                | Vite 8 via `@lovable.dev/vite-tanstack-config`                                  |
+| Build tool                | Vite 8                                                                          |
 | UI library                | shadcn/ui (Radix UI primitives)                                                 |
 | Styling                   | Tailwind CSS v4                                                                 |
 | Server runtime            | Nitro (Cloudflare adapter)                                                      |
@@ -90,7 +90,7 @@ before doing substantial work.
 | Forms                     | React Hook Form + Zod                                                           |
 | Date utilities            | date-fns v4                                                                     |
 | File imports              | `xlsx` (spreadsheet parsing)                                                    |
-| Deployment                | Vercel (preview + production); Lovable live preview at `cvshopdesk.lovable.app` |
+| Deployment                | Vercel (preview + production)                                                   |
 
 ---
 
