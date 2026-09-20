@@ -35,9 +35,7 @@ export function MetricCard({
     label.toLowerCase().includes("profit") || label.toLowerCase().includes("car count");
   if (appearance === "dashboard") {
     return (
-      <Card
-        className="min-w-0 rounded-xl border border-border bg-card shadow-card transition-shadow hover:shadow-elevated"
-      >
+      <Card className="min-w-0 rounded-xl border border-border bg-card shadow-card transition-shadow hover:shadow-elevated">
         <CardContent className="flex min-h-[14rem] h-full flex-col p-4 sm:p-4">
           <div className="flex items-center gap-2">
             <span
