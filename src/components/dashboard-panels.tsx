@@ -30,7 +30,7 @@ export type DashboardMechanics = {
 
 export function DashboardMiddleRow({ mechanics }: { mechanics: DashboardMechanics }) {
   return (
-    <section className="grid gap-4 xl:grid-cols-[1.02fr_1.14fr_1fr]" aria-label="Shop activity">
+    <section className="grid gap-3 xl:grid-cols-[1fr_1.19fr_1.08fr]" aria-label="Shop activity">
       <RecentImportsPanel />
       <NotificationsTvPanel />
       <MechanicProductivityPanel mechanics={mechanics} />
@@ -145,12 +145,12 @@ function NotificationsTvPanel() {
           {items.map((item, index) => (
             <div
               key={item.id}
-              className="flex items-start gap-2 border-b border-border/70 py-2.5 last:border-0"
+              className="flex items-start gap-2.5 border-b border-border/70 py-3 last:border-0"
             >
               <span
-                className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${index % 2 ? "bg-primary/15 text-primary" : "bg-secondary/15 text-secondary"}`}
+                className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${index % 2 ? "bg-primary/15 text-primary" : "bg-secondary/15 text-secondary"}`}
               >
-                <Bell className="h-3.5 w-3.5" />
+                <Bell className="h-3 w-3" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-semibold">
@@ -167,7 +167,7 @@ function NotificationsTvPanel() {
               </span>
               {!item.read_at && (
                 <span
-                  className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary"
+                  className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-primary"
                   aria-label="Unread"
                 />
               )}
@@ -208,13 +208,13 @@ function MechanicProductivityPanel({ mechanics }: { mechanics: DashboardMechanic
       </CardHeader>
       <CardContent className="px-4 pb-4 pt-0">
         <div className="overflow-hidden rounded-xl border border-border/70">
-          <table className="w-full table-fixed text-xs">
+          <table className="w-full table-fixed text-sm">
             <thead className="bg-muted/55 text-muted-foreground">
-              <tr>
-                <th className="px-3 py-2 text-left font-medium">Mechanic</th>
-                <th className="px-2 py-2 text-right font-medium">Previous day</th>
-                <th className="px-2 py-2 text-right font-medium">This week</th>
-                <th className="px-3 py-2 text-right font-medium">Month to date</th>
+              <tr className="h-11">
+                <th className="px-3 py-2 text-left text-xs font-medium">Mechanic</th>
+                <th className="px-2 py-2 text-right text-xs font-medium">Prev day</th>
+                <th className="px-2 py-2 text-right text-xs font-medium">This wk</th>
+                <th className="px-3 py-2 text-right text-xs font-medium">Month</th>
               </tr>
             </thead>
             <tbody>
@@ -226,24 +226,28 @@ function MechanicProductivityPanel({ mechanics }: { mechanics: DashboardMechanic
                     : null;
                 return (
                   <tr key={name} className="border-t border-border/70">
-                    <th className="px-3 py-2 text-left font-semibold">
-                      <span
-                        className={`mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${index % 2 ? "bg-primary/15 text-primary" : "bg-secondary/15 text-secondary"}`}
-                      >
-                        {name.slice(0, 1)}
+                    <th className="px-3 py-3.5 text-left font-semibold">
+                      <span className="flex items-center gap-2.5">
+                        <span
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${index % 2 ? "bg-primary/15 text-primary" : "bg-secondary/15 text-secondary"}`}
+                        >
+                          {name.slice(0, 1)}
+                        </span>
+                        <span className="truncate text-sm">{name}</span>
                       </span>
-                      {name}
                     </th>
-                    <td className="px-2 py-2 text-right font-semibold tabular-nums">
+                    <td className="px-2 py-3.5 text-right text-xs font-semibold tabular-nums text-muted-foreground">
                       {formatProductivity(mechanics.previous_day[name] ?? null)}
                     </td>
-                    <td className="px-2 py-2 text-right font-semibold tabular-nums">
+                    <td className="px-2 py-3.5 text-right text-xs font-semibold tabular-nums text-muted-foreground">
                       {formatProductivity(mechanics.week[name] ?? null)}
                     </td>
-                    <td className="px-3 py-2 text-right font-semibold tabular-nums">
-                      <span className="block">{formatProductivity(value ?? null)}</span>
+                    <td className="px-3 py-3.5 text-right font-semibold tabular-nums">
+                      <span className="block text-sm">
+                        {formatProductivity(value ?? null)}
+                      </span>
                       {numeric !== null && (
-                        <span className="mt-1 ml-auto block h-1.5 w-14 overflow-hidden rounded-full bg-muted">
+                        <span className="mt-1.5 ml-auto block h-2 w-20 overflow-hidden rounded-full bg-muted">
                           <span
                             className={`block h-full rounded-full ${index % 2 ? "bg-primary" : "bg-secondary"}`}
                             style={{ width: `${numeric}%` }}
