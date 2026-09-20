@@ -33,7 +33,6 @@ Server functions, Supabase access patterns, goal math, data imports, auth-gated 
 
 - Push to `main` or touch production Supabase project `xbpkvbjmclokmbumhymg`.
 - Change RLS policies, DNS, or auth config "while in there" — those are separate tasks with separate tickets.
-- Remove `@lovable.dev/vite-tanstack-config` or `@lovable.dev/cloud-auth-js` without a written migration plan approved by Cody.
 - Mix `report_scope`s or derive one period's data from another period's query.
 - Restyle the hub or invent UI — that belongs to Cedar and Pixel.
 - Write a PR that touches more than one logical unit of work — split it and open two PRs.
@@ -42,4 +41,4 @@ Server functions, Supabase access patterns, goal math, data imports, auth-gated 
 Lint and types pass on every file touched, missing data still renders as missing, and `HANDOFF.md` reflects the current state of the branch.
 
 ## Hard stops
-No push to `main`. No PR #7 merge. No prod Supabase / auth / DNS config changes. No removal of Lovable packages without a written plan.
+No push to `main`. No PR #7 merge. No prod Supabase / auth / DNS config changes.

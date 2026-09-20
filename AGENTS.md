@@ -13,10 +13,7 @@ Read this file before making substantial changes. Supplement with `PROJECT_CONTE
 - Use one branch per task or feature. Name branches clearly (e.g., `feat/tv-mode-polish`).
 - Commit after every meaningful, self-contained unit of completed work.
 - Push regularly — do not accumulate large local-only histories.
-- **Do not rewrite published Git history.** No force-push, no rebase, no amend, no squash
-  of commits that are already pushed. This rule is enforced especially hard here because the
-  Lovable editor tracks history on the connected branch and history rewrites corrupt its
-  project record. See `LOVABLE_NOTES.md` for context.
+- **Do not rewrite published Git history.** No force-push, no rebase, no amend, no squash of commits that are already pushed.
 - Do not merge to `main` unless explicitly instructed by the project owner.
 - Before picking up a task, check `HANDOFF.md` for in-progress work and known issues.
 
@@ -131,14 +128,4 @@ not stranded locally if the session ends unexpectedly.
 > usage is low, or explicitly requests a handoff at any time, immediately enter handoff
 > mode — do not wait for an internal threshold to be reached.
 
----
 
-## Lovable Compatibility
-
-See `LOVABLE_NOTES.md` for full context. Summary:
-
-- The main branch is connected to the Lovable editor. Every push to it syncs back.
-- History rewrites on any pushed branch break Lovable's project history.
-- Do not remove or break `@lovable.dev/vite-tanstack-config` — it drives the entire build.
-- Do not remove `@lovable.dev/cloud-auth-js` without a migration plan.
-- Do not delete `.lovable/project.json`.
