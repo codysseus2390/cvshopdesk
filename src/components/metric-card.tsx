@@ -35,15 +35,13 @@ export function MetricCard({
     label.toLowerCase().includes("profit") || label.toLowerCase().includes("car count");
   if (appearance === "dashboard") {
     return (
-      <Card
-        className={`min-w-0 rounded-xl border bg-card shadow-card transition-shadow hover:shadow-elevated ${greenAccent ? "border-secondary/30" : "border-primary/30"}`}
-      >
-        <CardContent className="flex min-h-[13.5rem] h-full flex-col p-4 sm:p-4">
-          <div className="flex items-center gap-3">
+      <Card className="min-w-0 rounded-xl border border-border bg-card shadow-card transition-shadow hover:shadow-elevated">
+        <CardContent className="flex min-h-[14rem] h-full flex-col p-4 sm:p-4">
+          <div className="flex items-center gap-2">
             <span
-              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-sm ${greenAccent ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"}`}
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full shadow-sm ${greenAccent ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"}`}
             >
-              <Icon className="h-6 w-6" />
+              <Icon className="h-5 w-5" />
             </span>
             <div className="min-w-0">
               <p className="text-sm font-semibold leading-tight text-foreground">{label}</p>
@@ -51,18 +49,21 @@ export function MetricCard({
             </div>
           </div>
           <p
-            className={`mt-2 break-words font-display font-bold tracking-tight tabular-nums ${notUpdated ? "text-xl text-muted-foreground" : "text-4xl leading-none text-foreground xl:text-5xl"}`}
+            className={`mt-3 break-words font-display font-bold tracking-tight tabular-nums ${notUpdated ? "text-lg text-muted-foreground" : "text-4xl leading-none text-foreground xl:text-5xl"}`}
           >
             {value}
           </p>
           {hint && <p className="mt-1 text-xs leading-snug text-muted-foreground">{hint}</p>}
           {supportingValues && (
-            <dl className="mt-2 space-y-1.5 border-t border-border/70 pt-2">
-              {supportingValues.map((period) => (
-                <div key={period.label}>
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
-                    <dt className="text-sm font-medium text-muted-foreground">{period.label}</dt>
-                    <dd className="text-base font-bold leading-tight tracking-tight tabular-nums text-foreground">
+            <dl className="mt-2 border-t border-border/60 pt-2">
+              {supportingValues.map((period, idx) => (
+                <div
+                  key={period.label}
+                  className={`${idx > 0 ? "mt-1.5 border-t border-border/40 pt-1.5" : "mb-1.5"}`}
+                >
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
+                    <dt className="text-xs font-medium text-muted-foreground">{period.label}</dt>
+                    <dd className="text-sm font-bold leading-tight tracking-tight tabular-nums text-foreground">
                       {period.value}
                     </dd>
                   </div>

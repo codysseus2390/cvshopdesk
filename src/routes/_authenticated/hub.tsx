@@ -272,9 +272,9 @@ function Dashboard() {
           <DashboardMiddleRow mechanics={data.mechanics} />
 
           {(shows("monthly_chart") || shows("ytd")) && (
-            <section className="grid items-start gap-3 lg:grid-cols-[minmax(0,2.35fr)_minmax(16rem,.9fr)_minmax(16rem,.9fr)]">
+            <section className="grid items-start gap-3 lg:grid-cols-[minmax(0,2.2fr)_minmax(15rem,.9fr)_minmax(15rem,.9fr)]">
               {shows("monthly_chart") && (
-                <Card className="min-w-0 rounded-xl border-secondary/25 bg-card lg:col-span-1">
+                <Card className="min-w-0 rounded-xl border-border bg-card lg:col-span-1">
                   <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 p-4 pb-2 sm:p-4 sm:pb-2">
                     <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
                       <BarChart3 className="h-5 w-5 text-secondary" />
@@ -317,7 +317,6 @@ function Dashboard() {
                                   style={{ backgroundColor: yearColor(year, i) }}
                                 />
                                 {year}
-                                {year === monthlyByYear.currentYear ? " · completed months" : ""}
                               </li>
                             ))}
                           </ul>
@@ -332,7 +331,7 @@ function Dashboard() {
                             </p>
                           )}
                         </div>
-                        <div className="h-48 sm:h-52">
+                        <div className="h-52 sm:h-64">
                           <ResponsiveContainer width="100%" height="100%">
                             <LineChart
                               accessibilityLayer
@@ -412,24 +411,26 @@ function Dashboard() {
               )}
 
               {shows("ytd") && (
-                <Card className="min-w-0 rounded-xl border-primary/25 bg-card">
+                <Card className="min-w-0 rounded-xl border-border bg-card">
                   <CardHeader className="p-4 pb-2 sm:p-4 sm:pb-2">
                     <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
                       <Trophy className="h-5 w-5 text-primary" />
                       Year to date
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-1.5 px-4 pb-4 text-sm sm:px-4 sm:pb-4">
-                    <Row label="Gross profit" value={formatCurrency(data.ytd.gross_profit)} />
-                    <Row label="Tires sold" value={formatCount(data.ytd.tires_sold)} />
-                    <Row label="Car count" value={formatCount(data.ytd.car_count)} />
-                    <Row label="GP per car" value={formatCurrency(data.ytd.gp_per_car)} />
+                  <CardContent className="px-4 pb-4 text-sm sm:px-4 sm:pb-4">
+                    <dl className="space-y-1.5">
+                      <YtdRow label="Gross profit" value={formatCurrency(data.ytd.gross_profit)} />
+                      <YtdRow label="Tires sold" value={formatCount(data.ytd.tires_sold)} />
+                      <YtdRow label="Car count" value={formatCount(data.ytd.car_count)} />
+                      <YtdRow label="GP per car" value={formatCurrency(data.ytd.gp_per_car)} />
+                    </dl>
                     {data.ytd.gp_per_car_note && (
-                      <p className="text-xs leading-snug text-muted-foreground">
+                      <p className="mt-1 text-xs leading-snug text-muted-foreground">
                         {data.ytd.gp_per_car_note}
                       </p>
                     )}
-                    <p className="pt-1 text-xs leading-snug text-muted-foreground">
+                    <p className="mt-2 text-xs leading-snug text-muted-foreground">
                       {data.ytd.basis === "cumulative-snapshot"
                         ? `From the accepted year-to-date report as of ${data.ytd.as_of}.`
                         : data.ytd.basis === "none"
@@ -439,15 +440,17 @@ function Dashboard() {
                             } day(s) elapsed.`}{" "}
                       Cumulative reports are never added to daily totals.
                     </p>
-                    <div className="border-t border-border/70 pt-2">
-                      <p className="mb-1 text-xs font-semibold text-muted-foreground">
+                    <div className="mt-3 border-t border-border/60 pt-3">
+                      <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                         Same period last year
                       </p>
-                      <Row
-                        label="Gross profit"
-                        value={formatCurrency(data.ytdLastYear.gross_profit)}
-                      />
-                      <Row label="Cars" value={formatCount(data.ytdLastYear.car_count)} />
+                      <dl className="space-y-1.5">
+                        <YtdRow
+                          label="Gross profit"
+                          value={formatCurrency(data.ytdLastYear.gross_profit)}
+                        />
+                        <YtdRow label="Cars" value={formatCount(data.ytdLastYear.car_count)} />
+                      </dl>
                     </div>
                   </CardContent>
                 </Card>
@@ -467,6 +470,20 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between gap-4">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-semibold tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+function YtdRow({ label, value }: { label: string; value: string }) {
+  const isNull = value === "Not updated" || value === "Unavailable" || value === "—";
+  return (
+    <div className="flex items-baseline justify-between gap-4">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd
+        className={`tabular-nums ${isNull ? "text-xs text-muted-foreground" : "font-semibold text-foreground"}`}
+      >
+        {value}
+      </dd>
     </div>
   );
 }
@@ -491,7 +508,7 @@ function KpiSparkline({
     >
       {enoughData ? (
         <>
-          <div className="h-10" aria-hidden="true">
+          <div className="h-11" aria-hidden="true">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trend.points} margin={{ top: 3, right: 2, bottom: 2, left: 2 }}>
                 <YAxis hide domain={["dataMin", "dataMax"]} />
@@ -507,7 +524,7 @@ function KpiSparkline({
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <p className="text-[10px] leading-tight text-muted-foreground">
+          <p className="text-[9px] leading-tight text-muted-foreground/70">
             Completed months · {trend.year}
           </p>
         </>

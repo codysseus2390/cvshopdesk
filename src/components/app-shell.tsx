@@ -84,7 +84,7 @@ export function AppShell({
   return (
     <div className="min-h-screen pb-28">
       <div className="flex">
-        <aside className="relative sticky top-0 hidden h-screen w-[212px] shrink-0 overflow-hidden border-r border-sidebar-border bg-sidebar px-3 py-5 shadow-elevated md:block">
+        <aside className="relative sticky top-0 hidden h-screen w-[211px] shrink-0 overflow-hidden border-r border-sidebar-border bg-sidebar px-3 py-5 shadow-elevated md:block">
           <div
             className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[47%] bg-cover bg-center opacity-95"
             style={{ backgroundImage: "url(/sidebar-brand-art.jpg)" }}
@@ -141,7 +141,7 @@ export function AppShell({
               <h1
                 className={
                   appearance === "dashboard"
-                    ? "text-2xl font-bold leading-tight tracking-tight text-foreground md:text-[1.75rem]"
+                    ? "text-[1.75rem] font-bold leading-tight tracking-tight text-foreground md:text-[2rem]"
                     : "font-display text-3xl font-bold leading-none text-foreground md:text-[1.75rem]"
                 }
               >
@@ -165,13 +165,13 @@ export function AppShell({
                   onSubmit={(e) => e.preventDefault()}
                   className="relative hidden min-w-0 flex-1 md:block md:max-w-[22rem] lg:max-w-[28rem]"
                 >
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search customers, inventory, or jobs..."
                     aria-label="Search customers, inventory, or jobs"
-                    className="h-10 rounded-full border-border/80 bg-card pl-9 pr-4 shadow-none"
+                    className="h-10 rounded-full border-border/80 bg-card pl-10 pr-4 shadow-none"
                   />
                 </form>
               )}
