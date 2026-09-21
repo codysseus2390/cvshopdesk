@@ -218,10 +218,10 @@ function Dashboard() {
                 {shows("today") && (
                   <span className="flex items-center gap-1.5">
                     <CalendarDays className="h-4 w-4 text-primary" />
-                    <span>{prevDayLabel ?? "Previous day"}</span>
+                    <span>{prevDayLabel ? `Previous day ${prevDayLabel}` : "Previous day"}</span>
                   </span>
                 )}
-                <span className="text-muted-foreground/60">·</span>
+                {shows("today") && <span className="text-muted-foreground/60">·</span>}
                 <span>This week {formatDashboardWeekRange(data.week.from, data.week.through)}</span>
               </div>
               {shows("today") &&
