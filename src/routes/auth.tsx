@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CedarLogo } from "@/components/cedar-logo";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import "./auth.css";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -86,33 +87,73 @@ function AuthPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-6 py-12">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-40"
-        style={{
-          backgroundImage:
-            "radial-gradient(920px 480px at 88% -12%, color-mix(in oklch, var(--color-primary) 10%, transparent), transparent 68%), radial-gradient(640px 380px at 6% 108%, color-mix(in oklch, var(--color-secondary) 8%, transparent), transparent 70%)",
-        }}
-        aria-hidden="true"
-      />
-      <div className="relative w-full max-w-sm space-y-6">
-        <div className="text-center">
-          <CedarLogo className="mx-auto h-16 w-auto" />
-          <p className="mt-3 font-display text-2xl font-bold tracking-tight">Cedar Valley Hub</p>
-          <p className="mt-1 text-sm text-muted-foreground">Staff-only sign in</p>
-        </div>
-        <Card className="noise-overlay relative overflow-hidden">
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/60 to-secondary/40" />
-          <CardHeader>
-            <p className="eyebrow">{mode === "signin" ? "Welcome back" : "New account"}</p>
-            <CardTitle className="font-display text-xl">
-              {mode === "signin" ? "Staff sign in" : "Create staff account"}
+    <main className="auth-page">
+      <svg className="auth-valley" viewBox="0 0 800 200" fill="none" aria-hidden="true">
+        <path
+          d="M0 134 C170 60 235 192 422 120 S650 34 800 108 V200 H0Z"
+          fill="#7cb258"
+          fillOpacity=".08"
+        />
+        <path
+          d="M0 157 C160 93 300 201 454 136 S710 90 800 117"
+          stroke="#7c9b3d"
+          strokeOpacity=".2"
+        />
+        <path
+          d="M0 170 C180 108 275 215 470 152 S720 101 800 132"
+          stroke="#7c9b3d"
+          strokeOpacity=".1"
+        />
+      </svg>
+      <svg className="auth-wheel" viewBox="0 0 940 940" fill="none" aria-hidden="true">
+        <g stroke="#7c9b3d">
+          <circle cx="470" cy="470" r="446" strokeWidth="2" />
+          <circle cx="470" cy="470" r="398" strokeWidth="2" />
+          <circle cx="470" cy="470" r="352" />
+          {Array.from({ length: 42 }, (_, i) => (
+            <path
+              key={i}
+              d="M875 470 L910 481"
+              strokeWidth="8"
+              transform={`rotate(${(i * 360) / 42} 470 470)`}
+            />
+          ))}
+        </g>
+        <path d="M80 210 A470 470 0 0 1 515 2" stroke="#ff8020" strokeWidth="6" />
+      </svg>
+      <div className="auth-layout">
+        <section className="auth-brand" aria-labelledby="auth-brand-heading">
+          <p className="auth-eyebrow">ShopDesk / Staff portal</p>
+          <img
+            className="auth-logo"
+            src="/cedar-valley-logo-stacked.png"
+            width="520"
+            height="260"
+            alt="Cedar Valley Tire & Auto Service"
+          />
+          <h1 id="auth-brand-heading">Your shop. Connected.</h1>
+          <p className="auth-description">
+            Daily numbers, report imports, and shop records.
+            <br />
+            One place to keep the crew moving.
+          </p>
+          <p className="auth-tagline">Same people. A smoother shop.</p>
+        </section>
+        <Card className="auth-card">
+          <CardHeader className="auth-card-header">
+            <CardTitle className="auth-card-title">
+              <h2>{mode === "signin" ? "Good to see you." : "Join the crew."}</h2>
             </CardTitle>
+            <p className="auth-card-intro">
+              {mode === "signin"
+                ? "Sign in to pick up where you left off."
+                : "Create your staff account to get started."}
+            </p>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <form onSubmit={submit} className="space-y-4">
+          <CardContent className="auth-card-content space-y-4">
+            <form onSubmit={submit} className="auth-form space-y-5" aria-busy={busy}>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Work email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -134,18 +175,33 @@ function AuthPage() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={busy}>
+              <Button type="submit" className="auth-submit w-full" disabled={busy}>
                 {busy ? "Working…" : mode === "signin" ? "Sign in" : "Create account"}
+                {!busy && <ArrowRight aria-hidden="true" />}
               </Button>
             </form>
-            <Button variant="outline" className="w-full" onClick={google}>
+            <Button
+              variant="outline"
+              className="auth-google w-full"
+              onClick={google}
+              disabled={busy}
+            >
               Continue with Google
             </Button>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            {message && <p className="text-sm text-muted-foreground">{message}</p>}
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
+            {message && (
+              <p role="status" className="text-sm text-muted-foreground">
+                {message}
+              </p>
+            )}
             <button
               type="button"
               className="w-full text-sm text-muted-foreground underline"
+              disabled={busy}
               onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
             >
               {mode === "signin"

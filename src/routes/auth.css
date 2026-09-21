@@ -1,0 +1,216 @@
+/* Login-only brand palette; does not change the authenticated app theme. */
+.auth-page {
+  --background: #fff;
+  --foreground: #0a0200;
+  --card: #fff;
+  --card-foreground: #0a0200;
+  --primary: #ff8020;
+  --primary-foreground: #0a0200;
+  --muted-foreground: #59665e;
+  --input: #ded9d0;
+  --ring: #7c9b3d;
+  --destructive: #b42318;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 100svh;
+  display: grid;
+  align-items: center;
+  color: var(--foreground);
+  background: linear-gradient(to right, #fff 52.08%, #f2ece3 52.08%);
+  padding: 80px 6%;
+}
+.auth-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 448px;
+  align-items: center;
+  gap: clamp(64px, 10vw, 200px);
+  width: 100%;
+  max-width: 1192px;
+  margin: auto;
+}
+.auth-eyebrow {
+  color: #526a28;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 26px;
+}
+.auth-logo {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+}
+.auth-brand h1 {
+  font-size: clamp(30px, 2.92vw, 42px);
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  margin: 36px 0 24px;
+}
+.auth-description {
+  color: #59665e;
+  font-size: 18px;
+  line-height: 1.5;
+}
+.auth-tagline {
+  color: #526a28;
+  font-size: 14px;
+  margin-top: 60px;
+}
+.auth-page .auth-card {
+  border: 0;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 18px 52px -12px #0a020017;
+  padding: 50px 42px 38px;
+}
+.auth-page .auth-card-header {
+  padding: 0 0 38px;
+}
+.auth-page .auth-card-title {
+  font-family: inherit;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+.auth-card-intro {
+  color: #59665e;
+  font-size: 15px;
+  line-height: 1.5;
+  margin-top: 14px;
+}
+.auth-page .auth-card-content {
+  padding: 0;
+}
+.auth-form label {
+  color: #435047;
+  font-size: 12px;
+  font-weight: 700;
+}
+.auth-form input {
+  height: 50px;
+  background: #f8f7f4;
+  color: #0a0200;
+  box-shadow: none;
+}
+.auth-page .auth-submit {
+  height: 52px;
+  margin-top: 20px;
+  border-color: #ff8020;
+  background: #ff8020;
+  color: #0a0200;
+  box-shadow: none;
+}
+.auth-page .auth-submit:hover {
+  background: #f57512;
+}
+.auth-page .auth-google {
+  background: #fff;
+  color: #0a0200;
+}
+.auth-page .auth-google:hover {
+  background: #f2ece3;
+}
+.auth-valley,
+.auth-wheel {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+.auth-valley {
+  width: 800px;
+  max-width: 65%;
+  left: 0;
+  bottom: 0;
+}
+.auth-wheel {
+  width: 940px;
+  max-width: none;
+  left: calc(50% + 160px);
+  top: calc(50% + 10px);
+  opacity: 0.2;
+  transform-origin: center;
+}
+/* One subtle entrance cycle, then rest; never distract indefinitely from sign-in. */
+@media (prefers-reduced-motion: no-preference) {
+  .auth-wheel {
+    animation: auth-wheel-drift 12s ease-in-out 1;
+  }
+}
+@keyframes auth-wheel-drift {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+@media (max-width: 1050px) {
+  .auth-page {
+    padding: 56px 5%;
+  }
+  .auth-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
+    gap: 48px;
+  }
+  .auth-page .auth-card {
+    padding: 36px 28px;
+  }
+  .auth-description {
+    font-size: 16px;
+  }
+}
+@media (max-width: 760px) {
+  .auth-page {
+    padding: 36px 20px 56px;
+    background: linear-gradient(#fff 0 260px, #f2ece3 500px);
+  }
+  .auth-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+    max-width: 448px;
+  }
+  .auth-brand {
+    text-align: center;
+  }
+  .auth-eyebrow {
+    margin-bottom: 16px;
+  }
+  .auth-logo {
+    max-width: 300px;
+    margin: auto;
+  }
+  .auth-brand h1 {
+    margin: 20px 0 12px;
+    font-size: 28px;
+  }
+  .auth-description {
+    font-size: 14px;
+  }
+  .auth-tagline {
+    display: none;
+  }
+  .auth-page .auth-card {
+    padding: 32px 24px;
+  }
+  .auth-page .auth-card-header {
+    padding-bottom: 28px;
+  }
+  .auth-page .auth-card-title {
+    font-size: 28px;
+  }
+  .auth-wheel {
+    left: 20%;
+    top: 45%;
+  }
+  .auth-valley {
+    max-width: none;
+    width: 100%;
+  }
+}
