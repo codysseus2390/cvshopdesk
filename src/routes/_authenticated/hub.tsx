@@ -239,34 +239,37 @@ function Dashboard() {
                   </Button>
                 ))}
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
-              <div className="lg:col-span-6">
-                <MetricCard
-                  appearance="dashboard"
-                  label="Gross profit"
-                  {...kpiProps("gross_profit", true)}
-                />
+            <div className="dashboard-kpi-area">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
+                <div className="lg:col-span-6">
+                  <MetricCard
+                    appearance="dashboard"
+                    hero
+                    label="Gross profit"
+                    {...kpiProps("gross_profit", true)}
+                  />
+                </div>
+                <div className="lg:col-span-3">
+                  <MetricCard
+                    appearance="dashboard"
+                    label="Tires sold"
+                    {...kpiProps("tires_sold", false)}
+                  />
+                </div>
+                <div className="lg:col-span-3">
+                  <MetricCard
+                    appearance="dashboard"
+                    label="Car count"
+                    {...kpiProps("car_count", false)}
+                  />
+                </div>
               </div>
-              <div className="lg:col-span-3">
-                <MetricCard
-                  appearance="dashboard"
-                  label="Tires sold"
-                  {...kpiProps("tires_sold", false)}
-                />
+              <div className="mt-2 space-y-1 text-xs leading-relaxed text-muted-foreground">
+                {shows("today") && !today && (
+                  <p>No confirmed entry for the previous day yet. Nothing is assumed to be zero.</p>
+                )}
+                {shows("mtd") && monthlySummary && <p>{monthlySummary}</p>}
               </div>
-              <div className="lg:col-span-3">
-                <MetricCard
-                  appearance="dashboard"
-                  label="Car count"
-                  {...kpiProps("car_count", false)}
-                />
-              </div>
-            </div>
-            <div className="mt-2 space-y-1 text-xs leading-relaxed text-muted-foreground">
-              {shows("today") && !today && (
-                <p>No confirmed entry for the previous day yet. Nothing is assumed to be zero.</p>
-              )}
-              {shows("mtd") && monthlySummary && <p>{monthlySummary}</p>}
             </div>
           </section>
 

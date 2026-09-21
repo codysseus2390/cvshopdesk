@@ -8,6 +8,7 @@ export function MetricCard({
   hint,
   size = "normal",
   appearance = "default",
+  hero,
   periodLabel,
   supportingValues,
   sparkline,
@@ -17,6 +18,7 @@ export function MetricCard({
   hint?: string | undefined;
   size?: "normal" | "tv";
   appearance?: "default" | "dashboard";
+  hero?: boolean;
   periodLabel?: string;
   supportingValues?: ReadonlyArray<{ label: string; value: string; hint?: string | undefined }>;
   sparkline?: ReactNode;
@@ -35,21 +37,29 @@ export function MetricCard({
     label.toLowerCase().includes("profit") || label.toLowerCase().includes("car count");
   if (appearance === "dashboard") {
     return (
-      <Card className="min-w-0 rounded-xl border border-border bg-card shadow-card transition-shadow hover:shadow-elevated">
-        <CardContent className="flex min-h-[14rem] h-full flex-col p-4 sm:p-4">
-          <div className="flex items-center gap-2">
+      <Card
+        className={`min-w-0 rounded-xl border bg-card shadow-card transition-shadow hover:shadow-elevated ${hero ? "border-border" : "border-border/70"}`}
+      >
+        <CardContent
+          className={`flex h-full flex-col ${hero ? "min-h-[14rem] p-5 sm:p-6" : "min-h-[11.5rem] p-3.5 sm:p-3.5"}`}
+        >
+          <div className={`flex items-center ${hero ? "gap-2" : "gap-1.5"}`}>
             <span
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full shadow-sm ${greenAccent ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"}`}
+              className={`flex shrink-0 items-center justify-center rounded-full shadow-sm ${hero ? "h-13 w-13" : "h-9 w-9"} ${greenAccent ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"}`}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className={hero ? "h-6 w-6" : "h-4 w-4"} />
             </span>
             <div className="min-w-0">
-              <p className="text-sm font-semibold leading-tight text-foreground">{label}</p>
+              <p
+                className={`font-semibold leading-tight text-foreground ${hero ? "text-base" : "text-xs"}`}
+              >
+                {label}
+              </p>
               {periodLabel && <p className="mt-0.5 text-xs text-muted-foreground">{periodLabel}</p>}
             </div>
           </div>
           <p
-            className={`mt-3 break-words font-display font-bold tracking-tight tabular-nums ${notUpdated ? "text-lg text-muted-foreground" : "text-4xl leading-none text-foreground xl:text-5xl"}`}
+            className={`mt-3 break-words font-display font-bold tracking-tight tabular-nums ${notUpdated ? "text-lg text-muted-foreground" : hero ? "text-5xl leading-none text-foreground xl:text-6xl" : "text-3xl leading-none text-foreground xl:text-4xl"}`}
           >
             {value}
           </p>
