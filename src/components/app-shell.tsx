@@ -75,6 +75,25 @@ const GROUP_LABELS: Record<string, string> = {
   system: "System",
 };
 
+const NAV_INACTIVE =
+  "group flex h-10 items-center gap-2.5 rounded-lg px-2.5 text-sm text-sidebar-foreground/60 transition-[background-color,color] duration-150 hover:bg-white/[0.06] hover:text-sidebar-foreground";
+const NAV_ACTIVE =
+  "group flex h-10 items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold bg-primary text-primary-foreground";
+
+function SidebarLink({ item, pending }: { item: (typeof NAV)[number]; pending: number }) {
+  return (
+    <Link to={item.to} className={NAV_INACTIVE} activeProps={{ className: NAV_ACTIVE }}>
+      <item.icon className="size-5 shrink-0" />
+      <span className="truncate">{item.label}</span>
+      {item.to === "/settings" && pending > 0 && (
+        <span className="ml-auto rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-accent-foreground">
+          {pending}
+        </span>
+      )}
+    </Link>
+  );
+}
+
 export function AppShell({
   title,
   subtitle,
@@ -109,61 +128,53 @@ export function AppShell({
   return (
     <div className="min-h-screen pb-28">
       <div className="flex">
-        <aside className="relative sticky top-0 hidden h-screen w-[211px] shrink-0 overflow-hidden border-r border-sidebar-border bg-sidebar px-3 py-5 shadow-elevated md:block">
-          <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[47%] bg-cover bg-center opacity-95"
-            style={{ backgroundImage: "url(/sidebar-brand-art.jpg)" }}
-            aria-hidden="true"
-          />
-          <Link
-            to="/hub"
-            className="relative z-10 block border-b border-sidebar-border px-2 pb-5"
-            aria-label="Cedar Valley Hub dashboard"
-          >
-            <CedarLogo className="h-12 w-auto max-w-full object-contain" />
-          </Link>
-          <nav className="relative z-10 mt-5 space-y-4">
+        <aside className="hidden h-screen w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
+          <div className="px-3 pb-4 pt-5">
+            <Link to="/hub" className="block" aria-label="Cedar Valley Hub dashboard">
+              <CedarLogo className="h-10 w-auto object-contain" />
+            </Link>
+            <div className="mt-4 flex items-center justify-between gap-2 px-1">
+              <p className="font-mono text-xs tracking-[0.16em] text-sidebar-foreground/40">
+                ShopDesk v2.0
+              </p>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2 py-0.5 text-xs font-semibold text-secondary">
+                <span className="live-dot size-1.5 rounded-full bg-secondary" />
+                Live
+              </span>
+            </div>
+          </div>
+
+          <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4">
             {(() => {
               let lastGroup = "";
-              return items.map((item) => {
-                const showHeader = item.group !== lastGroup && GROUP_LABELS[item.group] !== "";
-                lastGroup = item.group;
-                return (
-                  <span key={item.to} className="block">
-                    {showHeader && (
-                      <span className="mb-1 block px-3 pt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-sidebar-foreground/40">
-                        {GROUP_LABELS[item.group]}
-                      </span>
-                    )}
-                    <Link
-                      to={item.to}
-                      className="group relative flex min-h-11 items-center justify-between gap-2 rounded-lg border border-transparent px-3 py-2 text-sm font-semibold text-sidebar-foreground/70 transition-[background-color,border-color,box-shadow,color] duration-200 hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-foreground [&_.nav-bar]:opacity-0 hover:[&_.nav-bar]:opacity-60"
-                      activeProps={{
-                        className:
-                          "group relative flex min-h-11 items-center justify-between gap-2 rounded-lg border border-sidebar-primary/60 bg-sidebar-primary/15 text-sidebar-foreground shadow-sm [&_.nav-bar]:opacity-100",
-                      }}
-                    >
-                      <span className="nav-bar absolute inset-y-2 left-0 w-[3px] rounded-r-full bg-sidebar-primary transition-opacity duration-200" />
-                      <span className="flex min-w-0 items-center gap-3">
-                        <item.icon className="h-[18px] w-[18px] shrink-0 opacity-70 transition-opacity group-hover:opacity-100" />
-                        <span className="truncate">{item.label}</span>
-                      </span>
-                      {item.to === "/settings" && pending > 0 && (
-                        <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-accent-foreground">
-                          {pending}
-                        </span>
+              return items
+                .filter((item) => item.to !== "/account" && item.to !== "/settings")
+                .map((item) => {
+                  const showHeader = item.group !== lastGroup && GROUP_LABELS[item.group] !== "";
+                  lastGroup = item.group;
+                  return (
+                    <span key={item.to} className="block">
+                      {showHeader && (
+                        <p className="mb-2 px-3 font-mono text-xs font-medium uppercase tracking-[0.16em] text-sidebar-foreground/40">
+                          {GROUP_LABELS[item.group]}
+                        </p>
                       )}
-                    </Link>
-                  </span>
-                );
-              });
+                      <span className="block">
+                        <SidebarLink item={item} pending={pending} />
+                      </span>
+                    </span>
+                  );
+                });
             })()}
           </nav>
-          <p className="absolute bottom-2 left-0 right-0 z-10 text-center text-[10px] font-semibold leading-tight text-sidebar-foreground/80">
-            Cedar Valley ShopDesk
-            <br />
-            v2.0
-          </p>
+
+          <div className="mt-auto space-y-1 border-t border-white/10 px-3 py-3">
+            {items
+              .filter((item) => item.to === "/account" || item.to === "/settings")
+              .map((item) => (
+                <SidebarLink key={item.to} item={item} pending={pending} />
+              ))}
+          </div>
         </aside>
 
         <div className="min-w-0 flex-1">
