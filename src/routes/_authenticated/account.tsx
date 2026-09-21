@@ -161,7 +161,8 @@ function AccountPage() {
       <div className="grid max-w-4xl gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="font-display">Who you are</CardTitle>
+            <p className="eyebrow">Profile</p>
+            <CardTitle className="font-display text-xl">Who you are</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1 text-sm">
@@ -197,7 +198,8 @@ function AccountPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="font-display">Change password</CardTitle>
+            <p className="eyebrow">Security</p>
+            <CardTitle className="font-display text-xl">Change password</CardTitle>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={savePassword}>
@@ -250,7 +252,8 @@ function AccountPage() {
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="font-display">Change sign-in email</CardTitle>
+            <p className="eyebrow">Sign-in</p>
+            <CardTitle className="font-display text-xl">Change sign-in email</CardTitle>
           </CardHeader>
           <CardContent>
             <form className="grid gap-4 md:grid-cols-2" onSubmit={saveEmail}>

@@ -76,23 +76,24 @@ function HistoryPage() {
         <div className="space-y-8">
           <Card>
             <CardHeader>
-              <CardTitle className="font-display">Saved snapshots</CardTitle>
+              <p className="eyebrow">Archive</p>
+              <CardTitle className="font-display text-xl">Saved snapshots</CardTitle>
             </CardHeader>
             <CardContent className="overflow-x-auto">
               {data.rows.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No records saved in this range.</p>
               ) : (
                 <table className="w-full text-sm">
-                  <thead className="text-left text-xs uppercase text-muted-foreground">
+                  <thead className="text-left">
                     <tr>
-                      <th className="py-2">Date</th>
-                      <th>Scope</th>
-                      <th>GP</th>
-                      <th>Tires</th>
-                      <th>Cars</th>
-                      <th>Source</th>
-                      <th>State</th>
-                      <th>Upload</th>
+                      <th className="table-head py-2">Date</th>
+                      <th className="table-head py-2">Scope</th>
+                      <th className="table-head py-2">GP</th>
+                      <th className="table-head py-2">Tires</th>
+                      <th className="table-head py-2">Cars</th>
+                      <th className="table-head py-2">Source</th>
+                      <th className="table-head py-2">State</th>
+                      <th className="table-head py-2">Upload</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -135,7 +136,8 @@ function HistoryPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="font-display">Correction history</CardTitle>
+              <p className="eyebrow">Audit</p>
+              <CardTitle className="font-display text-xl">Correction history</CardTitle>
             </CardHeader>
             <CardContent>
               {data.corrections.length === 0 ? (
@@ -143,7 +145,7 @@ function HistoryPage() {
               ) : (
                 <ul className="space-y-2 text-sm">
                   {data.corrections.map((c) => (
-                    <li key={c.id} className="border-b border-border pb-2">
+                    <li key={c.id} className="rounded-xl border border-border/70 bg-muted/30 p-3">
                       <strong>
                         {c.business_date} ({c.scope}) {c.field}
                       </strong>

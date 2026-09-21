@@ -202,7 +202,7 @@ function NumbersPage() {
               key={option.key}
               size="sm"
               variant={kind === option.key ? "default" : "outline"}
-              className="rounded-xl"
+              className="rounded-full"
               onClick={() => switchKind(option.key)}
             >
               {option.label}
@@ -214,13 +214,20 @@ function NumbersPage() {
               variant="outline"
               aria-label="Previous period"
               onClick={() => move(-1)}
+              className="rounded-full"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="min-w-[9rem] text-center font-display text-lg font-bold">
               {report?.range.label ?? "…"}
             </span>
-            <Button size="icon" variant="outline" aria-label="Next period" onClick={() => move(1)}>
+            <Button
+              size="icon"
+              variant="outline"
+              aria-label="Next period"
+              onClick={() => move(1)}
+              className="rounded-full"
+            >
               <ChevronRight className="h-4 w-4" />
             </Button>
             <Button
@@ -245,22 +252,36 @@ function NumbersPage() {
 
         {report && (
           <>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {summary.map((row) => (
-                <Card key={row.key}>
-                  <CardContent className="pt-5">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {row.label}
-                    </p>
-                    <p className="mt-1 font-display text-2xl font-bold">
+            <p className="eyebrow">Key metrics</p>
+            <div className="stagger-in grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {summary.map((row, i) => (
+                <Card
+                  key={row.key}
+                  className={`relative overflow-hidden ${i === 0 ? "panel-glow-profit" : i === 3 ? "panel-glow-steel" : ""}`}
+                >
+                  <CardContent className="relative z-10 pt-5">
+                    <p className="table-head">{row.label}</p>
+                    <p className="mt-1 font-display text-3xl font-bold tracking-tight">
                       {formatMetric(row.actual, row.format)}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {row.goal === null
-                        ? "No goal set"
-                        : `${formatMetric(row.goal, row.format)} goal`}
-                      {row.variance !== null && ` · ${formatDiff(row.variance, row.format)}`}
-                    </p>
+                    <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                      {row.goal !== null && <span>{formatMetric(row.goal, row.format)} goal</span>}
+                      {row.goal === null && <span>No goal set</span>}
+                      {row.variance !== null && (
+                        <>
+                          <span className="text-border">·</span>
+                          <span
+                            className={
+                              row.variance >= 0
+                                ? "text-secondary font-medium"
+                                : "text-destructive font-medium"
+                            }
+                          >
+                            {formatDiff(row.variance, row.format)}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -289,13 +310,13 @@ function NumbersPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[46rem] text-sm">
                     <thead>
-                      <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
-                        <th className="py-2 pr-4">Metric</th>
-                        <th className="py-2 pr-4">Actual</th>
-                        <th className="py-2 pr-4">Goal</th>
-                        <th className="py-2 pr-4">Variance</th>
-                        <th className="py-2 pr-4">{report.previousRange.label}</th>
-                        <th className="py-2 pr-4">YoY change</th>
+                      <tr className="border-b text-left">
+                        <th className="table-head py-2 pr-4">Metric</th>
+                        <th className="table-head py-2 pr-4">Actual</th>
+                        <th className="table-head py-2 pr-4">Goal</th>
+                        <th className="table-head py-2 pr-4">Variance</th>
+                        <th className="table-head py-2 pr-4">{report.previousRange.label}</th>
+                        <th className="table-head py-2 pr-4">YoY change</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -383,7 +404,7 @@ function NumbersPage() {
                 ) : (
                   <ul className="space-y-2 text-sm">
                     {report.corrections.map((c) => (
-                      <li key={c.id} className="rounded-lg border border-border/70 p-3">
+                      <li key={c.id} className="rounded-xl border border-border/70 bg-muted/30 p-3">
                         <p className="font-semibold">
                           {c.field} · {c.business_date}
                         </p>

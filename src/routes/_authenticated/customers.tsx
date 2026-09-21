@@ -52,8 +52,9 @@ function CustomersPage() {
       title="Customers"
       subtitle="Only customers that arrived through confirmed imports appear here."
     >
+      <p className="eyebrow">Directory</p>
       <Input
-        className="mb-6 max-w-sm"
+        className="mb-6 max-w-sm rounded-xl"
         placeholder="Search name, phone or email"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -66,7 +67,7 @@ function CustomersPage() {
       )}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {data?.map((customer) => (
-          <Card key={customer.id}>
+          <Card key={customer.id} className="noise-overlay relative overflow-hidden">
             <CardContent className="space-y-2 p-6">
               <p className="font-display text-lg font-bold">{customer.name}</p>
               <p className="text-sm text-muted-foreground">

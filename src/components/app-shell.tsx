@@ -31,24 +31,49 @@ import { NotificationBell } from "@/components/notification-bell";
 import type { PermissionKey } from "@/lib/permissions";
 
 const NAV = [
-  { to: "/hub", label: "Dashboard", icon: LayoutDashboard, needs: "view_dashboard" },
-  { to: "/shop-ai", label: "Hank", icon: Bot, needs: undefined },
-  { to: "/numbers", label: "Numbers", icon: BarChart3, needs: "view_dashboard" },
-  { to: "/entry", label: "Daily entry", icon: ClipboardPenLine, needs: "edit_dashboard_numbers" },
-  { to: "/history", label: "History", icon: History, needs: undefined },
-  { to: "/inventory", label: "Inventory", icon: PackageSearch, needs: undefined },
-  { to: "/customers", label: "Customers", icon: UsersRound, needs: undefined },
-  { to: "/board", label: "Jobs & appointments", icon: CalendarClock, needs: undefined },
-  { to: "/tv", label: "TV mode", icon: Monitor, needs: undefined },
-  { to: "/tools", label: "Tools", icon: Wrench, needs: "access_tools" },
-  { to: "/account", label: "My account", icon: UserRound, needs: undefined },
-  { to: "/settings", label: "Settings", icon: Settings, needs: undefined },
+  {
+    to: "/hub",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    needs: "view_dashboard",
+    group: "primary",
+  },
+  { to: "/shop-ai", label: "Hank", icon: Bot, needs: undefined, group: "primary" },
+  { to: "/numbers", label: "Numbers", icon: BarChart3, needs: "view_dashboard", group: "primary" },
+  {
+    to: "/entry",
+    label: "Daily entry",
+    icon: ClipboardPenLine,
+    needs: "edit_dashboard_numbers",
+    group: "primary",
+  },
+  { to: "/history", label: "History", icon: History, needs: undefined, group: "shop" },
+  { to: "/inventory", label: "Inventory", icon: PackageSearch, needs: undefined, group: "shop" },
+  { to: "/customers", label: "Customers", icon: UsersRound, needs: undefined, group: "shop" },
+  {
+    to: "/board",
+    label: "Jobs & appointments",
+    icon: CalendarClock,
+    needs: undefined,
+    group: "shop",
+  },
+  { to: "/tv", label: "TV mode", icon: Monitor, needs: undefined, group: "shop" },
+  { to: "/tools", label: "Tools", icon: Wrench, needs: "access_tools", group: "system" },
+  { to: "/account", label: "My account", icon: UserRound, needs: undefined, group: "system" },
+  { to: "/settings", label: "Settings", icon: Settings, needs: undefined, group: "system" },
 ] as const satisfies readonly {
   to: string;
   label: string;
   icon: typeof Sparkles;
   needs: PermissionKey | undefined;
+  group: "primary" | "shop" | "system";
 }[];
+
+const GROUP_LABELS: Record<string, string> = {
+  primary: "",
+  shop: "Shop",
+  system: "System",
+};
 
 export function AppShell({
   title,
@@ -97,28 +122,42 @@ export function AppShell({
           >
             <CedarLogo className="h-12 w-auto max-w-full object-contain" />
           </Link>
-          <nav className="relative z-10 mt-5 space-y-1">
-            {items.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="group flex min-h-11 items-center justify-between gap-2 rounded-lg border border-transparent px-3 py-2 text-sm font-semibold text-sidebar-foreground/80 transition-[background-color,border-color,box-shadow,color] duration-200 hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                activeProps={{
-                  className:
-                    "group flex min-h-11 items-center justify-between gap-2 rounded-lg border border-sidebar-primary/70 bg-sidebar-primary text-sidebar-primary-foreground shadow-md",
-                }}
-              >
-                <span className="flex min-w-0 items-center gap-3">
-                  <item.icon className="h-[18px] w-[18px] shrink-0 opacity-85 transition-opacity group-hover:opacity-100" />
-                  <span className="truncate">{item.label}</span>
-                </span>
-                {item.to === "/settings" && pending > 0 && (
-                  <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-accent-foreground">
-                    {pending}
+          <nav className="relative z-10 mt-5 space-y-4">
+            {(() => {
+              let lastGroup = "";
+              return items.map((item) => {
+                const showHeader = item.group !== lastGroup && GROUP_LABELS[item.group] !== "";
+                lastGroup = item.group;
+                return (
+                  <span key={item.to} className="block">
+                    {showHeader && (
+                      <span className="mb-1 block px-3 pt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-sidebar-foreground/40">
+                        {GROUP_LABELS[item.group]}
+                      </span>
+                    )}
+                    <Link
+                      to={item.to}
+                      className="group relative flex min-h-11 items-center justify-between gap-2 rounded-lg border border-transparent px-3 py-2 text-sm font-semibold text-sidebar-foreground/70 transition-[background-color,border-color,box-shadow,color] duration-200 hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-foreground [&_.nav-bar]:opacity-0 hover:[&_.nav-bar]:opacity-60"
+                      activeProps={{
+                        className:
+                          "group relative flex min-h-11 items-center justify-between gap-2 rounded-lg border border-sidebar-primary/60 bg-sidebar-primary/15 text-sidebar-foreground shadow-sm [&_.nav-bar]:opacity-100",
+                      }}
+                    >
+                      <span className="nav-bar absolute inset-y-2 left-0 w-[3px] rounded-r-full bg-sidebar-primary transition-opacity duration-200" />
+                      <span className="flex min-w-0 items-center gap-3">
+                        <item.icon className="h-[18px] w-[18px] shrink-0 opacity-70 transition-opacity group-hover:opacity-100" />
+                        <span className="truncate">{item.label}</span>
+                      </span>
+                      {item.to === "/settings" && pending > 0 && (
+                        <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-accent-foreground">
+                          {pending}
+                        </span>
+                      )}
+                    </Link>
                   </span>
-                )}
-              </Link>
-            ))}
+                );
+              });
+            })()}
           </nav>
           <p className="absolute bottom-2 left-0 right-0 z-10 text-center text-[10px] font-semibold leading-tight text-sidebar-foreground/80">
             Cedar Valley ShopDesk
@@ -223,7 +262,7 @@ export function AppShell({
             className={
               appearance === "dashboard"
                 ? "dashboard-canvas mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-7"
-                : "mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-7"
+                : "page-enter mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-7"
             }
           >
             {children}

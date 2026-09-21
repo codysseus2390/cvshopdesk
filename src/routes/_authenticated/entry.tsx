@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCount, formatCurrency, gpPerCar } from "@/lib/metrics-math";
+import { formatCount, formatCurrency } from "@/lib/metrics-math";
 import { formatProductivity } from "@/lib/productivity-math";
 import { MECHANICS, type MechanicName } from "@/lib/mechanics";
 
@@ -206,9 +206,11 @@ function EntryPage() {
       subtitle="Manual numbers are saved with the business date, scope and your account."
     >
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/60 to-secondary/40" />
           <CardHeader>
-            <CardTitle className="font-display">Enter numbers</CardTitle>
+            <p className="eyebrow">Manual entry</p>
+            <CardTitle className="font-display text-xl">Enter numbers</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -300,7 +302,8 @@ function EntryPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="font-display">Review and confirm</CardTitle>
+            <p className="eyebrow">Review</p>
+            <CardTitle className="font-display text-xl">Review and confirm</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {stage === "edit" && !saved && (
@@ -329,9 +332,6 @@ function EntryPage() {
                   <li>
                     <strong>Car count:</strong> {formatCount(cars)}
                   </li>
-                  <li>
-                    <strong>GP per car:</strong> {formatCurrency(gpPerCar(gp, cars))}
-                  </li>
                 </ul>
                 <div className="flex gap-2">
                   <Button onClick={confirmSave} disabled={busy}>
@@ -352,9 +352,11 @@ function EntryPage() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <Card>
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-secondary/60 to-primary/40" />
           <CardHeader>
-            <CardTitle className="font-display">Mechanic production</CardTitle>
+            <p className="eyebrow">Production</p>
+            <CardTitle className="font-display text-xl">Mechanic production</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
@@ -422,7 +424,8 @@ function EntryPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="font-display">Review mechanic production</CardTitle>
+            <p className="eyebrow">Review</p>
+            <CardTitle className="font-display text-xl">Review mechanic production</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {mechanicStage === "edit" && !mechanicSaved && (

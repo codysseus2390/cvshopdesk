@@ -19,7 +19,7 @@ import { MetricCard } from "@/components/metric-card";
 import { DashboardMiddleRow, SystemSettingsPanel } from "@/components/dashboard-panels";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCount, formatCurrency, gpPerCar } from "@/lib/metrics-math";
+import { formatCount, formatCurrency } from "@/lib/metrics-math";
 import { usePermissions } from "@/components/use-permissions";
 import {
   buildDashboardChart,
@@ -61,7 +61,7 @@ export function useDashboard() {
   });
 }
 
-type KpiKey = "gross_profit" | "tires_sold" | "car_count" | "gp_per_car";
+type KpiKey = "gross_profit" | "tires_sold" | "car_count";
 
 function Dashboard() {
   const { data, isLoading, error } = useDashboard();
@@ -92,19 +92,11 @@ function Dashboard() {
     gross_profit: todayGp,
     tires_sold: today?.tires_sold ?? null,
     car_count: todayCars,
-    gp_per_car: gpPerCar(todayGp, todayCars),
   };
   const weeklyHint = (key: KpiKey): string | undefined =>
-    !data
-      ? undefined
-      : key === "gp_per_car"
-        ? data.week.gp_per_car === null
-          ? "Needs weekly gross profit and car count"
-          : undefined
-        : weeklyGoalNote(data.week[key], data.week.goals[key]);
+    !data ? undefined : weeklyGoalNote(data.week[key], data.week.goals[key]);
   const monthlyHint = (key: KpiKey): string | undefined => {
     if (!data) return undefined;
-    if (key === "gp_per_car") return data.mtd.gp_per_car_note ?? goalNote(key, data.mtd[key]);
     const missing = data.mtd.coverage[key].days_missing_value;
     const field =
       key === "gross_profit" ? "gross profit" : key === "tires_sold" ? "tire count" : "car count";
@@ -122,10 +114,6 @@ function Dashboard() {
               {
                 label: "Previous day",
                 value: format(previousDayValues[key]),
-                hint:
-                  key === "gp_per_car" && previousDayValues[key] === null
-                    ? "Needs gross profit and car count"
-                    : undefined,
               },
             ]
           : []),
@@ -135,15 +123,7 @@ function Dashboard() {
       ],
       sparkline: (
         <KpiSparkline
-          trend={
-            data
-              ? buildDashboardSparkline(
-                  data.monthly,
-                  key === "gp_per_car" ? "gross_profit_per_car" : key,
-                  data.today,
-                )
-              : null
-          }
+          trend={data ? buildDashboardSparkline(data.monthly, key, data.today) : null}
           green={key === "gross_profit" || key === "car_count"}
         />
       ),
@@ -160,7 +140,6 @@ function Dashboard() {
   const CHART_METRICS = [
     { key: "gross_profit", label: "Gross profit", currency: true },
     { key: "sales", label: "Sales", currency: true },
-    { key: "gross_profit_per_car", label: "GP per car", currency: true },
     { key: "tires_sold", label: "Tires sold", currency: false },
     { key: "car_count", label: "Car count", currency: false },
   ] as const;
@@ -428,13 +407,7 @@ function Dashboard() {
                       <YtdRow label="Gross profit" value={formatCurrency(data.ytd.gross_profit)} />
                       <YtdRow label="Tires sold" value={formatCount(data.ytd.tires_sold)} />
                       <YtdRow label="Car count" value={formatCount(data.ytd.car_count)} />
-                      <YtdRow label="GP per car" value={formatCurrency(data.ytd.gp_per_car)} />
                     </dl>
-                    {data.ytd.gp_per_car_note && (
-                      <p className="mt-1 text-xs leading-snug text-muted-foreground">
-                        {data.ytd.gp_per_car_note}
-                      </p>
-                    )}
                     <p className="mt-2 text-xs leading-snug text-muted-foreground">
                       {data.ytd.basis === "cumulative-snapshot"
                         ? `From the accepted year-to-date report as of ${data.ytd.as_of}.`

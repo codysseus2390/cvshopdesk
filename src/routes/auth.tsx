@@ -86,12 +86,26 @@ function AuthPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-6 py-12">
-      <div className="w-full max-w-sm space-y-6">
-        <CedarLogo className="mx-auto h-16 w-auto" />
-        <Card>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-6 py-12">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-40"
+        style={{
+          backgroundImage:
+            "radial-gradient(920px 480px at 88% -12%, color-mix(in oklch, var(--color-primary) 10%, transparent), transparent 68%), radial-gradient(640px 380px at 6% 108%, color-mix(in oklch, var(--color-secondary) 8%, transparent), transparent 70%)",
+        }}
+        aria-hidden="true"
+      />
+      <div className="relative w-full max-w-sm space-y-6">
+        <div className="text-center">
+          <CedarLogo className="mx-auto h-16 w-auto" />
+          <p className="mt-3 font-display text-2xl font-bold tracking-tight">Cedar Valley Hub</p>
+          <p className="mt-1 text-sm text-muted-foreground">Staff-only sign in</p>
+        </div>
+        <Card className="noise-overlay relative overflow-hidden">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/60 to-secondary/40" />
           <CardHeader>
-            <CardTitle className="font-display text-2xl">
+            <p className="eyebrow">{mode === "signin" ? "Welcome back" : "New account"}</p>
+            <CardTitle className="font-display text-xl">
               {mode === "signin" ? "Staff sign in" : "Create staff account"}
             </CardTitle>
           </CardHeader>

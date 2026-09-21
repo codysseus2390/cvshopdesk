@@ -127,5 +127,3 @@ not stranded locally if the session ends unexpectedly.
 > throughout every session (commit + push after each meaningful chunk). If the user says
 > usage is low, or explicitly requests a handoff at any time, immediately enter handoff
 > mode — do not wait for an internal threshold to be reached.
-
-

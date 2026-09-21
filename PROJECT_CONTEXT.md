@@ -71,26 +71,26 @@ before doing substantial work.
 
 ## Technology Stack
 
-| Layer                     | Choice                                                                          |
-| ------------------------- | ------------------------------------------------------------------------------- |
-| Language                  | TypeScript 5.8                                                                  |
-| Runtime / package manager | Bun                                                                             |
-| Framework                 | TanStack Start (React 19 + TanStack Router + SSR)                               |
-| Build tool                | Vite 8                                                                          |
-| UI library                | shadcn/ui (Radix UI primitives)                                                 |
-| Styling                   | Tailwind CSS v4                                                                 |
-| Server runtime            | Nitro (Cloudflare adapter)                                                      |
-| Database / Auth           | Supabase (project ID: `xbpkvbjmclokmbumhymg`)                                   |
-| ORM / migrations          | Drizzle Kit; schema types in `src/integrations/supabase/types.ts`               |
-| AI — chat                 | OpenAI (`gpt-5.6-luna` default — see `src/lib/ai/model-config.ts`)              |
-| AI — voice TTS            | ElevenLabs (`src/lib/ai/elevenlabs.server.ts`)                                  |
-| AI — image                | OpenAI (`gpt-image-1`)                                                          |
-| Charts                    | Recharts                                                                        |
-| Data fetching             | TanStack Query v5                                                               |
-| Forms                     | React Hook Form + Zod                                                           |
-| Date utilities            | date-fns v4                                                                     |
-| File imports              | `xlsx` (spreadsheet parsing)                                                    |
-| Deployment                | Vercel (preview + production)                                                   |
+| Layer                     | Choice                                                             |
+| ------------------------- | ------------------------------------------------------------------ |
+| Language                  | TypeScript 5.8                                                     |
+| Runtime / package manager | Bun                                                                |
+| Framework                 | TanStack Start (React 19 + TanStack Router + SSR)                  |
+| Build tool                | Vite 8                                                             |
+| UI library                | shadcn/ui (Radix UI primitives)                                    |
+| Styling                   | Tailwind CSS v4                                                    |
+| Server runtime            | Nitro (Cloudflare adapter)                                         |
+| Database / Auth           | Supabase (project ID: `xbpkvbjmclokmbumhymg`)                      |
+| ORM / migrations          | Drizzle Kit; schema types in `src/integrations/supabase/types.ts`  |
+| AI — chat                 | OpenAI (`gpt-5.6-luna` default — see `src/lib/ai/model-config.ts`) |
+| AI — voice TTS            | ElevenLabs (`src/lib/ai/elevenlabs.server.ts`)                     |
+| AI — image                | OpenAI (`gpt-image-1`)                                             |
+| Charts                    | Recharts                                                           |
+| Data fetching             | TanStack Query v5                                                  |
+| Forms                     | React Hook Form + Zod                                              |
+| Date utilities            | date-fns v4                                                        |
+| File imports              | `xlsx` (spreadsheet parsing)                                       |
+| Deployment                | Vercel (preview + production)                                      |
 
 ---
 
