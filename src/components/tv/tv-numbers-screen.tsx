@@ -1,12 +1,18 @@
 import { CarFront, CircleDashed, CircleDollarSign, Wrench } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { TvMetricCard, type TvPeriodValue } from "./tv-metric-card";
+import { cn } from "@/lib/utils";
 import { formatCount, formatCurrency } from "@/lib/metrics-math";
 import { formatProductivity } from "@/lib/productivity-math";
 import type { useDashboard } from "@/routes/_authenticated/hub";
 
 type DashboardData = NonNullable<ReturnType<typeof useDashboard>["data"]>;
 
-function period(label: string, value: number | null, format: (v: number | null) => string): TvPeriodValue {
+function period(
+  label: string,
+  value: number | null,
+  format: (v: number | null) => string,
+): TvPeriodValue {
   return { label, value: format(value), empty: value === null };
 }
 
@@ -15,44 +21,63 @@ export function TvNumbersScreen({ dashboard }: { dashboard: DashboardData | unde
   const week = dashboard?.week;
   const mtd = dashboard?.mtd;
 
+  const metrics: {
+    label: string;
+    icon: LucideIcon;
+    accent: "primary" | "secondary";
+    values: [number | null, number | null, number | null];
+    format: (v: number | null) => string;
+  }[] = [
+    {
+      label: "Gross profit",
+      icon: CircleDollarSign,
+      accent: "secondary",
+      values: [mtd?.gross_profit ?? null, week?.gross_profit ?? null, prev?.gross_profit ?? null],
+      format: formatCurrency,
+    },
+    {
+      label: "Tires sold",
+      icon: CircleDashed,
+      accent: "primary",
+      values: [mtd?.tires_sold ?? null, week?.tires_sold ?? null, prev?.tires_sold ?? null],
+      format: formatCount,
+    },
+    {
+      label: "Car count",
+      icon: CarFront,
+      accent: "secondary",
+      values: [mtd?.car_count ?? null, week?.car_count ?? null, prev?.car_count ?? null],
+      format: formatCount,
+    },
+    {
+      label: "Mechanic productivity",
+      icon: Wrench,
+      accent: "primary",
+      values: [
+        mtd?.mechanic_productivity ?? null,
+        week?.mechanic_productivity ?? null,
+        dashboard?.previousDayProductivity ?? null,
+      ],
+      format: formatProductivity,
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-2 gap-6">
-      <TvMetricCard
-        label="Gross profit"
-        icon={CircleDollarSign}
-        accent="secondary"
-        month={period("This month", mtd?.gross_profit ?? null, formatCurrency)}
-        week={period("This week", week?.gross_profit ?? null, formatCurrency)}
-        previousDay={period("Previous day", prev?.gross_profit ?? null, formatCurrency)}
-      />
-      <TvMetricCard
-        label="Tires sold"
-        icon={CircleDashed}
-        accent="primary"
-        month={period("This month", mtd?.tires_sold ?? null, formatCount)}
-        week={period("This week", week?.tires_sold ?? null, formatCount)}
-        previousDay={period("Previous day", prev?.tires_sold ?? null, formatCount)}
-      />
-      <TvMetricCard
-        label="Car count"
-        icon={CarFront}
-        accent="secondary"
-        month={period("This month", mtd?.car_count ?? null, formatCount)}
-        week={period("This week", week?.car_count ?? null, formatCount)}
-        previousDay={period("Previous day", prev?.car_count ?? null, formatCount)}
-      />
-      <TvMetricCard
-        label="Mechanic productivity"
-        icon={Wrench}
-        accent="primary"
-        month={period("This month", mtd?.mechanic_productivity ?? null, formatProductivity)}
-        week={period("This week", week?.mechanic_productivity ?? null, formatProductivity)}
-        previousDay={period(
-          "Previous day",
-          dashboard?.previousDayProductivity ?? null,
-          formatProductivity,
-        )}
-      />
+    <div className="tv-slab grid min-h-0 flex-1 grid-cols-2 grid-rows-2 overflow-hidden rounded-2xl border border-border">
+      {metrics.map((metric, index) => (
+        <TvMetricCard
+          key={metric.label}
+          label={metric.label}
+          icon={metric.icon}
+          accent={metric.accent}
+          month={period("This month", metric.values[0], metric.format)}
+          week={period("This week", metric.values[1], metric.format)}
+          previousDay={period("Previous day", metric.values[2], metric.format)}
+          // Hairline rules between cells instead of gaps, so the four KPIs read
+          // as one instrument panel.
+          className={cn(index % 2 === 0 && "border-r border-border", index < 2 && "border-b")}
+        />
+      ))}
     </div>
   );
 }

@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { TvAppointmentRow } from "./tv-appointment-row";
 import { TvStatusBadge } from "./tv-status-badge";
 import type { TvStatus } from "./tv-status";
@@ -17,6 +16,11 @@ export interface TvNextUpItem {
   vehicleCustomer: string;
 }
 
+/**
+ * Two slabs: the schedule fills the left, the counts and Next Up stack flush
+ * down the right rail. Rows and tiles butt against each other with hairline
+ * rules rather than sitting in separate cards.
+ */
 export function TvShopScreen({
   rows,
   counts,
@@ -27,85 +31,70 @@ export function TvShopScreen({
   nextUp: TvNextUpItem[];
 }) {
   return (
-    <div className="grid grid-cols-[1fr_360px] gap-6">
-      <section className="space-y-3">
-        {rows.length === 0 && (
-          <Card className="border-border/70 bg-card">
-            <CardContent className="p-8 text-center text-lg text-muted-foreground">
-              No jobs or appointments on today's board yet.
-            </CardContent>
-          </Card>
+    <div className="grid min-h-0 flex-1 grid-cols-[1fr_22rem] gap-4">
+      <section className="tv-slab flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border">
+        {rows.length === 0 ? (
+          <p className="flex flex-1 items-center justify-center p-8 text-center text-lg text-muted-foreground">
+            No jobs or appointments on today's board yet.
+          </p>
+        ) : (
+          rows.map((row) => (
+            <TvAppointmentRow
+              key={row.id}
+              time={row.time}
+              vehicleCustomer={row.vehicleCustomer}
+              job={row.job}
+              status={row.status}
+            />
+          ))
         )}
-        {rows.map((row) => (
-          <TvAppointmentRow
-            key={row.id}
-            time={row.time}
-            vehicleCustomer={row.vehicleCustomer}
-            job={row.job}
-            status={row.status}
-          />
-        ))}
       </section>
 
-      <section className="space-y-4">
-        <div className="grid grid-cols-1 gap-3">
-          <SummaryTile label="In shop" value={counts.inShop} status="in_shop" />
-          <SummaryTile label="Upcoming" value={counts.upcoming} status="upcoming" />
-          <SummaryTile label="Done today" value={counts.done} status="done" />
-        </div>
+      <section className="tv-slab flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border">
+        <SummaryTile label="In shop" value={counts.inShop} status="in_shop" />
+        <SummaryTile label="Upcoming" value={counts.upcoming} status="upcoming" />
+        <SummaryTile label="Done today" value={counts.done} status="done" />
 
-        <Card className="border-border/70 bg-card">
-          <CardContent className="p-5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Next up
-            </p>
-            <div className="mt-3 space-y-3">
-              {nextUp.length === 0 && (
-                <p className="text-sm text-muted-foreground">Nothing else scheduled today.</p>
-              )}
-              {nextUp.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-baseline justify-between gap-3 border-b border-border/60 pb-2 last:border-0 last:pb-0"
-                >
-                  <span className="truncate font-display text-lg font-bold text-foreground">
-                    {item.vehicleCustomer}
-                  </span>
-                  <span className="shrink-0 font-display text-lg font-bold tabular-nums text-primary">
-                    {item.time}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex min-h-0 flex-1 flex-col px-5 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            Next up
+          </p>
+          <div className="mt-2">
+            {nextUp.length === 0 && (
+              <p className="pt-2 text-sm text-muted-foreground">Nothing else scheduled today.</p>
+            )}
+            {nextUp.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-baseline justify-between gap-3 border-b border-border py-2.5 last:border-0"
+              >
+                <span className="truncate font-display text-lg font-bold text-[#fffdf8]">
+                  {item.vehicleCustomer}
+                </span>
+                <span className="shrink-0 font-display text-lg font-bold tabular-nums text-primary">
+                  {item.time}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
     </div>
   );
 }
 
-function SummaryTile({
-  label,
-  value,
-  status,
-}: {
-  label: string;
-  value: number;
-  status: TvStatus;
-}) {
+function SummaryTile({ label, value, status }: { label: string; value: number; status: TvStatus }) {
   return (
-    <Card className="border-border/70 bg-card">
-      <CardContent className="flex items-center justify-between p-5">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            {label}
-          </p>
-          <p className="mt-1 font-display text-4xl font-bold tabular-nums text-foreground">
-            {value}
-          </p>
-        </div>
-        <TvStatusBadge status={status} />
-      </CardContent>
-    </Card>
+    <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+          {label}
+        </p>
+        <p className="mt-0.5 font-display text-[2.4rem] font-bold leading-none tabular-nums text-[#fffdf8]">
+          {value}
+        </p>
+      </div>
+      <TvStatusBadge status={status} />
+    </div>
   );
 }

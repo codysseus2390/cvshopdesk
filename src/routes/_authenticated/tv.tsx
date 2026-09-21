@@ -3,9 +3,14 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { AccessGate } from "@/components/access-gate";
+import { TvBackground } from "@/components/tv/tv-background";
 import { TvHeader } from "@/components/tv/tv-header";
 import { TvNumbersScreen } from "@/components/tv/tv-numbers-screen";
-import { TvShopScreen, type TvNextUpItem, type TvScheduleRow } from "@/components/tv/tv-shop-screen";
+import {
+  TvShopScreen,
+  type TvNextUpItem,
+  type TvScheduleRow,
+} from "@/components/tv/tv-shop-screen";
 import { TvStatusBar } from "@/components/tv/tv-status-bar";
 import { cn } from "@/lib/utils";
 import { useDashboard } from "./hub";
@@ -134,7 +139,8 @@ function TvMode() {
   const visibleSchedule = schedule.slice(0, SCHEDULE_ROW_LIMIT);
   const counts = {
     inShop: (board.data?.jobs.length ?? 0) + (board.data?.jobsWithoutArrival.length ?? 0),
-    upcoming: (board.data?.appointments.length ?? 0) + (board.data?.appointmentsWithoutTime.length ?? 0),
+    upcoming:
+      (board.data?.appointments.length ?? 0) + (board.data?.appointmentsWithoutTime.length ?? 0),
     done: board.data?.done.length ?? 0,
   };
   const nextUp: TvNextUpItem[] = (board.data?.appointments ?? []).slice(0, 3).map((job) => ({
@@ -163,47 +169,48 @@ function TvMode() {
       : null;
 
   return (
-    <div
-      className={cn(
-        "dark min-h-screen p-8 text-foreground",
-        screen === "numbers" ? "tv-bg-numbers" : "tv-bg-shop",
-      )}
-    >
-      <div className="relative z-10 flex min-h-[calc(100vh-4rem)] flex-col gap-6">
+    <div className="dark relative flex h-screen flex-col overflow-hidden bg-background text-foreground">
+      <TvBackground />
+
+      <div className="relative z-10 flex h-full min-h-0 flex-col">
         <TvHeader
           title={screen === "numbers" ? "Shop numbers" : "Today's shop"}
           timezone={board.data?.timezone}
           alert={alert}
         />
 
-        {(announcements.data?.length ?? 0) > 0 && (
-          <div className="space-y-2">
-            {(announcements.data ?? []).slice(0, 2).map((item) => (
-              <div
-                key={item.id}
-                className={cn(
-                  "rounded-xl border-l-[6px] bg-card p-4",
-                  item.notification?.priority === "high" ? "border-destructive" : "border-primary",
-                )}
-              >
-                <p className="font-display text-xl font-bold text-foreground">
-                  {item.notification?.title}
-                </p>
-                <p className="mt-0.5 text-base text-muted-foreground">
-                  {item.notification?.message}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div key={screen} className="tv-screen-enter flex-1">
-          {screen === "numbers" ? (
-            <TvNumbersScreen dashboard={dashboard.data} />
-          ) : (
-            <TvShopScreen rows={visibleSchedule} counts={counts} nextUp={nextUp} />
+        <main className="flex min-h-0 flex-1 flex-col gap-4 p-4">
+          {(announcements.data?.length ?? 0) > 0 && (
+            <div className="flex shrink-0 gap-4">
+              {(announcements.data ?? []).slice(0, 2).map((item) => (
+                <div
+                  key={item.id}
+                  className={cn(
+                    "tv-slab flex-1 rounded-2xl border border-border border-l-[6px] px-5 py-3.5",
+                    item.notification?.priority === "high"
+                      ? "border-l-destructive"
+                      : "border-l-primary",
+                  )}
+                >
+                  <p className="font-display text-xl font-bold text-[#fffdf8]">
+                    {item.notification?.title}
+                  </p>
+                  <p className="mt-0.5 text-base text-muted-foreground">
+                    {item.notification?.message}
+                  </p>
+                </div>
+              ))}
+            </div>
           )}
-        </div>
+
+          <div key={screen} className="tv-screen-enter flex min-h-0 flex-1 flex-col">
+            {screen === "numbers" ? (
+              <TvNumbersScreen dashboard={dashboard.data} />
+            ) : (
+              <TvShopScreen rows={visibleSchedule} counts={counts} nextUp={nextUp} />
+            )}
+          </div>
+        </main>
 
         <TvStatusBar
           inShop={counts.inShop}
