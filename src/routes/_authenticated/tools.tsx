@@ -263,9 +263,11 @@ function ToolsPage() {
           </Button>
         </div>
 
-        <Card>
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/60 to-secondary/40" />
           <CardHeader>
-            <CardTitle className="font-display">Upload a report or screenshot</CardTitle>
+            <p className="eyebrow">Import</p>
+            <CardTitle className="font-display text-xl">Upload a report or screenshot</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-4">
@@ -351,9 +353,11 @@ function ToolsPage() {
         </Card>
 
         {reviewId && (
-          <Card>
+          <Card className="relative overflow-hidden">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-secondary/60 to-primary/40" />
             <CardHeader>
-              <CardTitle className="font-display">Review before it counts</CardTitle>
+              <p className="eyebrow">Review</p>
+              <CardTitle className="font-display text-xl">Before it counts</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {unreadable.length > 0 && (
@@ -479,7 +483,7 @@ function ToolsPage() {
                       <thead className="bg-muted">
                         <tr>
                           {itemColumns.map((col) => (
-                            <th key={col} className="p-2 text-left font-semibold">
+                            <th key={col} className="table-head p-2 text-left">
                               {col}
                             </th>
                           ))}
@@ -535,7 +539,8 @@ function ToolsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="font-display">Uploaded files</CardTitle>
+            <p className="eyebrow">Library</p>
+            <CardTitle className="font-display text-xl">Uploaded files</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {imports.isLoading && <p className="text-muted-foreground">Loading…</p>}

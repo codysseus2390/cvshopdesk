@@ -57,15 +57,15 @@
 
 ## 2. Component state checklist
 
-| Component | default | hover | pressed | focus | loading | disabled | empty | error | no-data |
-|-----------|---------|-------|---------|-------|---------|----------|-------|-------|---------|
-| MetricCard (dashboard) | art 76×80 + MTD value + rows + area sparkline | shadow +1 | — | flame ring | skeleton 224h, no zeros | — | “Not updated” | withhold values | sparkline empty / unavailable, not flat zero |
-| RecentImportsPanel | 3 rows + CTAs | row chevron | — | — | 3 skeleton rows | — | “No import history…” | inline error | same as empty |
-| NotificationsTvPanel | list + N new + poster | — | — | — | skeleton list | — | no notifs copy + poster stays | inline | — |
-| MechanicProductivityPanel | Figma density table | — | — | — | skeleton table | — | `—` cells, no 0% bars | inline | — |
-| Monthly chart | year lines + partial MTD badge | — | — | — | chart skeleton | — | dashed empty | inline | partial-month badge only |
-| AppShell sidebar | oil black + logo 174×113 + Tabler 23 | nav hover | active flame pill | — | — | — | — | — | — |
-| Enter today’s numbers CTA | 181×37 flame | lift | pressed darken | focus ring | — | disabled allowed | — | — | — |
+| Component                 | default                                       | hover       | pressed           | focus      | loading                 | disabled         | empty                         | error           | no-data                                      |
+| ------------------------- | --------------------------------------------- | ----------- | ----------------- | ---------- | ----------------------- | ---------------- | ----------------------------- | --------------- | -------------------------------------------- |
+| MetricCard (dashboard)    | art 76×80 + MTD value + rows + area sparkline | shadow +1   | —                 | flame ring | skeleton 224h, no zeros | —                | “Not updated”                 | withhold values | sparkline empty / unavailable, not flat zero |
+| RecentImportsPanel        | 3 rows + CTAs                                 | row chevron | —                 | —          | 3 skeleton rows         | —                | “No import history…”          | inline error    | same as empty                                |
+| NotificationsTvPanel      | list + N new + poster                         | —           | —                 | —          | skeleton list           | —                | no notifs copy + poster stays | inline          | —                                            |
+| MechanicProductivityPanel | Figma density table                           | —           | —                 | —          | skeleton table          | —                | `—` cells, no 0% bars         | inline          | —                                            |
+| Monthly chart             | year lines + partial MTD badge                | —           | —                 | —          | chart skeleton          | —                | dashed empty                  | inline          | partial-month badge only                     |
+| AppShell sidebar          | oil black + logo 174×113 + Tabler 23          | nav hover   | active flame pill | —          | —                       | —                | —                             | —               | —                                            |
+| Enter today’s numbers CTA | 181×37 flame                                  | lift        | pressed darken    | focus ring | —                       | disabled allowed | —                             | —               | —                                            |
 
 ---
 
@@ -73,28 +73,28 @@
 
 Pixel: Tabler only. Do not hunt.
 
-| Slot | Icon | Link |
-|------|------|------|
-| Nav Dashboard (active) | home-filled | https://tabler.io/icons/icon/home-filled |
-| Nav Hank | message-circle | https://tabler.io/icons/icon/message-circle |
-| Nav Numbers | chart-bar | https://tabler.io/icons/icon/chart-bar |
-| Nav Daily entry | edit | https://tabler.io/icons/icon/edit |
-| Nav History | history | https://tabler.io/icons/icon/history |
-| Nav Inventory | package | https://tabler.io/icons/icon/package |
-| Nav Customers | users | https://tabler.io/icons/icon/users |
-| Nav Jobs | calendar-event | https://tabler.io/icons/icon/calendar-event |
-| Nav TV | device-desktop | https://tabler.io/icons/icon/device-desktop |
-| Nav Tools / Mechanic header | tool | https://tabler.io/icons/icon/tool |
-| Nav Account | user | https://tabler.io/icons/icon/user |
-| Nav Settings | settings-filled | https://tabler.io/icons/icon/settings-filled |
-| Search | search | https://tabler.io/icons/icon/search |
-| Theme | sun | https://tabler.io/icons/icon/sun |
-| Bell | bell-filled | https://tabler.io/icons/icon/bell-filled |
-| Date row | calendar-event | https://tabler.io/icons/icon/calendar-event |
-| Imports | file-description-filled | https://tabler.io/icons/icon/file-description-filled |
-| Upload CTA | upload | https://tabler.io/icons/icon/upload |
-| Chevron | chevron-right / chevron-down | https://tabler.io/icons/icon/chevron-right |
-| Tires chrome interim (non-KPI) | circle-dotted or wheel metaphor | https://tabler.io/icons/icon/circle-dotted |
+| Slot                           | Icon                            | Link                                                 |
+| ------------------------------ | ------------------------------- | ---------------------------------------------------- |
+| Nav Dashboard (active)         | home-filled                     | https://tabler.io/icons/icon/home-filled             |
+| Nav Hank                       | message-circle                  | https://tabler.io/icons/icon/message-circle          |
+| Nav Numbers                    | chart-bar                       | https://tabler.io/icons/icon/chart-bar               |
+| Nav Daily entry                | edit                            | https://tabler.io/icons/icon/edit                    |
+| Nav History                    | history                         | https://tabler.io/icons/icon/history                 |
+| Nav Inventory                  | package                         | https://tabler.io/icons/icon/package                 |
+| Nav Customers                  | users                           | https://tabler.io/icons/icon/users                   |
+| Nav Jobs                       | calendar-event                  | https://tabler.io/icons/icon/calendar-event          |
+| Nav TV                         | device-desktop                  | https://tabler.io/icons/icon/device-desktop          |
+| Nav Tools / Mechanic header    | tool                            | https://tabler.io/icons/icon/tool                    |
+| Nav Account                    | user                            | https://tabler.io/icons/icon/user                    |
+| Nav Settings                   | settings-filled                 | https://tabler.io/icons/icon/settings-filled         |
+| Search                         | search                          | https://tabler.io/icons/icon/search                  |
+| Theme                          | sun                             | https://tabler.io/icons/icon/sun                     |
+| Bell                           | bell-filled                     | https://tabler.io/icons/icon/bell-filled             |
+| Date row                       | calendar-event                  | https://tabler.io/icons/icon/calendar-event          |
+| Imports                        | file-description-filled         | https://tabler.io/icons/icon/file-description-filled |
+| Upload CTA                     | upload                          | https://tabler.io/icons/icon/upload                  |
+| Chevron                        | chevron-right / chevron-down    | https://tabler.io/icons/icon/chevron-right           |
+| Tires chrome interim (non-KPI) | circle-dotted or wheel metaphor | https://tabler.io/icons/icon/circle-dotted           |
 
 **KPI / TV:** brand illustrations — not Tabler. Custom tire tread SVG = later packet.
 

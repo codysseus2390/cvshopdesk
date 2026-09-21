@@ -122,19 +122,19 @@ export function AssistantBar() {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 bg-background/75 backdrop-blur-xl">
+    <div className="fixed inset-x-0 bottom-0 z-40 bg-background/80 backdrop-blur-2xl">
       {open && turns.length > 0 && (
         <div className="max-h-64 space-y-3 overflow-y-auto px-4 py-4 sm:px-6">
           {turns.map((turn, i) => (
             <div
               key={i}
-              className={
+              className={`page-enter ${
                 turn.role === "user"
                   ? "text-sm font-semibold text-foreground"
                   : turn.ok === false
                     ? "rounded-md bg-destructive/10 p-3 text-sm text-destructive"
                     : "rounded-lg border border-border/70 bg-muted p-3 text-sm text-foreground"
-              }
+              }`}
             >
               {turn.role === "user" ? `You: ${turn.text}` : turn.text}
             </div>
@@ -154,7 +154,7 @@ export function AssistantBar() {
           e.preventDefault();
           submit();
         }}
-        className="mx-auto my-3 w-[calc(100%-1.25rem)] max-w-4xl rounded-3xl border border-border/80 bg-card p-2.5 shadow-elevated sm:w-[calc(100%-3rem)]"
+        className={`mx-auto my-3 w-[calc(100%-1.25rem)] max-w-4xl rounded-3xl border border-border/80 bg-card/95 p-2.5 shadow-elevated backdrop-blur-sm transition-shadow duration-300 sm:w-[calc(100%-3rem)] ${busy ? "shadow-[0_0_18px_color-mix(in_oklch,var(--color-primary)_12%,transparent)]" : ""}`}
       >
         {attachment && (
           <div className="mb-2 flex max-w-full items-center gap-2 truncate rounded-full border border-border bg-muted px-3 py-1.5 text-xs">
@@ -201,7 +201,7 @@ export function AssistantBar() {
             }}
             placeholder={`Ask ${assistantName} about your shop…`}
             aria-label={`Ask ${assistantName}`}
-            className="h-12 min-w-0 flex-1 rounded-full border-transparent bg-muted/70 px-4 shadow-none focus-visible:border-primary/40"
+            className="h-12 min-w-0 flex-1 rounded-full border-border/60 bg-muted/50 px-4 shadow-inner transition-shadow focus-visible:shadow-none"
           />
 
           <TalkButton

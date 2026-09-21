@@ -31,24 +31,68 @@ import { NotificationBell } from "@/components/notification-bell";
 import type { PermissionKey } from "@/lib/permissions";
 
 const NAV = [
-  { to: "/hub", label: "Dashboard", icon: LayoutDashboard, needs: "view_dashboard" },
-  { to: "/shop-ai", label: "Hank", icon: Bot, needs: undefined },
-  { to: "/numbers", label: "Numbers", icon: BarChart3, needs: "view_dashboard" },
-  { to: "/entry", label: "Daily entry", icon: ClipboardPenLine, needs: "edit_dashboard_numbers" },
-  { to: "/history", label: "History", icon: History, needs: undefined },
-  { to: "/inventory", label: "Inventory", icon: PackageSearch, needs: undefined },
-  { to: "/customers", label: "Customers", icon: UsersRound, needs: undefined },
-  { to: "/board", label: "Jobs & appointments", icon: CalendarClock, needs: undefined },
-  { to: "/tv", label: "TV mode", icon: Monitor, needs: undefined },
-  { to: "/tools", label: "Tools", icon: Wrench, needs: "access_tools" },
-  { to: "/account", label: "My account", icon: UserRound, needs: undefined },
-  { to: "/settings", label: "Settings", icon: Settings, needs: undefined },
+  {
+    to: "/hub",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    needs: "view_dashboard",
+    group: "primary",
+  },
+  { to: "/shop-ai", label: "Hank", icon: Bot, needs: undefined, group: "primary" },
+  { to: "/numbers", label: "Numbers", icon: BarChart3, needs: "view_dashboard", group: "primary" },
+  {
+    to: "/entry",
+    label: "Daily entry",
+    icon: ClipboardPenLine,
+    needs: "edit_dashboard_numbers",
+    group: "primary",
+  },
+  { to: "/history", label: "History", icon: History, needs: undefined, group: "shop" },
+  { to: "/inventory", label: "Inventory", icon: PackageSearch, needs: undefined, group: "shop" },
+  { to: "/customers", label: "Customers", icon: UsersRound, needs: undefined, group: "shop" },
+  {
+    to: "/board",
+    label: "Jobs & appointments",
+    icon: CalendarClock,
+    needs: undefined,
+    group: "shop",
+  },
+  { to: "/tv", label: "TV mode", icon: Monitor, needs: undefined, group: "shop" },
+  { to: "/tools", label: "Tools", icon: Wrench, needs: "access_tools", group: "system" },
+  { to: "/account", label: "My account", icon: UserRound, needs: undefined, group: "system" },
+  { to: "/settings", label: "Settings", icon: Settings, needs: undefined, group: "system" },
 ] as const satisfies readonly {
   to: string;
   label: string;
   icon: typeof Sparkles;
   needs: PermissionKey | undefined;
+  group: "primary" | "shop" | "system";
 }[];
+
+const GROUP_LABELS: Record<string, string> = {
+  primary: "",
+  shop: "Shop",
+  system: "System",
+};
+
+const NAV_INACTIVE =
+  "group flex h-10 items-center gap-2.5 rounded-lg px-2.5 text-sm text-sidebar-foreground/60 transition-[background-color,color,transform] duration-150 hover:bg-white/[0.06] hover:text-sidebar-foreground hover:translate-x-0.5";
+const NAV_ACTIVE =
+  "group flex h-10 items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold bg-primary text-primary-foreground shadow-[0_0_12px_color-mix(in_oklch,var(--color-sidebar-primary)_25%,transparent)]";
+
+function SidebarLink({ item, pending }: { item: (typeof NAV)[number]; pending: number }) {
+  return (
+    <Link to={item.to} className={NAV_INACTIVE} activeProps={{ className: NAV_ACTIVE }}>
+      <item.icon className="size-5 shrink-0" />
+      <span className="truncate">{item.label}</span>
+      {item.to === "/settings" && pending > 0 && (
+        <span className="ml-auto rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-accent-foreground">
+          {pending}
+        </span>
+      )}
+    </Link>
+  );
+}
 
 export function AppShell({
   title,
@@ -82,49 +126,57 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-screen pb-28">
+    <div className="page-vignette min-h-screen pb-28">
       <div className="flex">
-        <aside className="relative sticky top-0 hidden h-screen w-[211px] shrink-0 overflow-hidden border-r border-sidebar-border bg-sidebar px-3 py-5 shadow-elevated md:block">
-          <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[47%] bg-cover bg-center opacity-95"
-            style={{ backgroundImage: "url(/sidebar-brand-art.jpg)" }}
-            aria-hidden="true"
-          />
-          <Link
-            to="/hub"
-            className="relative z-10 block border-b border-sidebar-border px-2 pb-5"
-            aria-label="Cedar Valley Hub dashboard"
-          >
-            <CedarLogo className="h-12 w-auto max-w-full object-contain" />
-          </Link>
-          <nav className="relative z-10 mt-5 space-y-1">
-            {items.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="group flex min-h-11 items-center justify-between gap-2 rounded-lg border border-transparent px-3 py-2 text-sm font-semibold text-sidebar-foreground/80 transition-[background-color,border-color,box-shadow,color] duration-200 hover:border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                activeProps={{
-                  className:
-                    "group flex min-h-11 items-center justify-between gap-2 rounded-lg border border-sidebar-primary/70 bg-sidebar-primary text-sidebar-primary-foreground shadow-md",
-                }}
-              >
-                <span className="flex min-w-0 items-center gap-3">
-                  <item.icon className="h-[18px] w-[18px] shrink-0 opacity-85 transition-opacity group-hover:opacity-100" />
-                  <span className="truncate">{item.label}</span>
-                </span>
-                {item.to === "/settings" && pending > 0 && (
-                  <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-accent-foreground">
-                    {pending}
-                  </span>
-                )}
+        <aside className="sidebar-surface relative hidden h-screen w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
+          <div className="relative z-[2] flex h-full flex-col">
+            <div className="px-3 pb-4 pt-5">
+              <Link to="/hub" className="block" aria-label="Cedar Valley Hub dashboard">
+                <CedarLogo className="h-10 w-auto object-contain" />
               </Link>
-            ))}
-          </nav>
-          <p className="absolute bottom-2 left-0 right-0 z-10 text-center text-[10px] font-semibold leading-tight text-sidebar-foreground/80">
-            Cedar Valley ShopDesk
-            <br />
-            v2.0
-          </p>
+              <div className="mt-4 flex items-center justify-between gap-2 px-1">
+                <p className="font-mono text-xs tracking-[0.16em] text-sidebar-foreground/40">
+                  ShopDesk v2.0
+                </p>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2 py-0.5 text-xs font-semibold text-secondary">
+                  <span className="live-dot size-1.5 rounded-full bg-secondary" />
+                  Live
+                </span>
+              </div>
+            </div>
+
+            <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4">
+              {(() => {
+                let lastGroup = "";
+                return items
+                  .filter((item) => item.to !== "/account" && item.to !== "/settings")
+                  .map((item) => {
+                    const showHeader = item.group !== lastGroup && GROUP_LABELS[item.group] !== "";
+                    lastGroup = item.group;
+                    return (
+                      <span key={item.to} className="block">
+                        {showHeader && (
+                          <p className="mb-2 px-3 font-mono text-xs font-medium uppercase tracking-[0.16em] text-sidebar-foreground/40">
+                            {GROUP_LABELS[item.group]}
+                          </p>
+                        )}
+                        <span className="block">
+                          <SidebarLink item={item} pending={pending} />
+                        </span>
+                      </span>
+                    );
+                  });
+              })()}
+            </nav>
+
+            <div className="mt-auto space-y-1 border-t border-white/10 px-3 py-3">
+              {items
+                .filter((item) => item.to === "/account" || item.to === "/settings")
+                .map((item) => (
+                  <SidebarLink key={item.to} item={item} pending={pending} />
+                ))}
+            </div>
+          </div>
         </aside>
 
         <div className="min-w-0 flex-1">
@@ -141,7 +193,7 @@ export function AppShell({
               <h1
                 className={
                   appearance === "dashboard"
-                    ? "text-[1.75rem] font-bold leading-tight tracking-tight text-foreground md:text-[2rem]"
+                    ? "font-display text-[1.75rem] font-bold leading-tight tracking-tight text-foreground md:text-[2rem]"
                     : "font-display text-3xl font-bold leading-none text-foreground md:text-[1.75rem]"
                 }
               >
@@ -222,8 +274,8 @@ export function AppShell({
           <main
             className={
               appearance === "dashboard"
-                ? "mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-7"
-                : "mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-7"
+                ? "dashboard-canvas mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-7"
+                : "page-enter mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-7"
             }
           >
             {children}

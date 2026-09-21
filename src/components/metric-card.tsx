@@ -8,6 +8,7 @@ export function MetricCard({
   hint,
   size = "normal",
   appearance = "default",
+  hero,
   periodLabel,
   supportingValues,
   sparkline,
@@ -17,6 +18,7 @@ export function MetricCard({
   hint?: string | undefined;
   size?: "normal" | "tv";
   appearance?: "default" | "dashboard";
+  hero?: boolean;
   periodLabel?: string;
   supportingValues?: ReadonlyArray<{ label: string; value: string; hint?: string | undefined }>;
   sparkline?: ReactNode;
@@ -35,45 +37,80 @@ export function MetricCard({
     label.toLowerCase().includes("profit") || label.toLowerCase().includes("car count");
   if (appearance === "dashboard") {
     return (
-      <Card className="min-w-0 rounded-xl border border-border bg-card shadow-card transition-shadow hover:shadow-elevated">
-        <CardContent className="flex min-h-[14rem] h-full flex-col p-4 sm:p-4">
-          <div className="flex items-center gap-2">
+      <Card
+        className={`min-w-0 rounded-xl border bg-card shadow-card transition-[box-shadow,transform] duration-200 hover:shadow-elevated hover:-translate-y-px ${hero ? "noise-overlay border-border panel-glow-profit" : "border-border/70"}`}
+      >
+        <CardContent
+          className={`flex h-full flex-col ${hero ? "min-h-[14rem] p-5 sm:p-6" : "min-h-[11.5rem] p-3.5 sm:p-3.5"}`}
+        >
+          <div className={`flex items-center ${hero ? "gap-2.5" : "gap-1.5"}`}>
             <span
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full shadow-sm ${greenAccent ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"}`}
+              className={`flex shrink-0 items-center justify-center rounded-full shadow-sm ${hero ? "h-13 w-13" : "h-9 w-9"} ${greenAccent ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"}`}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className={hero ? "h-6 w-6" : "h-4 w-4"} />
             </span>
             <div className="min-w-0">
-              <p className="text-sm font-semibold leading-tight text-foreground">{label}</p>
+              <p
+                className={`font-semibold leading-tight text-foreground ${hero ? "text-base" : "text-xs"}`}
+              >
+                {label}
+              </p>
               {periodLabel && <p className="mt-0.5 text-xs text-muted-foreground">{periodLabel}</p>}
             </div>
           </div>
           <p
-            className={`mt-3 break-words font-display font-bold tracking-tight tabular-nums ${notUpdated ? "text-lg text-muted-foreground" : "text-4xl leading-none text-foreground xl:text-5xl"}`}
+            className={`mt-3 break-words font-display font-bold tracking-tight tabular-nums ${notUpdated ? "text-lg text-muted-foreground" : hero ? "text-5xl leading-none text-foreground xl:text-6xl" : "text-3xl leading-none text-foreground xl:text-4xl"}`}
           >
             {value}
           </p>
-          {hint && <p className="mt-1 text-xs leading-snug text-muted-foreground">{hint}</p>}
+          {hint && (
+            <p
+              className={`mt-1 leading-snug text-muted-foreground ${hero ? "text-[13px]" : "text-xs"}`}
+            >
+              {hint}
+            </p>
+          )}
           {supportingValues && (
-            <dl className="mt-2 border-t border-border/60 pt-2">
-              {supportingValues.map((period, idx) => (
-                <div
-                  key={period.label}
-                  className={`${idx > 0 ? "mt-1.5 border-t border-border/40 pt-1.5" : "mb-1.5"}`}
-                >
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
-                    <dt className="text-xs font-medium text-muted-foreground">{period.label}</dt>
-                    <dd className="text-sm font-bold leading-tight tracking-tight tabular-nums text-foreground">
+            <dl
+              className={`${hero ? "mt-3 flex flex-wrap gap-2" : "mt-2 border-t border-border/60 pt-2"}`}
+            >
+              {supportingValues.map((period, idx) =>
+                hero ? (
+                  <div
+                    key={period.label}
+                    className="rounded-lg border border-border/60 bg-muted/40 px-2.5 py-1.5"
+                  >
+                    <dt className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      {period.label}
+                    </dt>
+                    <dd className="mt-0.5 text-sm font-bold leading-tight tracking-tight tabular-nums text-foreground">
                       {period.value}
                     </dd>
+                    {period.hint && (
+                      <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">
+                        {period.hint}
+                      </p>
+                    )}
                   </div>
-                  {period.hint && (
-                    <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-                      {period.hint}
-                    </p>
-                  )}
-                </div>
-              ))}
+                ) : (
+                  <div
+                    key={period.label}
+                    className={`${idx > 0 ? "mt-1.5 border-t border-border/40 pt-1.5" : "mb-1.5"}`}
+                  >
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
+                      <dt className="text-xs font-medium text-muted-foreground">{period.label}</dt>
+                      <dd className="text-sm font-bold leading-tight tracking-tight tabular-nums text-foreground">
+                        {period.value}
+                      </dd>
+                    </div>
+                    {period.hint && (
+                      <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                        {period.hint}
+                      </p>
+                    )}
+                  </div>
+                ),
+              )}
             </dl>
           )}
           {sparkline}

@@ -5,19 +5,19 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold cursor-pointer transition-[color,background-color,border-color,box-shadow,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:translate-y-px disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-y-0 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold cursor-pointer transition-[color,background-color,border-color,box-shadow,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.97] active:translate-y-px disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 disabled:active:translate-y-0 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "border border-primary/80 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md",
+          "border border-primary/80 bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md hover:-translate-y-px",
         destructive:
-          "border border-destructive bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-md",
+          "border border-destructive bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-md hover:-translate-y-px",
         outline:
-          "border border-input bg-card shadow-sm hover:border-primary/40 hover:bg-primary/10 hover:text-foreground",
+          "border border-input bg-card shadow-sm hover:border-primary/40 hover:bg-primary/10 hover:text-foreground hover:shadow hover:-translate-y-px",
         secondary:
-          "border border-secondary/80 bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/90 hover:shadow-md",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+          "border border-secondary/80 bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/90 hover:shadow-md hover:-translate-y-px",
+        ghost: "hover:bg-accent hover:text-accent-foreground hover:-translate-y-px",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

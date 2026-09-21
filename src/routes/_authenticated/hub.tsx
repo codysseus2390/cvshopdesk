@@ -19,7 +19,7 @@ import { MetricCard } from "@/components/metric-card";
 import { DashboardMiddleRow, SystemSettingsPanel } from "@/components/dashboard-panels";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCount, formatCurrency, gpPerCar } from "@/lib/metrics-math";
+import { formatCount, formatCurrency } from "@/lib/metrics-math";
 import { usePermissions } from "@/components/use-permissions";
 import {
   buildDashboardChart,
@@ -61,7 +61,7 @@ export function useDashboard() {
   });
 }
 
-type KpiKey = "gross_profit" | "tires_sold" | "car_count" | "gp_per_car";
+type KpiKey = "gross_profit" | "tires_sold" | "car_count";
 
 function Dashboard() {
   const { data, isLoading, error } = useDashboard();
@@ -92,19 +92,11 @@ function Dashboard() {
     gross_profit: todayGp,
     tires_sold: today?.tires_sold ?? null,
     car_count: todayCars,
-    gp_per_car: gpPerCar(todayGp, todayCars),
   };
   const weeklyHint = (key: KpiKey): string | undefined =>
-    !data
-      ? undefined
-      : key === "gp_per_car"
-        ? data.week.gp_per_car === null
-          ? "Needs weekly gross profit and car count"
-          : undefined
-        : weeklyGoalNote(data.week[key], data.week.goals[key]);
+    !data ? undefined : weeklyGoalNote(data.week[key], data.week.goals[key]);
   const monthlyHint = (key: KpiKey): string | undefined => {
     if (!data) return undefined;
-    if (key === "gp_per_car") return data.mtd.gp_per_car_note ?? goalNote(key, data.mtd[key]);
     const missing = data.mtd.coverage[key].days_missing_value;
     const field =
       key === "gross_profit" ? "gross profit" : key === "tires_sold" ? "tire count" : "car count";
@@ -122,10 +114,6 @@ function Dashboard() {
               {
                 label: "Previous day",
                 value: format(previousDayValues[key]),
-                hint:
-                  key === "gp_per_car" && previousDayValues[key] === null
-                    ? "Needs gross profit and car count"
-                    : undefined,
               },
             ]
           : []),
@@ -135,15 +123,7 @@ function Dashboard() {
       ],
       sparkline: (
         <KpiSparkline
-          trend={
-            data
-              ? buildDashboardSparkline(
-                  data.monthly,
-                  key === "gp_per_car" ? "gross_profit_per_car" : key,
-                  data.today,
-                )
-              : null
-          }
+          trend={data ? buildDashboardSparkline(data.monthly, key, data.today) : null}
           green={key === "gross_profit" || key === "car_count"}
         />
       ),
@@ -160,7 +140,6 @@ function Dashboard() {
   const CHART_METRICS = [
     { key: "gross_profit", label: "Gross profit", currency: true },
     { key: "sales", label: "Sales", currency: true },
-    { key: "gross_profit_per_car", label: "GP per car", currency: true },
     { key: "tires_sold", label: "Tires sold", currency: false },
     { key: "car_count", label: "Car count", currency: false },
   ] as const;
@@ -214,13 +193,14 @@ function Dashboard() {
         <div className="space-y-4">
           <section aria-label="Dashboard KPIs">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                 {shows("today") && (
-                  <span className="flex items-center gap-2">
-                    <CalendarDays className="h-5 w-5 text-primary" />
-                    Previous day {prevDayLabel}
+                  <span className="flex items-center gap-1.5">
+                    <CalendarDays className="h-4 w-4 text-primary" />
+                    <span>{prevDayLabel ? `Previous day ${prevDayLabel}` : "Previous day"}</span>
                   </span>
                 )}
+                {shows("today") && <span className="text-muted-foreground/60">·</span>}
                 <span>This week {formatDashboardWeekRange(data.week.from, data.week.through)}</span>
               </div>
               {shows("today") &&
@@ -239,42 +219,46 @@ function Dashboard() {
                   </Button>
                 ))}
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <MetricCard
-                appearance="dashboard"
-                label="Gross profit"
-                {...kpiProps("gross_profit", true)}
-              />
-              <MetricCard
-                appearance="dashboard"
-                label="Tires sold"
-                {...kpiProps("tires_sold", false)}
-              />
-              <MetricCard
-                appearance="dashboard"
-                label="Car count"
-                {...kpiProps("car_count", false)}
-              />
-              <MetricCard
-                appearance="dashboard"
-                label="GP per car"
-                {...kpiProps("gp_per_car", true)}
-              />
-            </div>
-            <div className="mt-2 space-y-1 text-xs leading-relaxed text-muted-foreground">
-              {shows("today") && !today && (
-                <p>No confirmed entry for the previous day yet. Nothing is assumed to be zero.</p>
-              )}
-              {shows("mtd") && monthlySummary && <p>{monthlySummary}</p>}
+            <div className="dashboard-kpi-area">
+              <div className="stagger-in grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
+                <div className="lg:col-span-6">
+                  <MetricCard
+                    appearance="dashboard"
+                    hero
+                    label="Gross profit"
+                    {...kpiProps("gross_profit", true)}
+                  />
+                </div>
+                <div className="lg:col-span-3">
+                  <MetricCard
+                    appearance="dashboard"
+                    label="Tires sold"
+                    {...kpiProps("tires_sold", false)}
+                  />
+                </div>
+                <div className="lg:col-span-3">
+                  <MetricCard
+                    appearance="dashboard"
+                    label="Car count"
+                    {...kpiProps("car_count", false)}
+                  />
+                </div>
+              </div>
+              <div className="mt-2 space-y-1 text-xs leading-relaxed text-muted-foreground">
+                {shows("today") && !today && (
+                  <p>No confirmed entry for the previous day yet. Nothing is assumed to be zero.</p>
+                )}
+                {shows("mtd") && monthlySummary && <p>{monthlySummary}</p>}
+              </div>
             </div>
           </section>
 
           <DashboardMiddleRow mechanics={data.mechanics} />
 
           {(shows("monthly_chart") || shows("ytd")) && (
-            <section className="grid items-start gap-3 lg:grid-cols-[minmax(0,2.2fr)_minmax(15rem,.9fr)_minmax(15rem,.9fr)]">
+            <section className="stagger-in grid items-start gap-3 lg:grid-cols-[minmax(0,2.2fr)_minmax(15rem,.9fr)_minmax(15rem,.9fr)]">
               {shows("monthly_chart") && (
-                <Card className="min-w-0 rounded-xl border-border bg-card lg:col-span-1">
+                <Card className="card-lift noise-overlay min-w-0 rounded-xl border-border bg-card panel-glow-ember lg:col-span-1">
                   <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 p-4 pb-2 sm:p-4 sm:pb-2">
                     <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
                       <BarChart3 className="h-5 w-5 text-secondary" />
@@ -287,7 +271,7 @@ function Dashboard() {
                       aria-label="Chart metric"
                       value={chartMetric}
                       onChange={(e) => setChartMetric(e.target.value as typeof chartMetric)}
-                      className="h-9 rounded-lg border border-border bg-background px-2 text-sm"
+                      className="h-9 rounded-full border border-border bg-background px-3 text-sm shadow-sm transition-shadow hover:shadow"
                     >
                       {CHART_METRICS.map((m) => (
                         <option key={m.key} value={m.key}>
@@ -321,8 +305,8 @@ function Dashboard() {
                             ))}
                           </ul>
                           {typeof partialValue === "number" && (
-                            <p className="rounded-md border border-primary/25 bg-primary/5 px-2 py-1 text-xs text-muted-foreground">
-                              {partialMonth?.month} {monthlyByYear.currentYear} · partial MTD{" "}
+                            <p className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                              {partialMonth?.month} {monthlyByYear.currentYear} · MTD{" "}
                               <strong className="ml-1 tabular-nums text-foreground">
                                 {chartMetricDef.currency
                                   ? formatCurrency(partialValue)
@@ -411,7 +395,7 @@ function Dashboard() {
               )}
 
               {shows("ytd") && (
-                <Card className="min-w-0 rounded-xl border-border bg-card">
+                <Card className="card-lift noise-overlay min-w-0 rounded-xl border-border bg-card panel-glow-profit">
                   <CardHeader className="p-4 pb-2 sm:p-4 sm:pb-2">
                     <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
                       <Trophy className="h-5 w-5 text-primary" />
@@ -423,13 +407,7 @@ function Dashboard() {
                       <YtdRow label="Gross profit" value={formatCurrency(data.ytd.gross_profit)} />
                       <YtdRow label="Tires sold" value={formatCount(data.ytd.tires_sold)} />
                       <YtdRow label="Car count" value={formatCount(data.ytd.car_count)} />
-                      <YtdRow label="GP per car" value={formatCurrency(data.ytd.gp_per_car)} />
                     </dl>
-                    {data.ytd.gp_per_car_note && (
-                      <p className="mt-1 text-xs leading-snug text-muted-foreground">
-                        {data.ytd.gp_per_car_note}
-                      </p>
-                    )}
                     <p className="mt-2 text-xs leading-snug text-muted-foreground">
                       {data.ytd.basis === "cumulative-snapshot"
                         ? `From the accepted year-to-date report as of ${data.ytd.as_of}.`
@@ -558,8 +536,8 @@ function MonthlyChartTooltip({
     : String(label ?? "");
 
   return (
-    <div className="rounded-md border border-border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-elevated">
-      <p className="mb-1 font-semibold">{title}</p>
+    <div className="rounded-xl border border-border bg-popover px-3 py-2.5 text-sm text-popover-foreground shadow-elevated">
+      <p className="mb-1.5 font-semibold">{title}</p>
       {visible.map((entry) => {
         const name = String(entry.name).replace(" MTD", "");
         const value = typeof entry.value === "number" ? entry.value : null;
@@ -571,7 +549,7 @@ function MonthlyChartTooltip({
               style={{ backgroundColor: entry.color }}
             />
             {name}: {currency ? formatCurrency(value) : formatCount(value)}
-            {String(entry.name).endsWith(" MTD") ? " · Month to date" : ""}
+            {String(entry.name).endsWith(" MTD") ? " · MTD" : ""}
           </p>
         );
       })}

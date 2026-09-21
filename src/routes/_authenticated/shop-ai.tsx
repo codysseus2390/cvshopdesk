@@ -309,7 +309,7 @@ function ShopAiPage() {
           )}
         </div>
 
-        <Card className="flex min-h-0 flex-1 flex-col">
+        <Card className="noise-overlay relative flex min-h-0 flex-1 flex-col overflow-hidden">
           <CardContent ref={messagesRef} className="flex-1 space-y-5 overflow-y-auto p-4 sm:p-6">
             {isLoading && (
               <p className="text-sm text-muted-foreground">Loading your conversation…</p>
@@ -320,7 +320,8 @@ function ShopAiPage() {
                 <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <Bot className="h-6 w-6" />
                 </span>
-                <h2 className="mt-3 font-display text-xl font-bold">
+                <p className="mt-3 eyebrow">Shop assistant</p>
+                <h2 className="mt-1 font-display text-xl font-bold">
                   How can {assistantName} help?
                 </h2>
                 <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">

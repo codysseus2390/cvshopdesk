@@ -41,8 +41,9 @@ function InventoryPage() {
       title="Inventory"
       subtitle="Snapshots from confirmed imports. Each row shows the day it was captured."
     >
+      <p className="eyebrow">Parts &amp; tires</p>
       <Input
-        className="mb-6 max-w-sm"
+        className="mb-6 max-w-sm rounded-xl"
         placeholder="Search brand, size or description"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -57,15 +58,15 @@ function InventoryPage() {
           )}
           {!!data?.length && (
             <table className="w-full text-sm">
-              <thead className="text-left text-xs uppercase text-muted-foreground">
+              <thead className="text-left">
                 <tr>
-                  <th className="py-2">Item</th>
-                  <th>Brand</th>
-                  <th>Size</th>
-                  <th>Qty</th>
-                  <th>Price</th>
-                  <th>Cost</th>
-                  <th>Snapshot</th>
+                  <th className="table-head py-2">Item</th>
+                  <th className="table-head py-2">Brand</th>
+                  <th className="table-head py-2">Size</th>
+                  <th className="table-head py-2">Qty</th>
+                  <th className="table-head py-2">Price</th>
+                  <th className="table-head py-2">Cost</th>
+                  <th className="table-head py-2">Snapshot</th>
                 </tr>
               </thead>
               <tbody>

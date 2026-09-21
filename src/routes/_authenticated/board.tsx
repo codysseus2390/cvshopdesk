@@ -157,7 +157,8 @@ function BoardPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle className="font-display">Upcoming appointments</CardTitle>
+              <p className="eyebrow">Schedule</p>
+              <CardTitle className="font-display text-xl">Upcoming appointments</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {data.appointments.length === 0 && (
@@ -195,9 +196,9 @@ function BoardPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="font-display">
-                Unfinished job queue (oldest arrival first)
-              </CardTitle>
+              <p className="eyebrow">Shop floor</p>
+              <CardTitle className="font-display text-xl">Unfinished job queue</CardTitle>
+              <p className="text-xs text-muted-foreground">Oldest arrival first</p>
             </CardHeader>
             <CardContent className="space-y-3">
               {data.jobs.length === 0 && data.jobsWithoutArrival.length === 0 && (

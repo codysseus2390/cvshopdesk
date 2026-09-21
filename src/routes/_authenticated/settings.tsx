@@ -78,7 +78,6 @@ const TARGET_FIELDS = [
   { key: "gross_profit", label: "Monthly gross profit goal ($)" },
   { key: "tires_sold", label: "Monthly tires sold goal" },
   { key: "car_count", label: "Monthly car count goal" },
-  { key: "gp_per_car", label: "Gross profit per car goal ($)" },
 ] as const;
 
 function SettingsPage() {
