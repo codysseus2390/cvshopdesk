@@ -38,7 +38,7 @@ export function MetricCard({
   if (appearance === "dashboard") {
     return (
       <Card
-        className={`min-w-0 rounded-xl border bg-card shadow-card transition-shadow hover:shadow-elevated ${hero ? "border-border panel-glow-profit" : "border-border/70"}`}
+        className={`min-w-0 rounded-xl border bg-card shadow-card transition-[box-shadow,transform] duration-200 hover:shadow-elevated hover:-translate-y-px ${hero ? "noise-overlay border-border panel-glow-profit" : "border-border/70"}`}
       >
         <CardContent
           className={`flex h-full flex-col ${hero ? "min-h-[14rem] p-5 sm:p-6" : "min-h-[11.5rem] p-3.5 sm:p-3.5"}`}

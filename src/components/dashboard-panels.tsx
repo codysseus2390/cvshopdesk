@@ -51,7 +51,7 @@ function RecentImportsPanel() {
   const rows = (imports.data ?? []).slice(0, 3);
 
   return (
-    <Card className="min-w-0 rounded-2xl border-border/90 bg-card shadow-card panel-glow-steel">
+    <Card className="card-lift min-w-0 rounded-2xl border-border/90 bg-card shadow-card panel-glow-steel">
       <CardHeader className="flex-row items-center justify-between gap-3 border-b border-border/70 px-4 py-3">
         <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted text-foreground">
@@ -121,7 +121,7 @@ function NotificationsTvPanel() {
   const unread = (data ?? []).filter((item) => !item.read_at).length;
 
   return (
-    <Card className="min-w-0 rounded-2xl border-border/90 bg-card shadow-card panel-glow-ember">
+    <Card className="card-lift min-w-0 rounded-2xl border-border/90 bg-card shadow-card panel-glow-ember">
       <CardHeader className="flex-row items-center justify-between gap-3 border-b border-border/70 px-4 py-3">
         <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted text-foreground">
@@ -199,7 +199,7 @@ function NotificationsTvPanel() {
 
 function MechanicProductivityPanel({ mechanics }: { mechanics: DashboardMechanics }) {
   return (
-    <Card className="min-w-0 rounded-2xl border-border/90 bg-card shadow-card panel-glow-profit">
+    <Card className="card-lift min-w-0 rounded-2xl border-border/90 bg-card shadow-card panel-glow-profit">
       <CardHeader className="flex-row items-center justify-between gap-2 px-4 py-3">
         <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted text-foreground">
@@ -307,7 +307,7 @@ export function SystemSettingsPanel() {
             <Link
               key={tile.label}
               to={tile.to}
-              className="rounded-xl border border-border/70 bg-muted/35 p-3 transition-all hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm"
+              className="rounded-xl border border-border/70 bg-muted/35 p-3 transition-all duration-200 hover:border-primary/40 hover:bg-primary/5 hover:shadow-md hover:-translate-y-px"
             >
               <Icon className="mb-2 h-5 w-5 text-foreground" />
               <span className="block text-sm font-semibold">{tile.label}</span>

@@ -258,7 +258,7 @@ function Dashboard() {
           {(shows("monthly_chart") || shows("ytd")) && (
             <section className="stagger-in grid items-start gap-3 lg:grid-cols-[minmax(0,2.2fr)_minmax(15rem,.9fr)_minmax(15rem,.9fr)]">
               {shows("monthly_chart") && (
-                <Card className="min-w-0 rounded-xl border-border bg-card panel-glow-ember lg:col-span-1">
+                <Card className="card-lift noise-overlay min-w-0 rounded-xl border-border bg-card panel-glow-ember lg:col-span-1">
                   <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 p-4 pb-2 sm:p-4 sm:pb-2">
                     <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
                       <BarChart3 className="h-5 w-5 text-secondary" />
@@ -395,7 +395,7 @@ function Dashboard() {
               )}
 
               {shows("ytd") && (
-                <Card className="min-w-0 rounded-xl border-border bg-card panel-glow-profit">
+                <Card className="card-lift noise-overlay min-w-0 rounded-xl border-border bg-card panel-glow-profit">
                   <CardHeader className="p-4 pb-2 sm:p-4 sm:pb-2">
                     <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
                       <Trophy className="h-5 w-5 text-primary" />

@@ -128,13 +128,13 @@ export function AssistantBar() {
           {turns.map((turn, i) => (
             <div
               key={i}
-              className={
+              className={`page-enter ${
                 turn.role === "user"
                   ? "text-sm font-semibold text-foreground"
                   : turn.ok === false
                     ? "rounded-md bg-destructive/10 p-3 text-sm text-destructive"
                     : "rounded-lg border border-border/70 bg-muted p-3 text-sm text-foreground"
-              }
+              }`}
             >
               {turn.role === "user" ? `You: ${turn.text}` : turn.text}
             </div>
@@ -154,7 +154,7 @@ export function AssistantBar() {
           e.preventDefault();
           submit();
         }}
-        className="mx-auto my-3 w-[calc(100%-1.25rem)] max-w-4xl rounded-3xl border border-border/80 bg-card/95 p-2.5 shadow-elevated backdrop-blur-sm sm:w-[calc(100%-3rem)]"
+        className={`mx-auto my-3 w-[calc(100%-1.25rem)] max-w-4xl rounded-3xl border border-border/80 bg-card/95 p-2.5 shadow-elevated backdrop-blur-sm transition-shadow duration-300 sm:w-[calc(100%-3rem)] ${busy ? "shadow-[0_0_18px_color-mix(in_oklch,var(--color-primary)_12%,transparent)]" : ""}`}
       >
         {attachment && (
           <div className="mb-2 flex max-w-full items-center gap-2 truncate rounded-full border border-border bg-muted px-3 py-1.5 text-xs">

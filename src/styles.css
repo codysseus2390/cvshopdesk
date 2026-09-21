@@ -173,39 +173,74 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background-image:
-    linear-gradient(var(--color-border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
-  background-size: 24px 24px;
-  opacity: 0.18;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
   pointer-events: none;
+  mix-blend-mode: overlay;
 }
 
 .dashboard-kpi-area > * {
   position: relative;
 }
 
-/* Dashboard canvas — subtle grid + warm color washes for depth */
+/* Dashboard canvas — warm matte surface with ambient light washes */
 .dashboard-canvas {
+  position: relative;
   background-color: var(--color-background);
   background-image:
     radial-gradient(
       920px 480px at 88% -12%,
-      color-mix(in oklch, var(--color-primary) 10%, transparent),
+      color-mix(in oklch, var(--color-primary) 7%, transparent),
       transparent 68%
     ),
     radial-gradient(
       640px 380px at 6% 108%,
-      color-mix(in oklch, var(--color-secondary) 8%, transparent),
+      color-mix(in oklch, var(--color-secondary) 5%, transparent),
       transparent 70%
-    ),
-    linear-gradient(var(--color-border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
-  background-size:
-    auto,
-    auto,
-    56px 56px,
-    56px 56px;
+    );
+}
+
+.dashboard-canvas::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: overlay;
+}
+
+.dashboard-canvas::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    800px 500px at 30% 40%,
+    color-mix(in oklch, var(--color-primary) 4%, transparent),
+    transparent 55%
+  );
+  animation: ambient-drift 28s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+}
+
+.dashboard-canvas > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes ambient-drift {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(18px, -12px) scale(1.03);
+  }
+  100% {
+    transform: translate(-8px, 8px) scale(0.97);
+  }
 }
 
 /* Panel glow variants — warm radial gradients from top-right corner */
@@ -347,10 +382,77 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-  background-size: 128px 128px;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
   pointer-events: none;
   z-index: 1;
+  mix-blend-mode: overlay;
+}
+
+/* Reusable surface grain — apply to any panel for tactile texture */
+.surface-grain {
+  position: relative;
+}
+
+.surface-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: overlay;
+}
+
+/* Card hover lift — subtle elevation on hover for interactive cards */
+.card-lift {
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 200ms ease;
+}
+
+.card-lift:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 253 248 / 72%),
+    0 2px 4px rgb(11 11 12 / 6%),
+    0 12px 28px rgb(11 11 12 / 10%);
+}
+
+/* Sidebar surface — depth and texture for the sidebar panel */
+.sidebar-surface {
+  background-image: radial-gradient(
+    600px 400px at 50% -10%,
+    color-mix(in oklch, var(--color-sidebar-primary) 5%, transparent),
+    transparent 60%
+  );
+}
+
+.sidebar-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+}
+
+/* Page vignette — subtle edge darkening for depth */
+.page-vignette::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 85% 75% at 50% 50%,
+    transparent 50%,
+    color-mix(in oklch, var(--color-foreground) 4%, transparent) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Reduced motion support */

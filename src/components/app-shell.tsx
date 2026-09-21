@@ -76,9 +76,9 @@ const GROUP_LABELS: Record<string, string> = {
 };
 
 const NAV_INACTIVE =
-  "group flex h-10 items-center gap-2.5 rounded-lg px-2.5 text-sm text-sidebar-foreground/60 transition-[background-color,color] duration-150 hover:bg-white/[0.06] hover:text-sidebar-foreground";
+  "group flex h-10 items-center gap-2.5 rounded-lg px-2.5 text-sm text-sidebar-foreground/60 transition-[background-color,color,transform] duration-150 hover:bg-white/[0.06] hover:text-sidebar-foreground hover:translate-x-0.5";
 const NAV_ACTIVE =
-  "group flex h-10 items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold bg-primary text-primary-foreground";
+  "group flex h-10 items-center gap-2.5 rounded-lg px-2.5 text-sm font-semibold bg-primary text-primary-foreground shadow-[0_0_12px_color-mix(in_oklch,var(--color-sidebar-primary)_25%,transparent)]";
 
 function SidebarLink({ item, pending }: { item: (typeof NAV)[number]; pending: number }) {
   return (
@@ -126,54 +126,56 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-screen pb-28">
+    <div className="page-vignette min-h-screen pb-28">
       <div className="flex">
-        <aside className="hidden h-screen w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
-          <div className="px-3 pb-4 pt-5">
-            <Link to="/hub" className="block" aria-label="Cedar Valley Hub dashboard">
-              <CedarLogo className="h-10 w-auto object-contain" />
-            </Link>
-            <div className="mt-4 flex items-center justify-between gap-2 px-1">
-              <p className="font-mono text-xs tracking-[0.16em] text-sidebar-foreground/40">
-                ShopDesk v2.0
-              </p>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2 py-0.5 text-xs font-semibold text-secondary">
-                <span className="live-dot size-1.5 rounded-full bg-secondary" />
-                Live
-              </span>
+        <aside className="sidebar-surface relative hidden h-screen w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
+          <div className="relative z-[2] flex h-full flex-col">
+            <div className="px-3 pb-4 pt-5">
+              <Link to="/hub" className="block" aria-label="Cedar Valley Hub dashboard">
+                <CedarLogo className="h-10 w-auto object-contain" />
+              </Link>
+              <div className="mt-4 flex items-center justify-between gap-2 px-1">
+                <p className="font-mono text-xs tracking-[0.16em] text-sidebar-foreground/40">
+                  ShopDesk v2.0
+                </p>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary/15 px-2 py-0.5 text-xs font-semibold text-secondary">
+                  <span className="live-dot size-1.5 rounded-full bg-secondary" />
+                  Live
+                </span>
+              </div>
             </div>
-          </div>
 
-          <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4">
-            {(() => {
-              let lastGroup = "";
-              return items
-                .filter((item) => item.to !== "/account" && item.to !== "/settings")
-                .map((item) => {
-                  const showHeader = item.group !== lastGroup && GROUP_LABELS[item.group] !== "";
-                  lastGroup = item.group;
-                  return (
-                    <span key={item.to} className="block">
-                      {showHeader && (
-                        <p className="mb-2 px-3 font-mono text-xs font-medium uppercase tracking-[0.16em] text-sidebar-foreground/40">
-                          {GROUP_LABELS[item.group]}
-                        </p>
-                      )}
-                      <span className="block">
-                        <SidebarLink item={item} pending={pending} />
+            <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4">
+              {(() => {
+                let lastGroup = "";
+                return items
+                  .filter((item) => item.to !== "/account" && item.to !== "/settings")
+                  .map((item) => {
+                    const showHeader = item.group !== lastGroup && GROUP_LABELS[item.group] !== "";
+                    lastGroup = item.group;
+                    return (
+                      <span key={item.to} className="block">
+                        {showHeader && (
+                          <p className="mb-2 px-3 font-mono text-xs font-medium uppercase tracking-[0.16em] text-sidebar-foreground/40">
+                            {GROUP_LABELS[item.group]}
+                          </p>
+                        )}
+                        <span className="block">
+                          <SidebarLink item={item} pending={pending} />
+                        </span>
                       </span>
-                    </span>
-                  );
-                });
-            })()}
-          </nav>
+                    );
+                  });
+              })()}
+            </nav>
 
-          <div className="mt-auto space-y-1 border-t border-white/10 px-3 py-3">
-            {items
-              .filter((item) => item.to === "/account" || item.to === "/settings")
-              .map((item) => (
-                <SidebarLink key={item.to} item={item} pending={pending} />
-              ))}
+            <div className="mt-auto space-y-1 border-t border-white/10 px-3 py-3">
+              {items
+                .filter((item) => item.to === "/account" || item.to === "/settings")
+                .map((item) => (
+                  <SidebarLink key={item.to} item={item} pending={pending} />
+                ))}
+            </div>
           </div>
         </aside>
 
