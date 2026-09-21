@@ -239,27 +239,28 @@ function Dashboard() {
                   </Button>
                 ))}
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <MetricCard
-                appearance="dashboard"
-                label="Gross profit"
-                {...kpiProps("gross_profit", true)}
-              />
-              <MetricCard
-                appearance="dashboard"
-                label="Tires sold"
-                {...kpiProps("tires_sold", false)}
-              />
-              <MetricCard
-                appearance="dashboard"
-                label="Car count"
-                {...kpiProps("car_count", false)}
-              />
-              <MetricCard
-                appearance="dashboard"
-                label="GP per car"
-                {...kpiProps("gp_per_car", true)}
-              />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
+              <div className="lg:col-span-6">
+                <MetricCard
+                  appearance="dashboard"
+                  label="Gross profit"
+                  {...kpiProps("gross_profit", true)}
+                />
+              </div>
+              <div className="lg:col-span-3">
+                <MetricCard
+                  appearance="dashboard"
+                  label="Tires sold"
+                  {...kpiProps("tires_sold", false)}
+                />
+              </div>
+              <div className="lg:col-span-3">
+                <MetricCard
+                  appearance="dashboard"
+                  label="Car count"
+                  {...kpiProps("car_count", false)}
+                />
+              </div>
             </div>
             <div className="mt-2 space-y-1 text-xs leading-relaxed text-muted-foreground">
               {shows("today") && !today && (
