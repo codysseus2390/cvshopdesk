@@ -184,3 +184,145 @@
 .dashboard-kpi-area > * {
   position: relative;
 }
+
+/* Dashboard canvas — subtle grid + warm color washes for depth */
+.dashboard-canvas {
+  background-color: var(--color-background);
+  background-image:
+    radial-gradient(
+      920px 480px at 88% -12%,
+      color-mix(in oklch, var(--color-primary) 10%, transparent),
+      transparent 68%
+    ),
+    radial-gradient(
+      640px 380px at 6% 108%,
+      color-mix(in oklch, var(--color-secondary) 8%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(var(--color-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
+  background-size:
+    auto,
+    auto,
+    56px 56px,
+    56px 56px;
+}
+
+/* Panel glow variants — warm radial gradients from top-right corner */
+.panel-glow-profit {
+  background-image: radial-gradient(
+    90% 80% at 100% -8%,
+    color-mix(in oklch, var(--color-secondary) 10%, transparent),
+    transparent 62%
+  );
+}
+
+.panel-glow-ember {
+  background-image: radial-gradient(
+    90% 80% at 100% -8%,
+    color-mix(in oklch, var(--color-primary) 10%, transparent),
+    transparent 62%
+  );
+}
+
+.panel-glow-steel {
+  background-image: radial-gradient(
+    90% 80% at 100% -8%,
+    color-mix(in oklch, var(--color-foreground) 5%, transparent),
+    transparent 62%
+  );
+}
+
+/* Eyebrow label — small caps section header */
+.eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+/* Stagger-in entrance animation */
+@keyframes dashboard-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.stagger-in > * {
+  animation: dashboard-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.stagger-in > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger-in > *:nth-child(2) {
+  animation-delay: 50ms;
+}
+.stagger-in > *:nth-child(3) {
+  animation-delay: 100ms;
+}
+.stagger-in > *:nth-child(4) {
+  animation-delay: 150ms;
+}
+.stagger-in > *:nth-child(5) {
+  animation-delay: 200ms;
+}
+.stagger-in > *:nth-child(6) {
+  animation-delay: 250ms;
+}
+.stagger-in > *:nth-child(7) {
+  animation-delay: 300ms;
+}
+.stagger-in > *:nth-child(8) {
+  animation-delay: 350ms;
+}
+
+/* Live dot pulse — for unread indicators */
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+.live-dot {
+  animation: pulse-dot 2.2s ease-in-out infinite;
+}
+
+/* Gauge fill animation for progress bars */
+@keyframes gauge-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.gauge-fill {
+  transform-origin: left center;
+  animation: gauge-fill 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

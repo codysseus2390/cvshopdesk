@@ -38,12 +38,12 @@ export function MetricCard({
   if (appearance === "dashboard") {
     return (
       <Card
-        className={`min-w-0 rounded-xl border bg-card shadow-card transition-shadow hover:shadow-elevated ${hero ? "border-border" : "border-border/70"}`}
+        className={`min-w-0 rounded-xl border bg-card shadow-card transition-shadow hover:shadow-elevated ${hero ? "border-border panel-glow-profit" : "border-border/70"}`}
       >
         <CardContent
           className={`flex h-full flex-col ${hero ? "min-h-[14rem] p-5 sm:p-6" : "min-h-[11.5rem] p-3.5 sm:p-3.5"}`}
         >
-          <div className={`flex items-center ${hero ? "gap-2" : "gap-1.5"}`}>
+          <div className={`flex items-center ${hero ? "gap-2.5" : "gap-1.5"}`}>
             <span
               className={`flex shrink-0 items-center justify-center rounded-full shadow-sm ${hero ? "h-13 w-13" : "h-9 w-9"} ${greenAccent ? "bg-secondary text-secondary-foreground" : "bg-primary text-primary-foreground"}`}
             >
@@ -63,27 +63,54 @@ export function MetricCard({
           >
             {value}
           </p>
-          {hint && <p className="mt-1 text-xs leading-snug text-muted-foreground">{hint}</p>}
+          {hint && (
+            <p
+              className={`mt-1 leading-snug text-muted-foreground ${hero ? "text-[13px]" : "text-xs"}`}
+            >
+              {hint}
+            </p>
+          )}
           {supportingValues && (
-            <dl className="mt-2 border-t border-border/60 pt-2">
-              {supportingValues.map((period, idx) => (
-                <div
-                  key={period.label}
-                  className={`${idx > 0 ? "mt-1.5 border-t border-border/40 pt-1.5" : "mb-1.5"}`}
-                >
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
-                    <dt className="text-xs font-medium text-muted-foreground">{period.label}</dt>
-                    <dd className="text-sm font-bold leading-tight tracking-tight tabular-nums text-foreground">
+            <dl
+              className={`${hero ? "mt-3 flex flex-wrap gap-2" : "mt-2 border-t border-border/60 pt-2"}`}
+            >
+              {supportingValues.map((period, idx) =>
+                hero ? (
+                  <div
+                    key={period.label}
+                    className="rounded-lg border border-border/60 bg-muted/40 px-2.5 py-1.5"
+                  >
+                    <dt className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      {period.label}
+                    </dt>
+                    <dd className="mt-0.5 text-sm font-bold leading-tight tracking-tight tabular-nums text-foreground">
                       {period.value}
                     </dd>
+                    {period.hint && (
+                      <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">
+                        {period.hint}
+                      </p>
+                    )}
                   </div>
-                  {period.hint && (
-                    <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-                      {period.hint}
-                    </p>
-                  )}
-                </div>
-              ))}
+                ) : (
+                  <div
+                    key={period.label}
+                    className={`${idx > 0 ? "mt-1.5 border-t border-border/40 pt-1.5" : "mb-1.5"}`}
+                  >
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
+                      <dt className="text-xs font-medium text-muted-foreground">{period.label}</dt>
+                      <dd className="text-sm font-bold leading-tight tracking-tight tabular-nums text-foreground">
+                        {period.value}
+                      </dd>
+                    </div>
+                    {period.hint && (
+                      <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+                        {period.hint}
+                      </p>
+                    )}
+                  </div>
+                ),
+              )}
             </dl>
           )}
           {sparkline}

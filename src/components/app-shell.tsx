@@ -141,7 +141,7 @@ export function AppShell({
               <h1
                 className={
                   appearance === "dashboard"
-                    ? "text-[1.75rem] font-bold leading-tight tracking-tight text-foreground md:text-[2rem]"
+                    ? "font-display text-[1.75rem] font-bold leading-tight tracking-tight text-foreground md:text-[2rem]"
                     : "font-display text-3xl font-bold leading-none text-foreground md:text-[1.75rem]"
                 }
               >
@@ -222,7 +222,7 @@ export function AppShell({
           <main
             className={
               appearance === "dashboard"
-                ? "mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-7"
+                ? "dashboard-canvas mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-7"
                 : "mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-7"
             }
           >

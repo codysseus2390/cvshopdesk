@@ -214,13 +214,14 @@ function Dashboard() {
         <div className="space-y-4">
           <section aria-label="Dashboard KPIs">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                 {shows("today") && (
-                  <span className="flex items-center gap-2">
-                    <CalendarDays className="h-5 w-5 text-primary" />
-                    Previous day {prevDayLabel}
+                  <span className="flex items-center gap-1.5">
+                    <CalendarDays className="h-4 w-4 text-primary" />
+                    <span>{prevDayLabel ?? "Previous day"}</span>
                   </span>
                 )}
+                <span className="text-muted-foreground/60">·</span>
                 <span>This week {formatDashboardWeekRange(data.week.from, data.week.through)}</span>
               </div>
               {shows("today") &&
@@ -240,7 +241,7 @@ function Dashboard() {
                 ))}
             </div>
             <div className="dashboard-kpi-area">
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
+              <div className="stagger-in grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
                 <div className="lg:col-span-6">
                   <MetricCard
                     appearance="dashboard"
@@ -276,9 +277,9 @@ function Dashboard() {
           <DashboardMiddleRow mechanics={data.mechanics} />
 
           {(shows("monthly_chart") || shows("ytd")) && (
-            <section className="grid items-start gap-3 lg:grid-cols-[minmax(0,2.2fr)_minmax(15rem,.9fr)_minmax(15rem,.9fr)]">
+            <section className="stagger-in grid items-start gap-3 lg:grid-cols-[minmax(0,2.2fr)_minmax(15rem,.9fr)_minmax(15rem,.9fr)]">
               {shows("monthly_chart") && (
-                <Card className="min-w-0 rounded-xl border-border bg-card lg:col-span-1">
+                <Card className="min-w-0 rounded-xl border-border bg-card panel-glow-ember lg:col-span-1">
                   <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 p-4 pb-2 sm:p-4 sm:pb-2">
                     <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
                       <BarChart3 className="h-5 w-5 text-secondary" />
@@ -291,7 +292,7 @@ function Dashboard() {
                       aria-label="Chart metric"
                       value={chartMetric}
                       onChange={(e) => setChartMetric(e.target.value as typeof chartMetric)}
-                      className="h-9 rounded-lg border border-border bg-background px-2 text-sm"
+                      className="h-9 rounded-full border border-border bg-background px-3 text-sm shadow-sm transition-shadow hover:shadow"
                     >
                       {CHART_METRICS.map((m) => (
                         <option key={m.key} value={m.key}>
@@ -325,8 +326,8 @@ function Dashboard() {
                             ))}
                           </ul>
                           {typeof partialValue === "number" && (
-                            <p className="rounded-md border border-primary/25 bg-primary/5 px-2 py-1 text-xs text-muted-foreground">
-                              {partialMonth?.month} {monthlyByYear.currentYear} · partial MTD{" "}
+                            <p className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                              {partialMonth?.month} {monthlyByYear.currentYear} · MTD{" "}
                               <strong className="ml-1 tabular-nums text-foreground">
                                 {chartMetricDef.currency
                                   ? formatCurrency(partialValue)
@@ -415,7 +416,7 @@ function Dashboard() {
               )}
 
               {shows("ytd") && (
-                <Card className="min-w-0 rounded-xl border-border bg-card">
+                <Card className="min-w-0 rounded-xl border-border bg-card panel-glow-profit">
                   <CardHeader className="p-4 pb-2 sm:p-4 sm:pb-2">
                     <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
                       <Trophy className="h-5 w-5 text-primary" />
@@ -562,8 +563,8 @@ function MonthlyChartTooltip({
     : String(label ?? "");
 
   return (
-    <div className="rounded-md border border-border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-elevated">
-      <p className="mb-1 font-semibold">{title}</p>
+    <div className="rounded-xl border border-border bg-popover px-3 py-2.5 text-sm text-popover-foreground shadow-elevated">
+      <p className="mb-1.5 font-semibold">{title}</p>
       {visible.map((entry) => {
         const name = String(entry.name).replace(" MTD", "");
         const value = typeof entry.value === "number" ? entry.value : null;
@@ -575,7 +576,7 @@ function MonthlyChartTooltip({
               style={{ backgroundColor: entry.color }}
             />
             {name}: {currency ? formatCurrency(value) : formatCount(value)}
-            {String(entry.name).endsWith(" MTD") ? " · Month to date" : ""}
+            {String(entry.name).endsWith(" MTD") ? " · MTD" : ""}
           </p>
         );
       })}

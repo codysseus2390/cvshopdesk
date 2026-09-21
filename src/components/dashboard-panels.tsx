@@ -30,7 +30,10 @@ export type DashboardMechanics = {
 
 export function DashboardMiddleRow({ mechanics }: { mechanics: DashboardMechanics }) {
   return (
-    <section className="grid gap-3 xl:grid-cols-[1fr_1.19fr_1.08fr]" aria-label="Shop activity">
+    <section
+      className="stagger-in grid gap-3 xl:grid-cols-[1fr_1.19fr_1.08fr]"
+      aria-label="Shop activity"
+    >
       <RecentImportsPanel />
       <NotificationsTvPanel />
       <MechanicProductivityPanel mechanics={mechanics} />
@@ -48,7 +51,7 @@ function RecentImportsPanel() {
   const rows = (imports.data ?? []).slice(0, 3);
 
   return (
-    <Card className="min-w-0 rounded-2xl border-border/90 shadow-card">
+    <Card className="min-w-0 rounded-2xl border-border/90 bg-card shadow-card panel-glow-steel">
       <CardHeader className="flex-row items-center justify-between gap-3 border-b border-border/70 px-4 py-3">
         <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted text-foreground">
@@ -118,7 +121,7 @@ function NotificationsTvPanel() {
   const unread = (data ?? []).filter((item) => !item.read_at).length;
 
   return (
-    <Card className="min-w-0 rounded-2xl border-border/90 shadow-card">
+    <Card className="min-w-0 rounded-2xl border-border/90 bg-card shadow-card panel-glow-ember">
       <CardHeader className="flex-row items-center justify-between gap-3 border-b border-border/70 px-4 py-3">
         <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted text-foreground">
@@ -167,7 +170,7 @@ function NotificationsTvPanel() {
               </span>
               {!item.read_at && (
                 <span
-                  className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-primary"
+                  className="live-dot mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-primary"
                   aria-label="Unread"
                 />
               )}
@@ -196,7 +199,7 @@ function NotificationsTvPanel() {
 
 function MechanicProductivityPanel({ mechanics }: { mechanics: DashboardMechanics }) {
   return (
-    <Card className="min-w-0 rounded-2xl border-border/90 shadow-card">
+    <Card className="min-w-0 rounded-2xl border-border/90 bg-card shadow-card panel-glow-profit">
       <CardHeader className="flex-row items-center justify-between gap-2 px-4 py-3">
         <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted text-foreground">
@@ -245,7 +248,7 @@ function MechanicProductivityPanel({ mechanics }: { mechanics: DashboardMechanic
                     <td className="px-3 py-3.5 text-right font-semibold tabular-nums">
                       <span className="block text-sm">{formatProductivity(value ?? null)}</span>
                       {numeric !== null && (
-                        <span className="mt-1.5 ml-auto block h-2 w-20 overflow-hidden rounded-full bg-muted">
+                        <span className="gauge-fill mt-1.5 ml-auto block h-2 w-20 overflow-hidden rounded-full bg-muted">
                           <span
                             className={`block h-full rounded-full ${index % 2 ? "bg-primary" : "bg-secondary"}`}
                             style={{ width: `${numeric}%` }}
@@ -287,7 +290,7 @@ export function SystemSettingsPanel() {
     },
   ] as const;
   return (
-    <Card className="min-w-0 rounded-2xl border-border/90 shadow-card">
+    <Card className="min-w-0 rounded-2xl border-border/90 bg-card shadow-card panel-glow-steel">
       <CardHeader className="flex-row items-center justify-between gap-2 px-4 py-3">
         <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
           <Settings className="h-5 w-5 text-foreground" />
@@ -304,7 +307,7 @@ export function SystemSettingsPanel() {
             <Link
               key={tile.label}
               to={tile.to}
-              className="rounded-xl border border-border/70 bg-muted/35 p-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
+              className="rounded-xl border border-border/70 bg-muted/35 p-3 transition-all hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm"
             >
               <Icon className="mb-2 h-5 w-5 text-foreground" />
               <span className="block text-sm font-semibold">{tile.label}</span>
