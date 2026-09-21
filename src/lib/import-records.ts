@@ -274,11 +274,28 @@ export interface BoardRow {
 /** Grace period so an appointment does not vanish the second its time passes. */
 export const APPOINTMENT_GRACE_MINUTES = 30;
 
-export function splitBoard<T extends BoardRow>(rows: T[], nowMs: number) {
+/** YYYY-MM-DD for a timestamp in a given timezone — same technique as `shopToday`. */
+function localDate(iso: string, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(iso));
+}
+
+export function splitBoard<T extends BoardRow>(
+  rows: T[],
+  nowMs: number,
+  today?: { date: string; timezone: string },
+) {
   const cutoff = nowMs - APPOINTMENT_GRACE_MINUTES * 60_000;
 
   const appointmentRows = rows.filter((r) => r.record_kind === "appointment");
   const jobRows = rows.filter((r) => r.record_kind !== "appointment" && !isFinishedJob(r));
+  // Finished rows are tracked separately so "done today" can be shown without
+  // inventing a completion time: anchored on arrival (jobs) or appointment time.
+  const finishedRows = rows.filter(isFinishedJob);
 
   return {
     // Upcoming only: anything already past (beyond the grace period) drops off.
@@ -293,5 +310,14 @@ export function splitBoard<T extends BoardRow>(rows: T[], nowMs: number) {
       .sort((a, b) => (a.arrival_at ?? "").localeCompare(b.arrival_at ?? "")),
     // Arrival unknown: never substituted with the snapshot or appointment time.
     jobsWithoutArrival: jobRows.filter((r) => r.arrival_at === null),
+    // Finished records anchored to today's shop day by arrival (or appointment time
+    // when there was no arrival). There is no completion timestamp in the data, so
+    // this is "finished and tied to today", not "finished at some time today".
+    done: today
+      ? finishedRows.filter((r) => {
+          const anchor = r.arrival_at ?? r.appointment_at;
+          return anchor !== null && localDate(anchor, today.timezone) === today.date;
+        })
+      : [],
   };
 }

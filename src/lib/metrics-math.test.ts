@@ -9,7 +9,7 @@ import {
   yearToDate,
   type MetricRow,
 } from "./metrics-math";
-import { JOB_ROWS_PER_PAGE, SCREEN_SECONDS, screenAt } from "@/routes/_authenticated/tv";
+import { SCREEN_SECONDS, screenAt } from "@/routes/_authenticated/tv";
 
 const daily = (
   date: string,
@@ -239,13 +239,12 @@ describe("year to date", () => {
 });
 
 describe("TV rotation", () => {
-  it("alternates numbers and tech every 120 seconds", () => {
-    expect(SCREEN_SECONDS).toBe(120);
+  it("alternates numbers and shop screens every SCREEN_SECONDS", () => {
+    expect(SCREEN_SECONDS).toBeGreaterThan(0);
     expect(screenAt(0)).toBe("numbers");
-    expect(screenAt(119)).toBe("numbers");
-    expect(screenAt(120)).toBe("tech");
-    expect(screenAt(239)).toBe("tech");
-    expect(screenAt(240)).toBe("numbers");
-    expect(JOB_ROWS_PER_PAGE).toBeGreaterThan(0);
+    expect(screenAt(SCREEN_SECONDS - 1)).toBe("numbers");
+    expect(screenAt(SCREEN_SECONDS)).toBe("shop");
+    expect(screenAt(SCREEN_SECONDS * 2 - 1)).toBe("shop");
+    expect(screenAt(SCREEN_SECONDS * 2)).toBe("numbers");
   });
 });

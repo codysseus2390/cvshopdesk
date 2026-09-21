@@ -455,6 +455,88 @@
   z-index: 0;
 }
 
+/* TV mode — Shop Numbers background: near-black graphite with faint warm/cool
+   glows in opposite corners. Kept intentionally faint (~3-5%) so it reads as
+   atmosphere, not decoration. */
+.tv-bg-numbers {
+  position: relative;
+  background-color: var(--color-background);
+  background-image:
+    radial-gradient(
+      1100px 620px at 90% -10%,
+      color-mix(in oklch, var(--color-primary) 6%, transparent),
+      transparent 65%
+    ),
+    radial-gradient(
+      900px 560px at 4% 106%,
+      color-mix(in oklch, var(--color-secondary) 5%, transparent),
+      transparent 68%
+    );
+}
+
+.tv-bg-numbers::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* TV mode — Today's Shop background: same dark family, with a faint
+   blueprint/bay-line grid instead of glows so the two screens feel related
+   but distinct. */
+.tv-bg-shop {
+  position: relative;
+  background-color: var(--color-background);
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      color-mix(in oklch, var(--color-foreground) 3%, transparent) 0px,
+      transparent 1px,
+      transparent 96px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      color-mix(in oklch, var(--color-foreground) 3%, transparent) 0px,
+      transparent 1px,
+      transparent 96px
+    ),
+    radial-gradient(
+      900px 520px at 96% 100%,
+      color-mix(in oklch, var(--color-primary) 4%, transparent),
+      transparent 62%
+    );
+}
+
+.tv-bg-shop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* TV mode — screen crossfade. Understated: opacity + a few px of horizontal
+   drift, no bounce or scale. */
+@keyframes tv-screen-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.tv-screen-enter {
+  animation: tv-screen-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
