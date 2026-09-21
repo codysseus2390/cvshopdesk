@@ -18,18 +18,21 @@
   align-items: center;
   color: var(--foreground);
   background: linear-gradient(to right, #fff 52.08%, #f2ece3 52.08%);
-  padding: 80px 6%;
+  padding: 0;
 }
 .auth-layout {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 448px;
+  grid-template-columns: 750px 448px;
   align-items: center;
-  gap: clamp(64px, 10vw, 200px);
-  width: 100%;
-  max-width: 1192px;
+  gap: 94px;
+  width: 1440px;
+  max-width: 100%;
   margin: auto;
+}
+.auth-brand {
+  padding-left: 122px;
 }
 .auth-eyebrow {
   color: #526a28;
@@ -133,13 +136,14 @@
   max-width: none;
   left: calc(50% + 160px);
   top: calc(50% + 10px);
-  opacity: 0.2;
+  opacity: 0.28;
   transform-origin: center;
+  will-change: transform;
 }
 /* One subtle entrance cycle, then rest; never distract indefinitely from sign-in. */
 @media (prefers-reduced-motion: no-preference) {
   .auth-wheel {
-    animation: auth-wheel-drift 12s ease-in-out 1;
+    animation: auth-wheel-drift 12s ease-in-out infinite;
   }
 }
 @keyframes auth-wheel-drift {
@@ -158,6 +162,9 @@
   .auth-layout {
     grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
     gap: 48px;
+  }
+  .auth-brand {
+    padding-left: 0;
   }
   .auth-page .auth-card {
     padding: 36px 28px;
