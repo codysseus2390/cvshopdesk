@@ -13,6 +13,8 @@ import { buildNumbersReport, productivityValue } from "./numbers.server";
 import { dashboardWeekFromReport } from "./dashboard-week";
 import { overallProductivity, type ProductivityInput } from "./productivity-math";
 import { MECHANICS } from "./mechanics";
+import { readShopPermissions } from "./permissions.server";
+import { readAllRows } from "./read-all-rows";
 
 type MonthTotals = PeriodValues & { gp_per_car: number | null };
 
@@ -59,6 +61,10 @@ export const saveMetricEntry = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const shop = await resolveShop(supabase as unknown as Supa, userId);
 
+    const allowed = await readShopPermissions(supabase, shop.shopId, shop.role);
+    if (!allowed("edit_dashboard_numbers"))
+      throw new Error("You do not have permission to edit numbers.");
+
     const flags: string[] = [];
     if (data.sales === null || data.sales === undefined) flags.push("sales missing");
     if (data.gross_profit === null) flags.push("gross_profit missing");
@@ -89,30 +95,45 @@ export const getDashboard = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const shop = await resolveShop(supabase as unknown as Supa, userId);
+    const allowed = await readShopPermissions(supabase, shop.shopId, shop.role);
+    if (!allowed("view_dashboard"))
+      throw new Error("You do not have permission to view the dashboard.");
+    const showProductivity = allowed("view_productivity");
     const today = shopToday(shop.timezone);
     const year = today.slice(0, 4);
     const monthPrefix = today.slice(0, 7);
 
-    const [{ data: rows, error }, { data: productivityRows, error: productivityError }] =
-      await Promise.all([
+    const [{ data: rows }, { data: productivityRows }] = await Promise.all([
+      readAllRows((from, to) =>
         supabase
           .from("metric_snapshots")
           .select(
             "id, business_date, scope, sales, gross_profit, tires_sold, car_count, source, created_at, flags, note",
           )
           .eq("is_current", true)
+          .eq("shop_id", shop.shopId)
           .gte("business_date", `${Number(year) - 1}-01-01`)
-          .order("business_date", { ascending: true }),
-        supabase
-          .from("technician_productivity")
-          .select(
-            "business_date, technician, productivity_pct, hours_billed, hours_worked, period_scope, updated_at",
+          .lte("business_date", today)
+          .order("business_date", { ascending: true })
+          .order("id")
+          .range(from, to),
+      ),
+      showProductivity
+        ? readAllRows((from, to) =>
+            supabase
+              .from("technician_productivity")
+              .select(
+                "business_date, technician, productivity_pct, hours_billed, hours_worked, period_scope, updated_at",
+              )
+              .eq("shop_id", shop.shopId)
+              .gte("business_date", `${Number(year) - 1}-01-01`)
+              .lte("business_date", today)
+              .order("business_date")
+              .order("id")
+              .range(from, to),
           )
-          .gte("business_date", `${Number(year) - 1}-01-01`)
-          .lte("business_date", today),
-      ]);
-    if (error) throw new Error(error.message);
-    if (productivityError) throw new Error(productivityError.message);
+        : Promise.resolve({ data: [], error: null }),
+    ]);
 
     const all = (rows ?? []) as (MetricRow & { created_at: string; source: string })[];
     // Nothing dated after the shop's current business day counts toward current results.
@@ -138,10 +159,11 @@ export const getDashboard = createServerFn({ method: "GET" })
       "daily",
       previousDay,
     );
+    const mechanicNames = showProductivity ? [...MECHANICS] : [];
     const mechanics = {
-      names: [...MECHANICS],
+      names: mechanicNames,
       previous_day: Object.fromEntries(
-        MECHANICS.map((technician) => [
+        mechanicNames.map((technician) => [
           technician,
           productivityValue(
             productivity,
@@ -151,13 +173,13 @@ export const getDashboard = createServerFn({ method: "GET" })
         ]),
       ),
       week: Object.fromEntries(
-        MECHANICS.map((technician) => [
+        mechanicNames.map((technician) => [
           technician,
           weekReport.rows.find((row) => row.key === `productivity:${technician}`)?.actual ?? null,
         ]),
       ),
       month: Object.fromEntries(
-        MECHANICS.map((technician) => [
+        mechanicNames.map((technician) => [
           technician,
           monthReport.rows.find((row) => row.key === `productivity:${technician}`)?.actual ?? null,
         ]),
