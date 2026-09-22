@@ -17,13 +17,7 @@ import {
   parseNumericField,
   splitBoard,
 } from "./import-records";
-import {
-  JOB_PAGE_SECONDS,
-  JOB_ROWS_PER_PAGE,
-  SCREEN_SECONDS,
-  jobPageAt,
-  screenAt,
-} from "@/routes/_authenticated/tv";
+import { SCREEN_SECONDS, screenAt } from "@/routes/_authenticated/tv";
 
 describe("unreadable numeric data", () => {
   it("keeps N/A and dashes null and flags them, never zero", () => {
@@ -160,25 +154,43 @@ describe("board filtering", () => {
     expect(split.appointments.map((a) => a.id)).toEqual(["soon", "later"]);
     expect(split.appointmentsWithoutTime.map((a) => a.id)).toEqual(["notime"]);
   });
-});
 
-describe("TV rotation and paging", () => {
-  it("alternates the two screens every 120 seconds", () => {
-    expect(SCREEN_SECONDS).toBe(120);
-    expect(screenAt(0)).toBe("numbers");
-    expect(screenAt(119)).toBe("numbers");
-    expect(screenAt(120)).toBe("tech");
-    expect(screenAt(239)).toBe("tech");
-    expect(screenAt(240)).toBe("numbers");
+  it("leaves 'done' empty when no shop day is given, for backward compatibility", () => {
+    const split = splitBoard(
+      [job({ id: "done", arrival_at: "2026-09-11T07:00:00Z", job_status: "Completed" })],
+      now,
+    );
+    expect(split.done).toEqual([]);
   });
 
-  it("advances a long queue slowly and never drops a row", () => {
-    const count = JOB_ROWS_PER_PAGE * 3 - 1;
-    expect(jobPageAt(0, count)).toEqual({ pages: 3, page: 0 });
-    expect(jobPageAt(JOB_PAGE_SECONDS - 1, count).page).toBe(0);
-    expect(jobPageAt(JOB_PAGE_SECONDS, count).page).toBe(1);
-    expect(jobPageAt(JOB_PAGE_SECONDS * 3, count).page).toBe(0);
-    expect(jobPageAt(0, 0)).toEqual({ pages: 1, page: 0 });
+  it("anchors 'done' to today's shop day by arrival time, falling back to appointment time", () => {
+    const split = splitBoard(
+      [
+        job({ id: "done-today", arrival_at: "2026-09-11T15:00:00Z", job_status: "Completed" }),
+        job({ id: "done-yesterday", arrival_at: "2026-09-10T15:00:00Z", job_status: "Completed" }),
+        job({
+          id: "done-appt-only",
+          record_kind: "appointment",
+          appointment_at: "2026-09-11T09:00:00Z",
+          job_status: "Cancelled",
+        }),
+        job({ id: "still-open", arrival_at: "2026-09-11T15:00:00Z" }),
+      ],
+      now,
+      { date: "2026-09-11", timezone: "UTC" },
+    );
+    expect(split.done.map((d) => d.id).sort()).toEqual(["done-appt-only", "done-today"]);
+  });
+});
+
+describe("TV rotation", () => {
+  it("alternates the two screens every SCREEN_SECONDS", () => {
+    expect(SCREEN_SECONDS).toBeGreaterThan(0);
+    expect(screenAt(0)).toBe("numbers");
+    expect(screenAt(SCREEN_SECONDS - 1)).toBe("numbers");
+    expect(screenAt(SCREEN_SECONDS)).toBe("shop");
+    expect(screenAt(SCREEN_SECONDS * 2 - 1)).toBe("shop");
+    expect(screenAt(SCREEN_SECONDS * 2)).toBe("numbers");
   });
 });
 

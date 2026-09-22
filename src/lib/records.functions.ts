@@ -69,11 +69,12 @@ export const listBoard = createServerFn({ method: "GET" })
       .limit(500);
     if (error) throw new Error(error.message);
     const rows = data ?? [];
-    const split = splitBoard(rows, Date.now());
+    const today = shopToday(timezone);
+    const split = splitBoard(rows, Date.now(), { date: today, timezone });
     return {
       ...split,
       timezone,
-      shopToday: shopToday(timezone),
+      shopToday: today,
       fetchedAt: new Date().toISOString(),
       lastSnapshot: rows.reduce<string | null>(
         (acc, r) => (!acc || r.snapshot_at > acc ? r.snapshot_at : acc),
