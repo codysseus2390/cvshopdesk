@@ -169,6 +169,13 @@
       "when": 1789594345410,
       "tag": "0023_effective_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1789594346410,
+      "tag": "0024_business_calendar",
+      "breakpoints": true
     }
   ]
 }

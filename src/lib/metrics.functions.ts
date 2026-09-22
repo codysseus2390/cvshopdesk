@@ -15,6 +15,8 @@ import { overallProductivity, type ProductivityInput } from "./productivity-math
 import { MECHANICS } from "./mechanics";
 import { readShopPermissions } from "./permissions.server";
 import { readAllRows } from "./read-all-rows";
+import { readBusinessCalendar } from "./calendar.server";
+import { previousOpenDay } from "./business-calendar";
 
 type MonthTotals = PeriodValues & { gp_per_car: number | null };
 
@@ -99,6 +101,7 @@ export const getDashboard = createServerFn({ method: "GET" })
     if (!allowed("view_dashboard"))
       throw new Error("You do not have permission to view the dashboard.");
     const showProductivity = allowed("view_productivity");
+    const calendar = await readBusinessCalendar(supabase, shop.shopId);
     const today = shopToday(shop.timezone);
     const year = today.slice(0, 4);
     const monthPrefix = today.slice(0, 7);
@@ -139,12 +142,11 @@ export const getDashboard = createServerFn({ method: "GET" })
     // Nothing dated after the shop's current business day counts toward current results.
     const current = all.filter((r) => r.business_date <= today);
     const todayRow = current.find((r) => r.business_date === today && r.scope === "daily") ?? null;
-    const prevDate = new Date(`${today}T00:00:00Z`);
-    prevDate.setUTCDate(prevDate.getUTCDate() - 1);
-    const previousDay = prevDate.toISOString().slice(0, 10);
+    const previousDay = previousOpenDay(today, calendar);
+    if (!previousDay) throw new Error("The shop calendar does not identify a previous open day.");
     const previousDayRow =
       current.find((r) => r.business_date === previousDay && r.scope === "daily") ?? null;
-    const mtd = monthToDate(current, monthPrefix, today);
+    const mtd = monthToDate(current, monthPrefix, today, calendar);
     const productivity = (productivityRows ?? []) as ProductivityInput[];
     const [weekReport, monthReport] = await Promise.all([
       buildNumbersReport(supabase, shop, "weekly", today),
@@ -209,8 +211,8 @@ export const getDashboard = createServerFn({ method: "GET" })
       }
     }
 
-    const ytd = yearToDate(current, year, today);
-    const ytdLastYear = yearToDate(current, String(Number(year) - 1), today);
+    const ytd = yearToDate(current, year, today, calendar);
+    const ytdLastYear = yearToDate(current, String(Number(year) - 1), today, calendar);
 
     const lastUpdate = all.reduce<string | null>(
       (acc, r) => (acc === null || r.created_at > acc ? r.created_at : acc),

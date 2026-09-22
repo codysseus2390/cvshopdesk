@@ -3,6 +3,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { APP_ROLES, PERMISSIONS } from "@/lib/permissions";
 import type { GoalRules } from "@/lib/numbers-math";
+import { readShopPermissions } from "./permissions.server";
+import { requireShopPermission } from "./permissions.server";
+import { calendarSchema } from "./calendar.schema";
 
 const permissionKeys = PERMISSIONS.map((p) => p.key) as [string, ...string[]];
 const assignableRoles = ["manager", "staff", "display"] as const;
@@ -61,6 +64,7 @@ export const getAdminConfig = createServerFn({ method: "GET" })
       shopId: membership.shop_id,
       overrides: (overrides ?? []) as { role: string; permission: string; allowed: boolean }[],
       settings: {
+        business_calendar: calendarSchema.safeParse(settings?.business_calendar).data ?? null,
         hidden_widgets: (settings?.hidden_widgets ?? []) as string[],
         targets: (settings?.targets ?? {}) as Record<string, number | null>,
         goal_rules: (settings?.goal_rules ?? {}) as GoalRules,
@@ -132,8 +136,13 @@ export const saveShopSettings = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Supa;
     const membership = await currentMembership(context.supabase, context.userId);
-    if (membership.role !== "owner" && membership.role !== "manager") {
-      throw new Error("Only the owner and admins can change dashboard settings.");
+    const allowed = await readShopPermissions(
+      context.supabase,
+      membership.shop_id,
+      membership.role,
+    );
+    if (!allowed("change_settings")) {
+      throw new Error("You do not have permission to change dashboard settings.");
     }
 
     const { error } = await sb.from("shop_settings").upsert(
@@ -172,3 +181,25 @@ export const listAuditEvents = createServerFn({ method: "GET" })
 
 /** Roles that exist in the model, for the interface. */
 export const KNOWN_ROLES = APP_ROLES;
+
+export const saveBusinessCalendar = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => calendarSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const member = await requireShopPermission(context.supabase, context.userId, "manage_security");
+    const { data: saved, error } = await context.supabase
+      .from("shop_settings")
+      .upsert(
+        {
+          shop_id: member.shop_id,
+          business_calendar: data,
+          updated_by: context.userId,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "shop_id" },
+      )
+      .select("shop_id")
+      .single();
+    if (error || !saved) throw new Error("The calendar could not be saved. Please try again.");
+    return { ok: true };
+  });

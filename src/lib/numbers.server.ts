@@ -20,6 +20,7 @@ import {
 import { shopToday } from "./metrics-math";
 import { readShopPermissions } from "./permissions.server";
 import { readAllRows } from "./read-all-rows";
+import { readBusinessCalendar } from "./calendar.server";
 import {
   overallProductivity,
   SHOP_PRODUCTIVITY_TECHNICIAN,
@@ -109,6 +110,7 @@ export async function buildNumbersReport(
   const allowed = await readShopPermissions(supabase, shop.shopId, shop.role);
   if (!allowed("view_dashboard")) throw new Error("You do not have permission to view reports.");
   const showProductivity = allowed("view_productivity");
+  const calendar = await readBusinessCalendar(supabase, shop.shopId);
   const range = resolvePeriod(kind, anchor && /^\d{4}-\d{2}-\d{2}$/.test(anchor) ? anchor : today);
   const prev = previousYearPeriod(range);
 
@@ -211,7 +213,7 @@ export async function buildNumbersReport(
       buildReportRow(
         def,
         actual,
-        goalFor(def, rule, range, previousValue),
+        goalFor(def, rule, range, previousValue, calendar),
         previousValue,
         changedFields.has(def.key),
       ),
@@ -225,7 +227,7 @@ export async function buildNumbersReport(
       buildReportRow(
         def,
         actual,
-        goalFor(def, goalRules[def.key], range, previousValue),
+        goalFor(def, goalRules[def.key], range, previousValue, calendar),
         previousValue,
         changedFields.has(def.key),
       ),

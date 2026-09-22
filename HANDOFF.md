@@ -1,5 +1,32 @@
 # HANDOFF.md — Living Handoff Document
 
+## Latest checkpoint — second owner-requested pause, 2026-09-22
+
+The owner resumed the build, explicitly authorized pushing to `codysseus2390/cvshopdesk` on `feat/shopdesk-astra-implementation`, then asked for another stopping point. **Stop here until asked to resume.** The implementation remains incomplete and is not release-ready. The earlier section below records the baseline, worktree, plan hash, project IDs, tooling, and original outstanding scope.
+
+### Changes since `e2c25c9`
+
+- Extended draft migration 0023 to align permissive settings, notification/recipient, staff-invite, membership, and upload policies with effective permissions; notification recipients must belong to the notification's shop and approved audience. The `add_staff_member` definer function now checks `manage_staff` rather than a role name.
+- Added `requireShopPermission` and corresponding server/UI checks for staff management, settings, and announcements. Membership-role/approval and notification-read writes check that a row actually changed. Staff credential updates now validate effective staff-management permission and same-shop scope before using the privileged auth client.
+- Added draft migration 0024 and its Drizzle journal entry. It adds an owner-controlled `business_calendar` to shop settings and an audit trigger. The initial Monday-Friday schedule is scoped to the two verified Cedar shop UUIDs; other shops receive no guessed schedule. Initial coverage begins at the earlier of the oldest stored report's calendar year and the previous calendar year. No holidays are inferred.
+- Added validated calendar loading/saving and a Settings editor for effective weekday schedules and dated open/closed exceptions. Dashboard settings, Numbers goals, announcements, and staff-management UI now use the corresponding effective permission.
+- Wired previous-open-day selection, weekly goal allocation, and month/year daily coverage/freshness to the calendar. Daily totals still retain real weekend entries; expected coverage uses actual date sets. Calendar windows with unknown schedules fail visibly. Removed the dead Monthly scorecards setting.
+- Updated Supabase TypeScript shape for the new JSON field. The permission-loading test mock now supports `.validator()` for the new endpoint.
+
+### Remaining work and exact next action
+
+**First review this calendar integration before broadening scope.** Add focused regression tests for the wired `monthToDate`/`yearToDate` functions, calendar owner-only writes/audit, effective-date boundaries, and schedule changes. Existing pure calendar tests are present, but the new integration is not fully covered. Verify the initial schedule effective-date choice against the actual historical report windows.
+
+Known unfinished calendar/data details: yearly monthly-snapshot rollup still uses legacy coverage accounting; per-field historical month completeness, provenance, partial historical chart treatment, and current-day versus completed-day labels need implementation. The UI still has old Previous day wording in some places. Closed-day entry warning, common validated clock, and timezone cleanup are not built. Calendar save invalidates known dashboard/numbers/admin query prefixes; audit the actual Numbers query key and all dependent hooks before claiming cache consistency.
+
+Phase 1 also still needs a full operation matrix and expanded deny/grant tests, including new staff/notification policies, all direct/Hank write paths, productivity-related config exposure, zero-row writes not yet covered, and browser tests for the session/membership boundary. No browser auth/token test or independent Claude implementation inspection has run.
+
+All later plan phases remain: chart/UI/craft changes, three TV YoY cards/layout, enrolled-device remembered-account picker, Figma/browser/real-TV verification, full build, and independent inspection. Preserve the unchanged plan rather than treating this checkpoint as completion.
+
+No migrations were applied remotely. No deployment, merge, or PR was made. The previous build failed at Nitro filesystem tracing due to sandbox `EPERM`; it has not been reclassified as a successful build. Final checkpoint hashes and latest check results are in the task's `outputs/BUILD-HANDOFF.md`.
+
+---
+
 ## 2026-09-22 — Astra implementation paused at owner's request
 
 **Status: IN PROGRESS. Not release-ready.** The owner asked to stop because the five-hour usage window is nearly exhausted. Do not restart planning or the old five-round review loop. Resume this implementation only when requested.

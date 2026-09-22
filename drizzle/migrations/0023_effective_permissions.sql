@@ -70,6 +70,41 @@ create policy effective_import_update on public.imports as restrictive
   for update to authenticated using (public.has_shop_permission(shop_id, 'upload_imports') or public.has_shop_permission(shop_id, 'approve_imports'))
   with check (public.has_shop_permission(shop_id, 'upload_imports') or public.has_shop_permission(shop_id, 'approve_imports'));
 
+-- Replace older role-only permissive policies so explicit grants work too.
+alter policy "managers create settings" on public.shop_settings
+  with check (public.has_shop_permission(shop_id, 'change_settings'));
+alter policy "managers update settings" on public.shop_settings
+  using (public.has_shop_permission(shop_id, 'change_settings'))
+  with check (public.has_shop_permission(shop_id, 'change_settings'));
+alter policy "managers create notifications" on public.notifications
+  with check (public.has_shop_permission(shop_id, 'manage_notifications') and created_by = auth.uid());
+alter policy "recipients and managers read notifications" on public.notifications
+  using (public.has_shop_access(shop_id) and (
+    public.has_shop_permission(shop_id, 'manage_notifications') or exists (
+      select 1 from public.notification_recipients r where r.notification_id = notifications.id
+      and r.shop_id = notifications.shop_id and (r.user_id = auth.uid() or r.target = 'display'))));
+alter policy "managers create recipients" on public.notification_recipients
+  with check (public.has_shop_permission(shop_id, 'manage_notifications') and exists (
+    select 1 from public.notifications n where n.id = notification_id and n.shop_id = notification_recipients.shop_id)
+    and ((target = 'display' and user_id is null) or (target = 'user' and exists (
+      select 1 from public.shop_members m where m.shop_id = notification_recipients.shop_id
+      and m.user_id = notification_recipients.user_id and m.status = 'approved'))));
+alter policy "read own or display recipients" on public.notification_recipients
+  using (public.has_shop_access(shop_id) and (user_id = auth.uid() or target = 'display'
+    or public.has_shop_permission(shop_id, 'manage_notifications')));
+alter policy "managers read invites" on public.staff_invites
+  using (public.has_shop_permission(shop_id, 'manage_staff'));
+alter policy "managers create invites" on public.staff_invites
+  with check (public.has_shop_permission(shop_id, 'manage_staff') and created_by = auth.uid() and role <> 'owner');
+alter policy "managers update invites" on public.staff_invites
+  using (public.has_shop_permission(shop_id, 'manage_staff'))
+  with check (public.has_shop_permission(shop_id, 'manage_staff') and role <> 'owner');
+alter policy "managers decide membership" on public.shop_members
+  using (public.has_shop_permission(shop_id, 'manage_staff') and role <> 'owner')
+  with check (public.has_shop_permission(shop_id, 'manage_staff') and role <> 'owner');
+alter policy "shop members upload files" on storage.objects
+  with check (bucket_id = 'shop-uploads' and public.has_shop_permission(((storage.foldername(name))[1])::uuid, 'upload_imports'));
+
 -- Definer functions bypass RLS, so their operation guards are explicit.
 CREATE OR REPLACE FUNCTION public.save_shop_metrics(
   p_shop_id uuid,
@@ -490,4 +525,42 @@ begin
     where id = p_import_id;
 
   return jsonb_build_object('saved', v_saved, 'needs_review', v_review);
+end $$;
+create or replace function public.add_staff_member(p_email text, p_role public.member_role default 'staff')
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_user uuid := auth.uid();
+  v_shop uuid;
+  v_email text := lower(trim(p_email));
+  v_target uuid;
+begin
+  if v_user is null then raise exception 'Sign in required'; end if;
+  if p_role = 'owner' then raise exception 'The owner role cannot be granted'; end if;
+  if v_email is null or v_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' then
+    raise exception 'Enter a valid email address';
+  end if;
+
+  select m.shop_id into v_shop from public.shop_members m
+   where m.user_id = v_user and m.status = 'approved' and public.has_shop_permission(m.shop_id, 'manage_staff') limit 1;
+  if v_shop is null then raise exception 'Only the owner or a manager can add staff'; end if;
+
+  insert into public.staff_invites (shop_id, email, role, created_by)
+  values (v_shop, v_email, p_role, v_user)
+  on conflict (shop_id, email) do update set role = excluded.role, created_by = excluded.created_by;
+
+  select u.id into v_target from auth.users u where lower(trim(u.email)) = v_email limit 1;
+
+  if v_target is not null then
+    insert into public.shop_members (shop_id, user_id, email, role, status, decided_at, decided_by)
+    values (v_shop, v_target, v_email, p_role, 'approved', now(), v_user)
+    on conflict (shop_id, user_id) do update
+      set status = case when public.shop_members.role = 'owner' then public.shop_members.status else 'approved' end,
+          role = case when public.shop_members.role = 'owner' then public.shop_members.role else p_role end,
+          email = coalesce(public.shop_members.email, v_email),
+          decided_at = now(), decided_by = v_user;
+    update public.staff_invites set claimed_at = now() where shop_id = v_shop and email = v_email;
+    return jsonb_build_object('status', 'approved');
+  end if;
+
+  return jsonb_build_object('status', 'invited');
 end $$;
