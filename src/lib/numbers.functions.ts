@@ -22,10 +22,11 @@ type Supa = { from: (t: string) => any; rpc: (fn: string, args?: Record<string, 
 async function requirePermission(supabase: unknown, userId: string, permission: PermissionKey) {
   const { resolveShop } = await import("./numbers.server");
   const shop = await resolveShop(supabase, userId);
-  const { data: overrides } = await (supabase as Supa)
+  const { data: overrides, error: permissionError } = await (supabase as Supa)
     .from("role_permissions")
     .select("role, permission, allowed")
     .eq("shop_id", shop.shopId);
+  if (permissionError) throw new Error("Unable to verify your permissions. Please try again.");
   if (
     !can(
       shop.role,

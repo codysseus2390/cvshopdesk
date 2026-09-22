@@ -45,13 +45,16 @@ export const getAdminConfig = createServerFn({ method: "GET" })
     const sb = context.supabase as unknown as Supa;
     const membership = await currentMembership(context.supabase, context.userId);
 
-    const [{ data: overrides }, { data: settings }] = await Promise.all([
-      sb
-        .from("role_permissions")
-        .select("role, permission, allowed")
-        .eq("shop_id", membership.shop_id),
-      sb.from("shop_settings").select("*").eq("shop_id", membership.shop_id).maybeSingle(),
-    ]);
+    const [{ data: overrides, error: permissionError }, { data: settings, error: settingsError }] =
+      await Promise.all([
+        sb
+          .from("role_permissions")
+          .select("role, permission, allowed")
+          .eq("shop_id", membership.shop_id),
+        sb.from("shop_settings").select("*").eq("shop_id", membership.shop_id).maybeSingle(),
+      ]);
+    if (permissionError) throw new Error("Unable to verify your permissions. Please try again.");
+    if (settingsError) throw new Error("Unable to load shop settings. Please try again.");
 
     return {
       role: membership.role,

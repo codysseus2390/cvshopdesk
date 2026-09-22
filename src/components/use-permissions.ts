@@ -12,7 +12,7 @@ export function usePermissions() {
     staleTime: 30_000,
   });
 
-  const role = (query.data?.role ?? null) as AppRole | null;
+  const role = (query.isError ? null : (query.data?.role ?? null)) as AppRole | null;
   const overrides = query.data?.overrides ?? [];
   const permissions = role ? resolvePermissions(role, overrides) : null;
 

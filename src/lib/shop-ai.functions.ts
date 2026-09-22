@@ -53,18 +53,20 @@ interface StoredAttachment {
 }
 
 async function requireMembership(sb: Supa, userId: string) {
-  const { data: member } = await sb
+  const { data: member, error: membershipError } = await sb
     .from("shop_members")
     .select("shop_id, role, shops(timezone)")
     .eq("user_id", userId)
     .eq("status", "approved")
     .maybeSingle();
+  if (membershipError) throw new Error("Unable to verify your shop membership. Please try again.");
   if (!member?.shop_id) throw new Error("You do not have access to a shop yet.");
   const timezone = (member.shops?.timezone as string | undefined) ?? "America/Chicago";
-  const { data: overrides } = await sb
+  const { data: overrides, error: permissionError } = await sb
     .from("role_permissions")
     .select("role, permission, allowed")
     .eq("shop_id", member.shop_id);
+  if (permissionError) throw new Error("Unable to verify your permissions. Please try again.");
   const permissions = resolvePermissions(member.role as AppRole, (overrides ?? []) as never);
   return {
     shopId: member.shop_id as string,
