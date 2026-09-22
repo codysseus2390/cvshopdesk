@@ -1,5 +1,55 @@
 # HANDOFF.md — Living Handoff Document
 
+## 2026-09-22 — Astra implementation paused at owner's request
+
+**Status: IN PROGRESS. Not release-ready.** The owner asked to stop because the five-hour usage window is nearly exhausted. Do not restart planning or the old five-round review loop. Resume this implementation only when requested.
+
+- Branch: `feat/shopdesk-astra-implementation`.
+- Worktree: `C:\Users\ivinb\Documents\Codex\2026-09-22\final-round-5-of-5-is\work\shopdesk`.
+- Original checkout: `C:\Users\ivinb\cvshopdesk`, preserved on `feat/tv-mode-redesign` with its existing `.gitignore`, `.claude/`, plan, and review-log changes.
+- Implementation baseline: `59b5e69bfa4c42101546ba8548fc080a16ea26fb`.
+- First tested/pushed checkpoint: `fa13638` (failed permission reads now fail closed). Latest implementation checkpoint: `5aecab6fd9d7921de2bfe8945157365120251ac1`. This handoff is a following documentation-only commit.
+- Contract: this branch's `plan.md`, an unchanged copy of the active original plan. SHA256 `dc554beae33fa724ac85fe345f977fcb297026f0a1b7f764dd81dec9bf1b55b7`. The owner authorized implementation after replacing the older plan. Its old APPROVED verdict does not apply to this replacement or to code.
+- User decisions: Monday uses Friday as **Previous open day**; exclude closed dates from expected coverage and goal pacing while retaining real weekend entries. TV YoY graphs belong in the **three number cards only**, not mechanic productivity.
+
+### Completed code and draft work
+
+1. Server permission/config reads in numbers, admin, and Hank now throw on query failures; the permission hook denies access following a failed refresh. Regression tests cover failed reads and a protected fetch not occurring.
+2. Added `permissions.server.ts` for checked effective permission reads. Dashboard writes and reads enforce their relevant permission. Dashboard/report productivity queries are conditional on `view_productivity`, and Numbers filters productivity rows, goals, technician names, and correction payloads when denied.
+3. Added `read-all-rows.ts` with 500-row pagination and whole-report failure on an incomplete/error page. Dashboard queries have explicit shop/date bounds and stable ordering. Numbers requests the current and comparison windows with an OR filter rather than all dates between them.
+4. **Draft, unapplied** migration `0023_effective_permissions.sql`: shared effective-permission SQL; manager-denial fix; restrictive record/productivity/settings/notification/import policies; explicit definer RPC save/import guards; private import metric helper revoked from authenticated callers. Existing migration 0022 is newly registered in the Drizzle journal (its file was already present, and its function exists on staging despite only 22 journal entries). No existing SQL migration was edited.
+5. Added `test:integration` using dev-only PGlite (disposable PostgreSQL, no connection-string option). Replays all 24 migrations against minimal Supabase auth/storage schema shims and checks seven identities, explicit denial/grant, real affected-row counts, RPC denial, identity spoofing, and preservation of metric history. **This is not a real Supabase token/browser test.** Existing 17 live-DB unit checks remain skipped.
+6. Added root `SessionBoundary`, global RPC epoch middleware, and membership polling/reset logic in `AccessGate`. User changes clear/cancel cache and remount children; token refresh does not. Late RPC responses from earlier identities are rejected. Membership scope changes reset protected queries and mutations. **Browser verification is still outstanding**, especially initial loading, cross-tab auth, A-B-A switching, errors, revoked membership, active queries, and late mutations.
+7. Added **unwired** pure business-calendar functions and tests (previous open date, explicit exceptions, effective schedules, date-set coverage, split-month goal allocation). No calendar schema, UI, reporting integration, or production behavior has been changed yet.
+
+### Verification and release boundaries
+
+- Dependency install used the frozen lockfile; PGlite was subsequently added intentionally as a dev dependency.
+- Final pause checks: typecheck passed; 92 unit tests passed / 17 existing DB checks skipped; all 6 development-environment tests passed. Integration passed with all 24 migrations (migration and integration runner unchanged since that run).
+- Final lint: 0 errors and 17 existing warnings. `git diff --check` passed.
+- Build transformed the client and server, then failed in Nitro's file tracing with sandbox `EPERM: readlink C:\Users\ivinb`. Retry the build with justified filesystem permission; do not call this a passed build. The latest session-boundary edits were not part of that completed build attempt.
+- No migrations applied to staging or production. Supabase tool calls were read-only. No merge, PR, or deployment performed. No Figma/browser/real-TV verification yet. No independent Claude implementation inspection yet.
+- The initial push was rejected because destination ownership was unverified. GitHub subsequently confirmed connected-account admin/push access to `codysseus2390/cvshopdesk`; the same ordinary feature-branch push succeeded. Do not work around approval blocks.
+
+### Exact next step
+
+**Review and finish Phase 1's permission matrix before starting more calendar/UI work.** Compare every operation across server handlers, UI, direct RLS, definer RPCs, imports, and Hank; extend real affected-row tests. Current restrictive policies preserve older hard-coded manager policies, so explicit grants can still fail for settings/notifications. Staff-management policies/RPCs, notification recipients, storage, all writes' zero-row handling, query identity/shop key factories, and end-to-end productivity leakage checks remain unfinished. Recheck `getAdminConfig` and direct settings reads for productivity-related fields. Do not apply the draft migration until those paths and grants are consistent.
+
+Then follow the unchanged plan: integrate the owner-confirmed calendar/timezone rules; finish trustworthy chart completeness and shared data hooks; implement the small UI and craft changes; TV graphs/layout; secure enrolled-device account picker; complete browser/token/integration checks and fresh Claude inspection (codex-build workflow, at most 2 fix and 2 inspection rounds). Do not claim any of those later phases have been completed.
+
+### Environment/reference details for continuation
+
+- Node 24.19.0 / Bun 1.4.2. Commands: `bun run typecheck`, `bun run lint`, `bun run test:unit`, `bun run test:integration`, `bun run build`, `bun run check:env`.
+- Worktree tracked `.env` is legacy public configuration, **not verified staging config**. Do not run browser/API mutations from it. Original `.env.local` only listed `VERCEL_OIDC_TOKEN`; do not copy secrets or print values.
+- Verified staging project: `fsmyugwrfuvqrrhufryf`; production: `cblabtksphjsnkkyfnmo`. Staging has 22 recorded Drizzle migrations and one shop. There is no Supabase migrations history; preserve the existing Drizzle deployment path.
+- Read-only verified Cedar shop IDs: staging `7abf0d1f-1faf-488a-b356-ce635e278bc2`, production `8d1b6141-6f8a-441e-9725-f2d8358e62c5`; both named Cedar Valley Tire & Auto Service, America/Chicago. Do not apply their weekday calendar or display productivity grant globally to other shops.
+- Skills read: `C:\Users\ivinb\.agents\skills\codex-build\SKILL.md`, sibling claudex-loop build/runtime references, Supabase skill. Host builds; a fresh safe/read-only Claude inspector is required later. Recommended inspector from the reviewed handoff was Fable 5.1 High; never silently substitute a model.
+- Runner: `C:\Users\ivinb\.agents\skills\claudex-loop\scripts\runner.py`; Python: `C:\Users\ivinb\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe`; Claude: `C:\Users\ivinb\.local\bin\claude.exe`. Keep inspection artifacts outside this checkout.
+- Approved Figma reference: `https://www.figma.com/design/1GarIodYxJ1rBaTeuFYSVp`; craft exploration: `https://www.figma.com/design/tnwstlDvU6Pfkd43SLvCOc`. Read the applicable Figma skill before tool use.
+- Prior review and final-plan delivery copies are in the task's `outputs/`; superseded original-plan backup and the one-time migration-generation script are in the task's `work/`. **Do not rerun `append-permission-rpcs.mjs`**: it appends definitions and intentionally refuses duplicate journal entries.
+
+---
+
 This file is updated by an agent at the end of every session or whenever a task is
 handed off. The next agent should read this before starting any work.
 
