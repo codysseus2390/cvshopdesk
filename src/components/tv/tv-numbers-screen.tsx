@@ -1,9 +1,9 @@
-import { CarFront, CircleDashed, CircleDollarSign, Wrench } from "lucide-react";
+import { CarFront, CircleDashed, CircleDollarSign } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { TvMetricCard, type TvPeriodValue } from "./tv-metric-card";
+import { TvProductivityCard } from "./tv-productivity-card";
 import { cn } from "@/lib/utils";
 import { formatCount, formatCurrency } from "@/lib/metrics-math";
-import { formatProductivity } from "@/lib/productivity-math";
 import type { useDashboard } from "@/routes/_authenticated/hub";
 
 type DashboardData = NonNullable<ReturnType<typeof useDashboard>["data"]>;
@@ -49,17 +49,6 @@ export function TvNumbersScreen({ dashboard }: { dashboard: DashboardData | unde
       values: [mtd?.car_count ?? null, week?.car_count ?? null, prev?.car_count ?? null],
       format: formatCount,
     },
-    {
-      label: "Mechanic productivity",
-      icon: Wrench,
-      accent: "primary",
-      values: [
-        mtd?.mechanic_productivity ?? null,
-        week?.mechanic_productivity ?? null,
-        dashboard?.previousDayProductivity ?? null,
-      ],
-      format: formatProductivity,
-    },
   ];
 
   return (
@@ -73,11 +62,20 @@ export function TvNumbersScreen({ dashboard }: { dashboard: DashboardData | unde
           month={period("This month", metric.values[0], metric.format)}
           week={period("This week", metric.values[1], metric.format)}
           previousDay={period("Previous day", metric.values[2], metric.format)}
-          // Hairline rules between cells instead of gaps, so the four KPIs read
-          // as one instrument panel.
+          // Hairline rules between cells instead of gaps, so the panel reads as
+          // one instrument cluster.
           className={cn(index % 2 === 0 && "border-r border-border", index < 2 && "border-b")}
         />
       ))}
+      {/* Fourth cell: per-mechanic breakdown, matching the dashboard panel. */}
+      <TvProductivityCard
+        mechanics={dashboard?.mechanics}
+        shop={[
+          dashboard?.previousDayProductivity ?? null,
+          week?.mechanic_productivity ?? null,
+          mtd?.mechanic_productivity ?? null,
+        ]}
+      />
     </div>
   );
 }
