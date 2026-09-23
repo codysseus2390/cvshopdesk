@@ -79,4 +79,3 @@ export function parseAutoflowAppointments(payload: unknown, timezone: string, fe
     flags: [] as string[],
   }));
 }
-
