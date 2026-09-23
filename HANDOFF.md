@@ -1,5 +1,48 @@
 # HANDOFF.md — Living Handoff Document
 
+## 2026-09-23 — Animated TV redesign from the owner's two references
+
+Branch: codex/tv-animated-redesign. Released source commit:
+e2489aee0877be767a482eb56a27a9775bfb52ec (also codex/autoflow-release).
+Do not deploy main: this still builds on the existing safe release line.
+
+Figma: https://www.figma.com/design/P7whBvxGPIv9NXz4aj3UDC
+Shop frame 2:2; numbers frame 4:34. Figma uses reference samples only;
+production uses existing live queries. Existing repository brand asset retained.
+
+TV now has a carbon-style background with drifting orange light trails,
+status-colored breathing borders/rails, separate In Shop / Upcoming / Done
+scrolling columns, and a right-hand 12-hour schedule. Numbers uses separate
+illuminated KPI cards and large MTD values. User explicitly requested mechanics
+only: the Shop total row and its prop are removed from TV productivity.
+
+Both screens remain mounted for an 850ms slide/crossfade and light sweep.
+Inactive screen is inert and hidden from assistive technology. Pause freezes
+ambient effects, rails, auto rotation and scrolling; live timers still tick.
+Reduced motion disables CSS motion and list auto scrolling. No new dependencies,
+backend/schema changes, workflow writes, or changes to missing metric handling.
+
+Validation: 111 unit tests passed, 17 DB tests skipped. Typecheck and build pass;
+ESLint has no errors (one existing route export warning locally). Final Actions
+35934684594 passed tests, lint, typecheck, build and secret scan.
+Browser checked live workflow/descriptions, status columns, scrolling, timer
+progress while paused, decorative animation, manual/automatic screen rotation,
+720p and full-HD layouts. Final 720p table has only Dale/Josh/Teagen and fits
+without overflow. Viewport override reset after checks.
+
+Final Preview: 6rYjTJ3AS5QMBG2Rc4J1GYsJxCYF
+https://cvshopdesk-5wn1h9gol-codysseus90.vercel.app/tv
+Production build: CLzVzfAgqyfh3d2HmiMu3QJpzUfM (rebuilt with Production settings).
+Source e2489ae; Vercel confirms Ready / Production / Current with domain app.cedarvalleytire.com.
+The production browser still needs an owner sign-in for a live-data visual check.
+The release branch alias can point to the production rebuild; use the unique
+Preview URL above for staging. No PR/main merge.
+
+Relevant files: src/components/tv/*.tsx, src/routes/_authenticated/tv.tsx,
+src/styles.css. Next step: optional signed-in production visual check once the owner signs in.
+
+---
+
 ## 2026-09-23 — TV job-description correction
 
 Branch `codex/tv-job-descriptions` continues the production release, not main.
