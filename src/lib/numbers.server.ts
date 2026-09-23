@@ -18,11 +18,15 @@ import {
   type ReportRow,
 } from "./numbers-math";
 import { shopToday } from "./metrics-math";
+import { readShopPermissions } from "./permissions.server";
+import { readAllRows } from "./read-all-rows";
+import { readBusinessCalendar } from "./calendar.server";
 import {
   overallProductivity,
   SHOP_PRODUCTIVITY_TECHNICIAN,
   type ProductivityInput,
 } from "./productivity-math";
+import { resolveShopTimeZone } from "./timezone";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Supa = { from: (t: string) => any; rpc: (fn: string, args?: Record<string, unknown>) => any };
@@ -46,7 +50,7 @@ export async function resolveShop(supabase: unknown, userId: string): Promise<Sh
   return {
     shopId: data.shop_id as string,
     role: data.role as string,
-    timezone: (data.shops?.timezone as string) ?? "America/Chicago",
+    timezone: resolveShopTimeZone(data.shops?.timezone as string | null | undefined),
     name: (data.shops?.name as string) ?? "Cedar Valley",
   };
 }
@@ -82,6 +86,9 @@ export interface NumbersReport {
   basis: string;
   as_of: string | null;
   covered_days: number;
+  /** False when the shop hasn't configured a business calendar (b): weekly goal
+   * proration and open-day coverage fall back to legacy, calendar-unaware math. */
+  calendarConfigured: boolean;
   rows: ReportRow[];
   technicians: string[];
   goal_rules: GoalRules;
@@ -104,41 +111,77 @@ export async function buildNumbersReport(
 ): Promise<NumbersReport> {
   const sb = supabase as Supa;
   const today = shopToday(shop.timezone);
+  const allowed = await readShopPermissions(supabase, shop.shopId, shop.role);
+  if (!allowed("view_dashboard")) throw new Error("You do not have permission to view reports.");
+  const showProductivity = allowed("view_productivity");
+  // (b) No calendar configured: pass `undefined` so goalFor/proration use their
+  // existing legacy, calendar-unaware branches instead of guessing a calendar.
+  const calendar = await readBusinessCalendar(supabase, shop.shopId);
+  const calendarConfigured = calendar !== null;
+  const calendarOrUndefined = calendar ?? undefined;
   const range = resolvePeriod(kind, anchor && /^\d{4}-\d{2}-\d{2}$/.test(anchor) ? anchor : today);
   const prev = previousYearPeriod(range);
 
-  const [{ data: settings }, { data: metricRows }, { data: prodRows }, { data: corrections }] =
-    await Promise.all([
-      sb
-        .from("shop_settings")
-        .select("targets, goal_rules, technician_goals")
-        .eq("shop_id", shop.shopId)
-        .maybeSingle(),
+  const [
+    { data: settings, error: settingsError },
+    { data: metricRows, error: metricsError },
+    { data: prodRows, error: productivityError },
+    { data: corrections, error: correctionsError },
+  ] = await Promise.all([
+    sb
+      .from("shop_settings")
+      .select("targets, goal_rules, technician_goals")
+      .eq("shop_id", shop.shopId)
+      .maybeSingle(),
+    readAllRows<NumbersRow>((from, to) =>
       sb
         .from("metric_snapshots")
         .select("business_date, scope, sales, gross_profit, tires_sold, car_count, created_at")
+        .eq("shop_id", shop.shopId)
         .eq("is_current", true)
-        .gte("business_date", prev.from)
-        .lte("business_date", range.to),
-      sb
-        .from("technician_productivity")
-        .select(
-          "business_date, technician, productivity_pct, hours_billed, hours_worked, period_scope, note, updated_at",
+        .or(
+          `and(business_date.gte.${prev.from},business_date.lte.${prev.to}),and(business_date.gte.${range.from},business_date.lte.${range.to})`,
         )
-        .gte("business_date", prev.from)
-        .lte("business_date", range.to),
-      sb
-        .from("metric_corrections")
-        .select("id, business_date, field, previous_value, new_value, corrected_at, note")
-        .gte("business_date", range.from)
-        .lte("business_date", range.to)
-        .order("corrected_at", { ascending: false })
-        .limit(50),
-    ]);
+        .order("business_date")
+        .order("id")
+        .range(from, to),
+    ),
+    showProductivity
+      ? readAllRows<ProductivityRow>((from, to) =>
+          sb
+            .from("technician_productivity")
+            .select(
+              "business_date, technician, productivity_pct, hours_billed, hours_worked, period_scope, note, updated_at",
+            )
+            .eq("shop_id", shop.shopId)
+            .or(
+              `and(business_date.gte.${prev.from},business_date.lte.${prev.to}),and(business_date.gte.${range.from},business_date.lte.${range.to})`,
+            )
+            .order("business_date")
+            .order("id")
+            .range(from, to),
+        )
+      : Promise.resolve({ data: [], error: null }),
+    sb
+      .from("metric_corrections")
+      .select("id, business_date, field, previous_value, new_value, corrected_at, note")
+      .eq("shop_id", shop.shopId)
+      .gte("business_date", range.from)
+      .lte("business_date", range.to)
+      .order("corrected_at", { ascending: false })
+      .limit(50),
+  ]);
+  if (settingsError || metricsError || productivityError || correctionsError)
+    throw new Error("Unable to load the complete report. Please try again.");
 
   const rows = (metricRows ?? []) as NumbersRow[];
   const productivity = (prodRows ?? []) as ProductivityRow[];
-  const goalRules = (settings?.goal_rules ?? {}) as GoalRules;
+  const goalRules = Object.fromEntries(
+    Object.entries((settings?.goal_rules ?? {}) as GoalRules).filter(
+      ([key]) =>
+        showProductivity || (key !== "mechanic_productivity" && !key.startsWith("productivity:")),
+    ),
+  ) as GoalRules;
   const legacyTargets = (settings?.targets ?? {}) as Record<string, number | null>;
 
   const actuals = aggregatePeriod(rows, range, today);
@@ -147,7 +190,9 @@ export async function buildNumbersReport(
 
   const technicians = Array.from(
     new Set([
-      ...((settings?.technician_goals ?? []) as { technician: string }[]).map((g) => g.technician),
+      ...(
+        (showProductivity ? (settings?.technician_goals ?? []) : []) as { technician: string }[]
+      ).map((g) => g.technician),
       ...productivity.map((p) => p.technician),
     ]),
   )
@@ -159,6 +204,7 @@ export async function buildNumbersReport(
 
   const report: ReportRow[] = [];
   for (const def of NUMBER_METRICS) {
+    if (def.key === "mechanic_productivity" && !showProductivity) continue;
     const actual =
       def.key === "mechanic_productivity"
         ? mechanicActual
@@ -175,7 +221,7 @@ export async function buildNumbersReport(
       buildReportRow(
         def,
         actual,
-        goalFor(def, rule, range, previousValue),
+        goalFor(def, rule, range, previousValue, calendarOrUndefined),
         previousValue,
         changedFields.has(def.key),
       ),
@@ -189,7 +235,7 @@ export async function buildNumbersReport(
       buildReportRow(
         def,
         actual,
-        goalFor(def, goalRules[def.key], range, previousValue),
+        goalFor(def, goalRules[def.key], range, previousValue, calendarOrUndefined),
         previousValue,
         changedFields.has(def.key),
       ),
@@ -204,9 +250,14 @@ export async function buildNumbersReport(
     basis: actuals.basis,
     as_of: actuals.as_of,
     covered_days: actuals.covered_days,
+    calendarConfigured,
     rows: report,
     technicians,
     goal_rules: goalRules,
-    corrections: (corrections ?? []) as NumbersReport["corrections"],
+    corrections: ((corrections ?? []) as NumbersReport["corrections"]).filter(
+      (row) =>
+        showProductivity ||
+        (row.field !== "mechanic_productivity" && !row.field.startsWith("productivity:")),
+    ),
   };
 }

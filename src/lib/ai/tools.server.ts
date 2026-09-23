@@ -32,8 +32,15 @@ export interface ShopAiToolContext {
   supabase: any;
   shopId: string;
   userId: string;
+  /** The signed-in member's role in this shop, e.g. "owner" | "manager" | "staff". */
+  role: string;
   timezone: string;
-  /** The shop's current business date (America/Chicago by default). */
+  /**
+   * The shop's current business date, computed from its own validated,
+   * configured IANA timezone. There is no hardcoded default timezone — an
+   * unconfigured or invalid shop timezone fails visibly upstream instead of
+   * silently falling back to America/Chicago (see src/lib/timezone.ts).
+   */
   today: string;
   /** Effective permissions of the signed-in staff member. */
   can: (permission: PermissionKey) => boolean;

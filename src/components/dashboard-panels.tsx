@@ -28,7 +28,13 @@ export type DashboardMechanics = {
   month: Record<string, MechanicValue>;
 };
 
-export function DashboardMiddleRow({ mechanics }: { mechanics: DashboardMechanics }) {
+export function DashboardMiddleRow({
+  mechanics,
+  calendarConfigured,
+}: {
+  mechanics: DashboardMechanics;
+  calendarConfigured: boolean;
+}) {
   return (
     <section
       className="stagger-in grid gap-3 xl:grid-cols-[1fr_1.19fr_1.08fr]"
@@ -36,7 +42,7 @@ export function DashboardMiddleRow({ mechanics }: { mechanics: DashboardMechanic
     >
       <RecentImportsPanel />
       <NotificationsTvPanel />
-      <MechanicProductivityPanel mechanics={mechanics} />
+      <MechanicProductivityPanel mechanics={mechanics} calendarConfigured={calendarConfigured} />
     </section>
   );
 }
@@ -197,7 +203,13 @@ function NotificationsTvPanel() {
   );
 }
 
-function MechanicProductivityPanel({ mechanics }: { mechanics: DashboardMechanics }) {
+function MechanicProductivityPanel({
+  mechanics,
+  calendarConfigured,
+}: {
+  mechanics: DashboardMechanics;
+  calendarConfigured: boolean;
+}) {
   return (
     <Card className="card-lift min-w-0 rounded-2xl border-border/90 bg-card shadow-card panel-glow-profit">
       <CardHeader className="flex-row items-center justify-between gap-2 px-4 py-3">
@@ -215,7 +227,9 @@ function MechanicProductivityPanel({ mechanics }: { mechanics: DashboardMechanic
             <thead className="bg-muted/55 text-muted-foreground">
               <tr className="h-11">
                 <th className="px-3 py-2 text-left text-xs font-medium">Mechanic</th>
-                <th className="px-2 py-2 text-right text-xs font-medium">Prev day</th>
+                <th className="px-2 py-2 text-right text-xs font-medium">
+                  {calendarConfigured ? "Prev open day" : "Prev day"}
+                </th>
                 <th className="px-2 py-2 text-right text-xs font-medium">This wk</th>
                 <th className="px-3 py-2 text-right text-xs font-medium">Month</th>
               </tr>

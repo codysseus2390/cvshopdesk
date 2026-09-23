@@ -13,6 +13,7 @@ import {
 } from "@/components/tv/tv-shop-screen";
 import { TvStatusBar } from "@/components/tv/tv-status-bar";
 import { cn } from "@/lib/utils";
+import { isValidTimeZone } from "@/lib/timezone";
 import { useDashboard } from "./hub";
 import { useBoard, type BoardJob } from "./board";
 import { listDisplayNotifications } from "@/lib/notifications.functions";
@@ -52,21 +53,32 @@ function lastName(name: string | null): string {
   return parts[parts.length - 1] || name;
 }
 
-function shortTime(iso: string | null): string {
+/** `timezone` must already be validated by the caller (never a raw, possibly-invalid
+ *  value) — this never falls back to the viewer's device-local time. A job with no
+ *  timestamp at all still reads as "—"; an invalid/missing shop timezone reads as the
+ *  labeled "Time unavailable" so the two "no data" cases are never confused.
+ *  NOTE: `TvAppointmentRow` (src/components/tv/tv-appointment-row.tsx) keys its
+ *  compact two-line unavailable style off this exact literal — keep both in sync
+ *  if this copy ever changes. */
+function shortTime(iso: string | null, timezone: string | undefined): string {
   if (!iso) return "—";
+  if (!isValidTimeZone(timezone)) return "Time unavailable";
   return new Date(iso)
-    .toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+    .toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: timezone })
     .replace(/\s?[AP]M$/i, "");
 }
 
-function buildSchedule(board: ReturnType<typeof useBoard>["data"]): TvScheduleRow[] {
+function buildSchedule(
+  board: ReturnType<typeof useBoard>["data"],
+  timezone: string | undefined,
+): TvScheduleRow[] {
   if (!board) return [];
   const rows: (TvScheduleRow & { sortKey: number | null })[] = [];
 
   for (const job of [...board.appointments]) {
     rows.push({
       id: job.id,
-      time: shortTime(job.appointment_at),
+      time: shortTime(job.appointment_at, timezone),
       vehicleCustomer: `${job.vehicle_label ?? "Vehicle not recorded"} · ${lastName(job.customer_name)}`,
       job: job.requested_service ?? "Service not recorded",
       status: "upcoming",
@@ -86,7 +98,7 @@ function buildSchedule(board: ReturnType<typeof useBoard>["data"]): TvScheduleRo
   for (const job of [...board.jobs, ...board.jobsWithoutArrival] as BoardJob[]) {
     rows.push({
       id: job.id,
-      time: shortTime(job.arrival_at),
+      time: shortTime(job.arrival_at, timezone),
       vehicleCustomer: `${job.vehicle_label ?? "Vehicle not recorded"} · ${lastName(job.customer_name)}`,
       job: job.requested_service ?? "Service not recorded",
       status: "in_shop",
@@ -97,7 +109,7 @@ function buildSchedule(board: ReturnType<typeof useBoard>["data"]): TvScheduleRo
     const anchor = job.arrival_at ?? job.appointment_at;
     rows.push({
       id: job.id,
-      time: shortTime(anchor),
+      time: shortTime(anchor, timezone),
       vehicleCustomer: `${job.vehicle_label ?? "Vehicle not recorded"} · ${lastName(job.customer_name)}`,
       job: job.requested_service ?? "Service not recorded",
       status: "done",
@@ -134,8 +146,9 @@ function TvMode() {
   }, []);
 
   const screen = screenAt(elapsed);
+  const shopTimezone = dashboard.data?.shop.timezone;
 
-  const schedule = buildSchedule(board.data);
+  const schedule = buildSchedule(board.data, shopTimezone);
   const visibleSchedule = schedule.slice(0, SCHEDULE_ROW_LIMIT);
   const counts = {
     inShop: (board.data?.jobs.length ?? 0) + (board.data?.jobsWithoutArrival.length ?? 0),
@@ -145,11 +158,11 @@ function TvMode() {
   };
   const nextUp: TvNextUpItem[] = (board.data?.appointments ?? []).slice(0, 3).map((job) => ({
     id: job.id,
-    time: shortTime(job.appointment_at),
+    time: shortTime(job.appointment_at, shopTimezone),
     vehicleCustomer: `${job.vehicle_label ?? "Vehicle not recorded"} · ${lastName(job.customer_name)}`,
   }));
   const nextAppointment = board.data?.appointments[0]?.appointment_at
-    ? shortTime(board.data.appointments[0].appointment_at)
+    ? shortTime(board.data.appointments[0].appointment_at, shopTimezone)
     : null;
 
   const problem =
@@ -175,7 +188,7 @@ function TvMode() {
       <div className="relative z-10 flex h-full min-h-0 flex-col">
         <TvHeader
           title={screen === "numbers" ? "Shop numbers" : "Today's shop"}
-          timezone={board.data?.timezone}
+          timezone={shopTimezone}
           alert={alert}
         />
 

@@ -889,6 +889,7 @@ export type Database = {
       };
       shop_settings: {
         Row: {
+          business_calendar: Json | null;
           goal_rules: Json;
           hidden_widgets: Json;
           shop_id: string;
@@ -898,6 +899,7 @@ export type Database = {
           updated_by: string | null;
         };
         Insert: {
+          business_calendar?: Json | null;
           goal_rules?: Json;
           hidden_widgets?: Json;
           shop_id: string;
@@ -907,6 +909,7 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
+          business_calendar?: Json | null;
           goal_rules?: Json;
           hidden_widgets?: Json;
           shop_id?: string;

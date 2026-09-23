@@ -9,6 +9,9 @@
  *  - Nothing dated after the shop's current business day is counted in current results.
  */
 
+import { openDates, missingOpenDates, type BusinessCalendar } from "./business-calendar";
+import { addDays } from "./numbers-math";
+import { resolveShopTimeZone } from "./timezone";
 export type Scope = "daily" | "mtd" | "ytd" | "invoice" | "inventory" | "jobs" | "other";
 
 export interface MetricRow {
@@ -73,7 +76,12 @@ function emptyTotals(expectedDays: number): Totals {
  * Sum of daily-scope rows only. Cumulative rows are ignored on purpose.
  * `upTo` (the shop's current business date) excludes future-dated records.
  */
-export function sumDaily(rows: MetricRow[], expectedDays: number, upTo?: string): Totals {
+export function sumDaily(
+  rows: MetricRow[],
+  expectedDays: number | string[],
+  upTo?: string,
+): Totals {
+  const expectedCount = typeof expectedDays === "number" ? expectedDays : expectedDays.length;
   const daily = rows.filter(
     (r) => r.scope === "daily" && (upTo === undefined || r.business_date <= upTo),
   );
@@ -84,7 +92,7 @@ export function sumDaily(rows: MetricRow[], expectedDays: number, upTo?: string)
     if (!existing || (r.created_at ?? "") >= (existing.created_at ?? ""))
       byDate.set(r.business_date, r);
   }
-  if (byDate.size === 0) return emptyTotals(expectedDays);
+  if (byDate.size === 0) return emptyTotals(expectedCount);
 
   const sums: Record<Field, number | null> = {
     gross_profit: null,
@@ -107,11 +115,21 @@ export function sumDaily(rows: MetricRow[], expectedDays: number, upTo?: string)
   }
 
   const coveredDays = byDate.size;
-  const missingDays = Math.max(0, expectedDays - coveredDays);
+  const missingDays =
+    typeof expectedDays === "number"
+      ? Math.max(0, expectedDays - coveredDays)
+      : missingOpenDates(expectedDays, byDate.keys()).length;
+  const fieldCoverage = (field: Field) =>
+    typeof expectedDays === "number"
+      ? cov(withValue[field].size, coveredDays)
+      : {
+          days_with_value: withValue[field].size,
+          days_missing_value: missingOpenDates(expectedDays, withValue[field]).length,
+        };
   const coverage = {
-    gross_profit: cov(withValue.gross_profit.size, coveredDays),
-    tires_sold: cov(withValue.tires_sold.size, coveredDays),
-    car_count: cov(withValue.car_count.size, coveredDays),
+    gross_profit: fieldCoverage("gross_profit"),
+    tires_sold: fieldCoverage("tires_sold"),
+    car_count: fieldCoverage("car_count"),
   };
 
   const { value, note } = ratio({
@@ -265,14 +283,33 @@ function latestCumulative(
  * The latest accepted cumulative `mtd` snapshot replaces the daily sum, but its own
  * as-of date is reported and coverage is marked stale when it predates today.
  */
-export function monthToDate(rows: MetricRow[], monthPrefix: string, today: string): PeriodTotals {
+export function monthToDate(
+  rows: MetricRow[],
+  monthPrefix: string,
+  today: string,
+  calendar?: BusinessCalendar,
+): PeriodTotals {
   const elapsed = daysElapsedInMonth(monthPrefix, today);
-  const boundary = monthPrefix === today.slice(0, 7) ? today : `${monthPrefix}-31`;
+  const boundary =
+    monthPrefix === today.slice(0, 7)
+      ? today
+      : `${monthPrefix}-${String(daysInMonth(monthPrefix)).padStart(2, "0")}`;
+  const expected = calendar
+    ? openDates(`${monthPrefix}-01`, boundary >= today ? addDays(today, -1) : boundary, calendar)
+    : null;
+  if (calendar && expected === null)
+    throw new Error("The shop calendar does not cover this reporting month.");
+  const behindAsOf = (asOf: string | null) =>
+    expected
+      ? expected.filter((date) => !asOf || date > asOf).length
+      : asOf
+        ? daysBetween(asOf, boundary)
+        : elapsed;
   const inMonth = rows.filter((r) => r.business_date.startsWith(monthPrefix));
   const snapshot = latestCumulative(inMonth, "mtd", boundary);
 
   if (snapshot) {
-    const behind = daysBetween(snapshot.business_date, boundary);
+    const behind = behindAsOf(snapshot.business_date);
     return {
       ...fromSnapshot(snapshot, behind),
       basis: "cumulative-snapshot",
@@ -282,13 +319,13 @@ export function monthToDate(rows: MetricRow[], monthPrefix: string, today: strin
     };
   }
 
-  const summed = sumDaily(inMonth, elapsed, boundary);
+  const summed = sumDaily(inMonth, expected ?? elapsed, boundary);
   const dailyDates = inMonth
     .filter((r) => r.scope === "daily" && r.business_date <= boundary)
     .map((r) => r.business_date)
     .sort();
   const asOf = dailyDates.length ? dailyDates[dailyDates.length - 1]! : null;
-  const behind = asOf ? daysBetween(asOf, boundary) : elapsed;
+  const behind = behindAsOf(asOf);
   return {
     ...summed,
     basis: summed.covered_days > 0 ? "daily-sum" : "none",
@@ -303,14 +340,30 @@ export function monthToDate(rows: MetricRow[], monthPrefix: string, today: strin
  * otherwise daily rows in the year are summed against elapsed days of the year.
  * Cumulative and daily scopes are never added together.
  */
-export function yearToDate(rows: MetricRow[], year: string, today: string): PeriodTotals {
+export function yearToDate(
+  rows: MetricRow[],
+  year: string,
+  today: string,
+  calendar?: BusinessCalendar,
+): PeriodTotals {
   const inYear = rows.filter((r) => r.business_date.startsWith(year));
   const boundary = year === today.slice(0, 4) ? today : `${year}-12-31`;
   const elapsed = year === today.slice(0, 4) ? dayOfYear(today) : dayOfYear(`${year}-12-31`);
+  const expected = calendar
+    ? openDates(`${year}-01-01`, boundary >= today ? addDays(today, -1) : boundary, calendar)
+    : null;
+  if (calendar && expected === null)
+    throw new Error("The shop calendar does not cover this reporting year.");
+  const behindAsOf = (asOf: string | null) =>
+    expected
+      ? expected.filter((date) => !asOf || date > asOf).length
+      : asOf
+        ? daysBetween(asOf, boundary)
+        : elapsed;
   const snapshot = latestCumulative(inYear, "ytd", boundary);
 
   if (snapshot) {
-    const behind = daysBetween(snapshot.business_date, boundary);
+    const behind = behindAsOf(snapshot.business_date);
     return {
       ...fromSnapshot(snapshot, behind),
       basis: "cumulative-snapshot",
@@ -344,7 +397,7 @@ export function yearToDate(rows: MetricRow[], year: string, today: string): Peri
     const rolled = sumDaily(asDaily, asDaily.length, boundary);
     const dates = asDaily.map((r) => r.business_date).sort();
     const asOfRolled = dates[dates.length - 1] ?? null;
-    const behindRolled = asOfRolled ? daysBetween(asOfRolled, boundary) : elapsed;
+    const behindRolled = behindAsOf(asOfRolled);
     return {
       ...rolled,
       basis: "cumulative-snapshot",
@@ -354,13 +407,13 @@ export function yearToDate(rows: MetricRow[], year: string, today: string): Peri
     };
   }
 
-  const summed = sumDaily(inYear, elapsed, boundary);
+  const summed = sumDaily(inYear, expected ?? elapsed, boundary);
   const dailyDates = inYear
     .filter((r) => r.scope === "daily" && r.business_date <= boundary)
     .map((r) => r.business_date)
     .sort();
   const asOf = dailyDates.length ? dailyDates[dailyDates.length - 1]! : null;
-  const behind = asOf ? daysBetween(asOf, boundary) : elapsed;
+  const behind = behindAsOf(asOf);
   return {
     ...summed,
     basis: summed.covered_days > 0 ? "daily-sum" : "none",
@@ -395,10 +448,20 @@ export function formatCount(value: number | null): string {
   return value.toLocaleString("en-US");
 }
 
-/** Business date in the shop's timezone (America/Chicago). */
-export function shopToday(timeZone = "America/Chicago", now = new Date()): string {
+/**
+ * Business date in the shop's timezone.
+ *
+ * `timeZone` must be a real, validated IANA zone when supplied for authoritative
+ * shop business-day math (dashboard, reports, goal pacing) — an invalid or missing
+ * value throws instead of silently defaulting, per the shared timezone contract
+ * (see ./timezone.ts). Omitting `timeZone` entirely is reserved for non-authoritative
+ * UI convenience callers (e.g. initializing a date picker's default value) that have
+ * no shop context to validate against; that legacy no-arg path is unchanged.
+ */
+export function shopToday(timeZone?: string, now = new Date()): string {
+  const zone = timeZone === undefined ? "America/Chicago" : resolveShopTimeZone(timeZone);
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone,
+    timeZone: zone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

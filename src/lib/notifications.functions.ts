@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { readShopPermissions } from "./permissions.server";
 
 type Supa = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,8 +47,9 @@ export const createNotification = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Supa;
     const member = await membership(context.supabase, context.userId);
-    if (member.role !== "owner" && member.role !== "manager") {
-      throw new Error("Only the owner and admins can send announcements.");
+    const allowed = await readShopPermissions(context.supabase, member.shop_id, member.role);
+    if (!allowed("manage_notifications")) {
+      throw new Error("You do not have permission to send announcements.");
     }
 
     let recipientUserIds: string[] = [];
@@ -161,12 +163,14 @@ export const markNotificationRead = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ recipientId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Supa;
-    const { error } = await sb
+    const { data: updated, error } = await sb
       .from("notification_recipients")
       .update({ read_at: new Date().toISOString() })
       .eq("id", data.recipientId)
-      .eq("user_id", context.userId);
+      .eq("user_id", context.userId)
+      .select("id");
     if (error) throw new Error(error.message);
+    if (updated?.length !== 1) throw new Error("That notification could not be marked as read.");
     return { ok: true };
   });
 

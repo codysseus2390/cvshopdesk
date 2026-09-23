@@ -17,6 +17,7 @@ import { usePermissions } from "@/components/use-permissions";
 import { NotificationComposer } from "@/components/notification-composer";
 import { HankSettings } from "@/components/hank-settings";
 import { NumbersGoals } from "@/components/numbers-goals";
+import { BusinessCalendarSettings } from "@/components/business-calendar-settings";
 import { useTheme } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,7 +72,6 @@ const DASHBOARD_WIDGETS = [
   { key: "mtd", label: "Month to date" },
   { key: "monthly_chart", label: "Monthly gross profit chart" },
   { key: "ytd", label: "Year to date and last year" },
-  { key: "scorecards", label: "Monthly scorecards" },
 ] as const;
 
 const TARGET_FIELDS = [
@@ -103,7 +103,7 @@ function SettingsPage() {
         </TabsList>
 
         <TabsContent value="staff">
-          <StaffAndRoles isAdmin={isAdmin} isOwner={isOwner} />
+          <StaffAndRoles isAdmin={perms.can("manage_staff")} isOwner={isOwner} />
         </TabsContent>
         <TabsContent value="permissions">
           <PermissionMatrix
@@ -113,13 +113,14 @@ function SettingsPage() {
           />
         </TabsContent>
         <TabsContent value="dashboard">
-          <DashboardSettings isAdmin={isAdmin} />
+          <DashboardSettings isAdmin={perms.can("change_settings")} />
+          <BusinessCalendarSettings />
         </TabsContent>
         <TabsContent value="numbers">
-          <NumbersGoals canEdit={isAdmin} />
+          <NumbersGoals canEdit={perms.can("change_settings")} />
         </TabsContent>
         <TabsContent value="notifications">
-          <NotificationComposer canSend={isAdmin} />
+          <NotificationComposer canSend={perms.can("manage_notifications")} />
         </TabsContent>
         <TabsContent value="hank">
           <HankSettings canEdit={isAdmin} />
