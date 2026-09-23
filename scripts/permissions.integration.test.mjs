@@ -744,32 +744,22 @@ test("guard_business_calendar and save_business_calendar", async () => {
     assert.equal(firstAudit.rows[0].detail.previous, null);
     assert.deepEqual(firstAudit.rows[0].detail.next, JSON.parse(calendarA));
 
-    // Owner succeeds on second save (UPDATE path), confirmed retroactive.
+    // Owner succeeds on second save (UPDATE-via-ON-CONFLICT path), confirmed
+    // retroactive.
     //
-    // KNOWN PRODUCT BUG (reported to Iron, not fixed here): save_business_calendar
-    // writes via `insert ... on conflict (shop_id) do update`. Postgres fires a
-    // table's BEFORE INSERT row trigger for the attempted insert even when the row
-    // conflicts and the statement falls through to the DO UPDATE branch, in
-    // addition to firing the BEFORE UPDATE trigger for the actual update (verified
-    // with a minimal PGlite repro: a single ON CONFLICT DO UPDATE call fires
-    // tg_op values ['INSERT','UPDATE'] where a plain first insert fires only
-    // ['INSERT']). Because guard_business_calendar() unconditionally inserts an
-    // audit_events row whenever tg_op='INSERT' and new.business_calendar is not
-    // null, every call to save_business_calendar for a shop that already has a
-    // shop_settings row (i.e. every call after the first) writes a *spurious
-    // extra* audit_events row shaped like a fresh, non-retroactive
-    // 'business_calendar_changed' with detail.previous incorrectly null, on top
-    // of the correct row from the real UPDATE branch. Worse: because the
-    // transaction-local app.calendar_retroactive setting is already in place
-    // before the insert attempt fires, the spurious row is ALSO marked
-    // action='business_calendar_changed_retroactive' with the same
-    // retroactive/retroactive_from as the real row — the two are indistinguishable
-    // except by the (incorrect) null `previous`. This duplicates and corrupts the
-    // business-calendar audit trail. Deliberately not asserting an exact row count
-    // here (it would either bake in the bug or make this test start failing the
-    // moment Iron fixes it); instead this positively verifies the one *correct*
-    // retroactive row (the one with the real previous value) exists with the
-    // right shape.
+    // save_business_calendar writes via `insert ... on conflict (shop_id) do
+    // update`. Postgres fires the table's BEFORE INSERT row trigger for the
+    // attempted row even when it conflicts and the statement falls through to
+    // the DO UPDATE branch, in addition to firing the BEFORE UPDATE trigger for
+    // the actual update (verified with a minimal PGlite repro: a single ON
+    // CONFLICT DO UPDATE call fires tg_op values ['INSERT','UPDATE'] where a
+    // plain first insert fires only ['INSERT']). guard_business_calendar() (the
+    // BEFORE trigger) only raises on an unauthorized write and never inserts an
+    // audit row, so firing twice there is harmless. audit_business_calendar()
+    // (the AFTER trigger) is the one that writes audit_events, and Postgres does
+    // not fire the AFTER INSERT trigger for a row that falls through to DO
+    // UPDATE — only AFTER UPDATE fires — so exactly one audit row is written for
+    // this save, and it carries the real previous value from `old`.
     await db.query("select public.save_business_calendar($1,$2::jsonb,true,'2026-01-01')", [
       shop,
       calendarB,
@@ -778,23 +768,35 @@ test("guard_business_calendar and save_business_calendar", async () => {
       "select action, detail from public.audit_events where shop_id=$1 and action like 'business_calendar_changed%' order by created_at asc",
       [shop],
     );
-    assert.ok(
-      secondAudit.rows.length >= 2,
-      "the retroactive save adds at least one more audit row on top of the first save's row",
+    assert.equal(
+      secondAudit.rows.length,
+      2,
+      "the retroactive save adds exactly one more audit row on top of the first save's row (no duplicate from the conflict->update fallback)",
     );
-    const retroRow = secondAudit.rows.find(
-      (row) =>
-        row.action === "business_calendar_changed_retroactive" &&
-        row.detail.retroactive === true &&
-        row.detail.retroactive_from === "2026-01-01" &&
-        row.detail.previous !== null,
-    );
-    assert.ok(
-      retroRow,
-      "a correctly-marked retroactive audit row with the real previous value exists",
-    );
+    const retroRow = secondAudit.rows[1];
+    assert.equal(retroRow.action, "business_calendar_changed_retroactive");
+    assert.equal(retroRow.detail.retroactive, true);
+    assert.equal(retroRow.detail.retroactive_from, "2026-01-01");
     assert.deepEqual(retroRow.detail.previous, JSON.parse(calendarA));
     assert.deepEqual(retroRow.detail.next, JSON.parse(calendarB));
+
+    // A no-op save (identical business_calendar to what's already stored) is a
+    // real UPDATE-via-ON-CONFLICT statement, but business_calendar does not
+    // actually change, so neither trigger's change-check fires: zero new audit
+    // rows.
+    await db.query("select public.save_business_calendar($1,$2::jsonb,true,'2026-01-01')", [
+      shop,
+      calendarB,
+    ]);
+    const noopAudit = await db.query(
+      "select action, detail from public.audit_events where shop_id=$1 and action like 'business_calendar_changed%' order by created_at asc",
+      [shop],
+    );
+    assert.equal(
+      noopAudit.rows.length,
+      2,
+      "a no-op save (identical business_calendar) writes zero additional audit rows",
+    );
 
     // A manager with change_settings (the default) cannot write the calendar
     // directly against shop_settings: the trigger enforces owner-only regardless
@@ -817,7 +819,7 @@ test("guard_business_calendar and save_business_calendar", async () => {
     );
 
     console.log(
-      "guard_business_calendar + save_business_calendar: owner forward/retroactive audit rows, manager direct-write rejection, non-owner RPC rejection all checked.",
+      "guard_business_calendar + save_business_calendar: owner forward/retroactive audit rows are written exactly once each (insert path and conflict->update path), a no-op save writes zero rows, manager direct-write rejection, non-owner RPC rejection all checked.",
     );
   } finally {
     await db.close();
