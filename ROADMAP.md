@@ -7,7 +7,9 @@ are historical context, not instructions to restart completed work.
 
 - Phase 0: preview-first release safeguards and verified backend baseline (in progress).
 - Phases 1-2: code preserved on main through PR 28; staging migration/browser proof
-  is still missing. Do not equate merged code with a usable deployment.
+  now has verified migration/recovery evidence through 0024 (2026-09-23); hosted
+  Preview and signed-in browser proof remain pending. Do not equate migrated code
+  with a usable deployment.
 - Phases 3-8: continue only after the prerequisite staging checks pass.
 - See `docs/release-workflow.md` for the phase PR, owner acceptance and release gates.
 

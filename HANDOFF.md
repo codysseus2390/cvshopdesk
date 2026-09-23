@@ -1,5 +1,35 @@
 # HANDOFF.md — Living Handoff Document
 
+## Staging repair completed; Preview validation next — 2026-09-23
+
+Branch `fix/preview-release-gates`, verified implementation head
+`5bbe05543ef8b25c36aa0653f178b439bdb92fec` (this documentation checkpoint follows).
+Owner-approved staging repair is now complete: 0022 journal-only reconciliation,
+then unchanged 0023/0024, atomically with in-transaction schema assertions.
+All 25 migration hashes/timestamps match; read-only preflight passed afterward.
+All 21 metric snapshots have unchanged content hashes. Cedar's calendar is seeded.
+
+Private local backup and isolated restore passed for the migration-affected scope:
+57 tables, 60 policies, 41 routines compared with zero normalized differences.
+See `docs/staging-recovery-2026-09-23.md` for hashes, scope/exclusions, local Supabase
+compatibility details and advisor findings. Backup/credentials must stay ignored
+and private. Local restore server stopped. Do not rerun the old repair scripts.
+
+PR 29 remains draft. Hosted CI at 5bbe055 passed all six checks, but its prior
+Vercel build failed before staging was repaired. A fresh Preview build and signed-in
+role/session/browser checks are required before exact-commit owner acceptance.
+Local deployment probing is not a substitute: current development settings lack
+the Preview-only server key and are not accepted as a Preview environment.
+
+Exact next action: verify the new checkpoint's hosted Vercel Preview build against
+the repaired staging backend, then test login/Dashboard/Numbers/TV and role/session
+boundaries. Review advisor notices; do not silently change unrelated permissions.
+Main, production SQL, and the live domain were not changed. No main merge or
+production promotion is authorized. Earlier backup/migration blockers below are
+historical and superseded by this checkpoint.
+
+---
+
 ## Staging repair approved; backup access blocked — 2026-09-23
 
 Owner explicitly approved staging-only journal repair and migrations 0023/0024 after
