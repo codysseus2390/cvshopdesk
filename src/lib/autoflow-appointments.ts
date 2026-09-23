@@ -38,7 +38,7 @@ export function appointmentInstant(
     const p = Object.fromEntries(
       formatter.formatToParts(new Date(ms)).map((p) => [p.type, p.value]),
     );
-    return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}`;
+    return `${p["year"]}-${p["month"]}-${p["day"]}T${p["hour"]}:${p["minute"]}:${p["second"]}`;
   };
   let instant = wall;
   for (let i = 0; i < 3; i++) instant += wall - Date.parse(`${local(instant)}Z`);
@@ -79,3 +79,4 @@ export function parseAutoflowAppointments(payload: unknown, timezone: string, fe
     flags: [] as string[],
   }));
 }
+
