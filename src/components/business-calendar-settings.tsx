@@ -3,6 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { saveBusinessCalendar } from "@/lib/admin.functions";
 import { addDays } from "@/lib/numbers-math";
+import type { BusinessCalendar } from "@/lib/business-calendar";
+import { useDashboard } from "@/routes/_authenticated/hub";
 import { usePermissions } from "./use-permissions";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -11,6 +13,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 export function BusinessCalendarSettings() {
   const { settings, isOwner } = usePermissions();
   const calendar = settings?.business_calendar;
+  // Shop-local "today" (never device-local) for marking which schedule row is
+  // currently active vs. still scheduled to start in the future. Undefined
+  // (dashboard not loaded / shop timezone invalid) means "unknown" — the
+  // current/scheduled marker is omitted rather than guessed.
+  const shopToday = useDashboard().data?.today;
   const save = useServerFn(saveBusinessCalendar);
   const queries = useQueryClient();
   const [effective, setEffective] = useState("");
@@ -21,38 +28,52 @@ export function BusinessCalendarSettings() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   // Set only when the server reports `{ ok: false, requiresRetroactiveConfirmation: true }`
-  // for the in-progress save — never derived from error-message text.
-  const [pendingConfirm, setPendingConfirm] = useState<"schedule" | "exception" | null>(null);
+  // for the in-progress save — never derived from error-message text. `payload` is the
+  // exact calendar snapshot that produced that response, so Confirm resends precisely
+  // what the user saw the warning for, not whatever the form fields hold by the time
+  // they click Confirm.
+  const [pendingConfirm, setPendingConfirm] = useState<{
+    kind: "schedule" | "exception";
+    payload: BusinessCalendar;
+  } | null>(null);
+
+  /** Any edit to the schedule/exception inputs invalidates a pending retroactive
+   *  confirmation — it was raised for a different payload than what's in the form now. */
+  function clearPendingConfirm() {
+    setPendingConfirm(null);
+    setMessage("");
+  }
 
   async function update(kind: "schedule" | "exception", confirmRetroactive = false) {
     setBusy(true);
     setMessage("");
     try {
-      const schedules = calendar?.schedules ?? [];
-      const exceptions = calendar?.exceptions ?? [];
+      const payload: BusinessCalendar =
+        confirmRetroactive && pendingConfirm
+          ? pendingConfirm.payload
+          : {
+              schedules:
+                kind === "schedule"
+                  ? [
+                      ...(calendar?.schedules ?? []).filter((s) => s.effective_from !== effective),
+                      { effective_from: effective, open_weekdays: weekdays },
+                    ]
+                  : (calendar?.schedules ?? []),
+              exceptions:
+                kind === "exception"
+                  ? [
+                      ...(calendar?.exceptions ?? []).filter(
+                        (e) => e.business_date !== exceptionDate,
+                      ),
+                      { business_date: exceptionDate, is_open: isOpen, reason },
+                    ]
+                  : (calendar?.exceptions ?? []),
+            };
       const result = await save({
-        data: {
-          calendar: {
-            schedules:
-              kind === "schedule"
-                ? [
-                    ...schedules.filter((s) => s.effective_from !== effective),
-                    { effective_from: effective, open_weekdays: weekdays },
-                  ]
-                : schedules,
-            exceptions:
-              kind === "exception"
-                ? [
-                    ...exceptions.filter((e) => e.business_date !== exceptionDate),
-                    { business_date: exceptionDate, is_open: isOpen, reason },
-                  ]
-                : exceptions,
-          },
-          confirmRetroactive,
-        },
+        data: { calendar: payload, confirmRetroactive },
       });
       if (!result.ok) {
-        setPendingConfirm(kind);
+        setPendingConfirm({ kind, payload });
         setMessage(
           `This change would alter the recorded open/closed status of ${result.conflictDate}, which is on or before today (${result.today}). Confirm to save it anyway, or cancel and adjust the change.`,
         );
@@ -82,22 +103,46 @@ export function BusinessCalendarSettings() {
           days are retained. Holidays must be entered explicitly.
         </p>
         {!calendar && (
-          <p>No calendar has been configured. The owner must set one before viewing reports.</p>
+          <p>
+            No shop calendar is set up yet. Until the owner sets one, reports count every day as a
+            reporting day and use &quot;Previous day&quot;.
+          </p>
         )}
-        {[...(calendar?.schedules ?? [])]
-          .sort((a, b) => b.effective_from.localeCompare(a.effective_from))
-          .map((s, i, sorted) => {
-            const previous = sorted[i - 1];
+        {(() => {
+          const sorted = [...(calendar?.schedules ?? [])].sort((a, b) =>
+            b.effective_from.localeCompare(a.effective_from),
+          );
+          // Index of the newest schedule that has already started (effective_from <=
+          // shop-local today). -1 when every schedule is still in the future; undefined
+          // when today itself is unknown (dashboard not loaded / invalid shop timezone) —
+          // that case omits the marker entirely rather than guessing which row is active.
+          const currentIndex =
+            shopToday === undefined
+              ? undefined
+              : sorted.findIndex((s) => s.effective_from <= shopToday);
+          return sorted.map((s, i, arr) => {
+            const previous = arr[i - 1];
+            const marker =
+              currentIndex === undefined
+                ? null
+                : currentIndex === -1 || i < currentIndex
+                  ? "(scheduled)"
+                  : i === currentIndex
+                    ? "(current)"
+                    : previous
+                      ? `to ${addDays(previous.effective_from, -1)}`
+                      : null;
             return (
               <p key={s.effective_from} className="text-sm">
-                From {s.effective_from}{" "}
-                {i === 0 || !previous ? "(current)" : `to ${addDays(previous.effective_from, -1)}`}:{" "}
+                From {s.effective_from}
+                {marker ? ` ${marker}` : ""}:{" "}
                 {s.open_weekdays
                   .map((day) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day])
                   .join(", ") || "Closed every day"}
               </p>
             );
-          })}
+          });
+        })()}
         {isOwner && (
           <>
             <fieldset disabled={busy} className="space-y-3">
@@ -107,7 +152,10 @@ export function BusinessCalendarSettings() {
                 <Input
                   type="date"
                   value={effective}
-                  onChange={(e) => setEffective(e.target.value)}
+                  onChange={(e) => {
+                    setEffective(e.target.value);
+                    clearPendingConfirm();
+                  }}
                 />
               </label>
               <div className="flex flex-wrap gap-3">
@@ -116,11 +164,12 @@ export function BusinessCalendarSettings() {
                     <input
                       type="checkbox"
                       checked={weekdays.includes(index)}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setWeekdays((days) =>
                           e.target.checked ? [...days, index] : days.filter((d) => d !== index),
-                        )
-                      }
+                        );
+                        clearPendingConfirm();
+                      }}
                     />
                     {day}
                   </label>
@@ -142,20 +191,33 @@ export function BusinessCalendarSettings() {
                 <Input
                   type="date"
                   value={exceptionDate}
-                  onChange={(e) => setExceptionDate(e.target.value)}
+                  onChange={(e) => {
+                    setExceptionDate(e.target.value);
+                    clearPendingConfirm();
+                  }}
                 />
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   checked={isOpen}
-                  onChange={(e) => setIsOpen(e.target.checked)}
+                  onChange={(e) => {
+                    setIsOpen(e.target.checked);
+                    clearPendingConfirm();
+                  }}
                 />
                 Open on this date
               </label>
               <label className="block text-sm">
                 Reason
-                <Input value={reason} maxLength={140} onChange={(e) => setReason(e.target.value)} />
+                <Input
+                  value={reason}
+                  maxLength={140}
+                  onChange={(e) => {
+                    setReason(e.target.value);
+                    clearPendingConfirm();
+                  }}
+                />
               </label>
               {calendar?.exceptions.some((e) => e.business_date === exceptionDate) && (
                 <p className="text-sm text-muted-foreground">
@@ -183,7 +245,7 @@ export function BusinessCalendarSettings() {
             <Button
               variant="destructive"
               disabled={busy}
-              onClick={() => void update(pendingConfirm, true)}
+              onClick={() => void update(pendingConfirm.kind, true)}
             >
               Confirm retroactive change
             </Button>

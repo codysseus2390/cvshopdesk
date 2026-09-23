@@ -17,6 +17,24 @@ export function TvClock({ timezone }: { timezone?: string | undefined }) {
     return () => clearInterval(timer);
   }, []);
 
+  // Plan §4: refresh immediately on wake/visibility change rather than waiting up to a
+  // full second for the next tick — a TV coming back from sleep/screen-off should show
+  // the correct time the instant it's visible again, not a stale frozen one.
+  useEffect(() => {
+    function refreshNow() {
+      setNow(new Date());
+    }
+    function handleVisibility() {
+      if (document.visibilityState === "visible") refreshNow();
+    }
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", refreshNow);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", refreshNow);
+    };
+  }, []);
+
   const validTz = isValidTimeZone(timezone) ? timezone : null;
 
   const stamp = validTz
