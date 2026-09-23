@@ -26,6 +26,7 @@ import {
   SHOP_PRODUCTIVITY_TECHNICIAN,
   type ProductivityInput,
 } from "./productivity-math";
+import { resolveShopTimeZone } from "./timezone";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Supa = { from: (t: string) => any; rpc: (fn: string, args?: Record<string, unknown>) => any };
@@ -49,7 +50,7 @@ export async function resolveShop(supabase: unknown, userId: string): Promise<Sh
   return {
     shopId: data.shop_id as string,
     role: data.role as string,
-    timezone: (data.shops?.timezone as string) ?? "America/Chicago",
+    timezone: resolveShopTimeZone(data.shops?.timezone as string | null | undefined),
     name: (data.shops?.name as string) ?? "Cedar Valley",
   };
 }
@@ -85,6 +86,9 @@ export interface NumbersReport {
   basis: string;
   as_of: string | null;
   covered_days: number;
+  /** False when the shop hasn't configured a business calendar (b): weekly goal
+   * proration and open-day coverage fall back to legacy, calendar-unaware math. */
+  calendarConfigured: boolean;
   rows: ReportRow[];
   technicians: string[];
   goal_rules: GoalRules;
@@ -110,7 +114,11 @@ export async function buildNumbersReport(
   const allowed = await readShopPermissions(supabase, shop.shopId, shop.role);
   if (!allowed("view_dashboard")) throw new Error("You do not have permission to view reports.");
   const showProductivity = allowed("view_productivity");
+  // (b) No calendar configured: pass `undefined` so goalFor/proration use their
+  // existing legacy, calendar-unaware branches instead of guessing a calendar.
   const calendar = await readBusinessCalendar(supabase, shop.shopId);
+  const calendarConfigured = calendar !== null;
+  const calendarOrUndefined = calendar ?? undefined;
   const range = resolvePeriod(kind, anchor && /^\d{4}-\d{2}-\d{2}$/.test(anchor) ? anchor : today);
   const prev = previousYearPeriod(range);
 
@@ -213,7 +221,7 @@ export async function buildNumbersReport(
       buildReportRow(
         def,
         actual,
-        goalFor(def, rule, range, previousValue, calendar),
+        goalFor(def, rule, range, previousValue, calendarOrUndefined),
         previousValue,
         changedFields.has(def.key),
       ),
@@ -227,7 +235,7 @@ export async function buildNumbersReport(
       buildReportRow(
         def,
         actual,
-        goalFor(def, goalRules[def.key], range, previousValue, calendar),
+        goalFor(def, goalRules[def.key], range, previousValue, calendarOrUndefined),
         previousValue,
         changedFields.has(def.key),
       ),
@@ -242,6 +250,7 @@ export async function buildNumbersReport(
     basis: actuals.basis,
     as_of: actuals.as_of,
     covered_days: actuals.covered_days,
+    calendarConfigured,
     rows: report,
     technicians,
     goal_rules: goalRules,

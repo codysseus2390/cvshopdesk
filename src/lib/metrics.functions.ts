@@ -8,7 +8,13 @@ import {
   type MetricRow,
   type PeriodTotals,
 } from "./metrics-math";
-import { aggregatePeriod, resolvePeriod, type NumbersRow, type PeriodValues } from "./numbers-math";
+import {
+  addDays,
+  aggregatePeriod,
+  resolvePeriod,
+  type NumbersRow,
+  type PeriodValues,
+} from "./numbers-math";
 import { buildNumbersReport, productivityValue } from "./numbers.server";
 import { dashboardWeekFromReport } from "./dashboard-week";
 import { overallProductivity, type ProductivityInput } from "./productivity-math";
@@ -17,6 +23,7 @@ import { readShopPermissions } from "./permissions.server";
 import { readAllRows } from "./read-all-rows";
 import { readBusinessCalendar } from "./calendar.server";
 import { previousOpenDay } from "./business-calendar";
+import { resolveShopTimeZone } from "./timezone";
 
 type MonthTotals = PeriodValues & { gp_per_car: number | null };
 
@@ -34,7 +41,7 @@ async function resolveShop(supabase: Supa, userId: string) {
   return {
     shopId: data.shop_id as string,
     role: data.role as string,
-    timezone: (data.shops?.timezone as string) ?? "America/Chicago",
+    timezone: resolveShopTimeZone(data.shops?.timezone as string | null | undefined),
     name: (data.shops?.name as string) ?? "Cedar Valley",
   };
 }
@@ -142,11 +149,23 @@ export const getDashboard = createServerFn({ method: "GET" })
     // Nothing dated after the shop's current business day counts toward current results.
     const current = all.filter((r) => r.business_date <= today);
     const todayRow = current.find((r) => r.business_date === today && r.scope === "daily") ?? null;
-    const previousDay = previousOpenDay(today, calendar);
-    if (!previousDay) throw new Error("The shop calendar does not identify a previous open day.");
+    // (b) No calendar configured: fall back to the plain previous calendar day and
+    // tell the client so it can keep the legacy "Previous day" label instead of
+    // claiming a calendar-confirmed "Previous open day".
+    const calendarConfigured = calendar !== null;
+    const previousDayKind: "open" | "calendar" = calendarConfigured ? "open" : "calendar";
+    const calendarOrUndefined = calendar ?? undefined;
+    let previousDay: string;
+    if (calendar) {
+      const open = previousOpenDay(today, calendar);
+      if (!open) throw new Error("The shop calendar does not identify a previous open day.");
+      previousDay = open;
+    } else {
+      previousDay = addDays(today, -1);
+    }
     const previousDayRow =
       current.find((r) => r.business_date === previousDay && r.scope === "daily") ?? null;
-    const mtd = monthToDate(current, monthPrefix, today, calendar);
+    const mtd = monthToDate(current, monthPrefix, today, calendarOrUndefined);
     const productivity = (productivityRows ?? []) as ProductivityInput[];
     const [weekReport, monthReport] = await Promise.all([
       buildNumbersReport(supabase, shop, "weekly", today),
@@ -211,8 +230,8 @@ export const getDashboard = createServerFn({ method: "GET" })
       }
     }
 
-    const ytd = yearToDate(current, year, today, calendar);
-    const ytdLastYear = yearToDate(current, String(Number(year) - 1), today, calendar);
+    const ytd = yearToDate(current, year, today, calendarOrUndefined);
+    const ytdLastYear = yearToDate(current, String(Number(year) - 1), today, calendarOrUndefined);
 
     const lastUpdate = all.reduce<string | null>(
       (acc, r) => (acc === null || r.created_at > acc ? r.created_at : acc),
@@ -223,7 +242,9 @@ export const getDashboard = createServerFn({ method: "GET" })
       shop: { id: shop.shopId, name: shop.name, timezone: shop.timezone, role: shop.role },
       today,
       todayRow,
+      calendarConfigured,
       previousDay,
+      previousDayKind,
       previousDayRow,
       previousDayProductivity,
       mechanics,

@@ -88,8 +88,21 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
       );
       const { addDays } = await import("@/lib/numbers-math");
       const { overallProductivity } = await import("@/lib/productivity-math");
+      const { readBusinessCalendar } = await import("@/lib/calendar.server");
+      const { previousOpenDay } = await import("@/lib/business-calendar");
       const productivity = productivityRows ?? [];
-      const yesterday = addDays(ctx.today, -1);
+      // Same (b) legacy fallback as the dashboard: use the calendar's previous open
+      // day when configured, otherwise the plain previous calendar day — so Hank
+      // agrees with the dashboard on a Monday instead of always saying Sunday.
+      const calendar = await readBusinessCalendar(ctx.supabase, ctx.shopId);
+      let yesterday: string;
+      if (calendar) {
+        const open = previousOpenDay(ctx.today, calendar);
+        if (!open) throw new Error("The shop calendar does not identify a previous open day.");
+        yesterday = open;
+      } else {
+        yesterday = addDays(ctx.today, -1);
+      }
       const { buildNumbersReport } = await import("@/lib/numbers.server");
       const shop = { shopId: ctx.shopId, role: "", timezone: ctx.timezone, name: "" };
       const [weekReport, monthReport] = await Promise.all([

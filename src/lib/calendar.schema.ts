@@ -29,3 +29,14 @@ export const calendarSchema = z
       new Set(value.exceptions.map((e) => e.business_date)).size === value.exceptions.length,
     "Each effective date and exception date must be unique.",
   );
+
+/**
+ * saveBusinessCalendar's input: the calendar plus an explicit opt-in the caller
+ * must set when it knowingly alters the open/closed status of a date on or before
+ * the shop's local today (the retroactive-edit guard in admin.functions.ts decides
+ * whether this flag was actually required; forward-dated changes never need it).
+ */
+export const saveBusinessCalendarInputSchema = z.object({
+  calendar: calendarSchema,
+  confirmRetroactive: z.boolean().optional(),
+});
