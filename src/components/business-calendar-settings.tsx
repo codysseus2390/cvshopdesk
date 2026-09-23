@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { saveBusinessCalendar } from "@/lib/admin.functions";
+import { addDays } from "@/lib/numbers-math";
 import { usePermissions } from "./use-permissions";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -19,30 +20,45 @@ export function BusinessCalendarSettings() {
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  async function update(kind: "schedule" | "exception") {
+  // Set only when the server reports `{ ok: false, requiresRetroactiveConfirmation: true }`
+  // for the in-progress save — never derived from error-message text.
+  const [pendingConfirm, setPendingConfirm] = useState<"schedule" | "exception" | null>(null);
+
+  async function update(kind: "schedule" | "exception", confirmRetroactive = false) {
     setBusy(true);
     setMessage("");
     try {
       const schedules = calendar?.schedules ?? [];
       const exceptions = calendar?.exceptions ?? [];
-      await save({
+      const result = await save({
         data: {
-          schedules:
-            kind === "schedule"
-              ? [
-                  ...schedules.filter((s) => s.effective_from !== effective),
-                  { effective_from: effective, open_weekdays: weekdays },
-                ]
-              : schedules,
-          exceptions:
-            kind === "exception"
-              ? [
-                  ...exceptions.filter((e) => e.business_date !== exceptionDate),
-                  { business_date: exceptionDate, is_open: isOpen, reason },
-                ]
-              : exceptions,
+          calendar: {
+            schedules:
+              kind === "schedule"
+                ? [
+                    ...schedules.filter((s) => s.effective_from !== effective),
+                    { effective_from: effective, open_weekdays: weekdays },
+                  ]
+                : schedules,
+            exceptions:
+              kind === "exception"
+                ? [
+                    ...exceptions.filter((e) => e.business_date !== exceptionDate),
+                    { business_date: exceptionDate, is_open: isOpen, reason },
+                  ]
+                : exceptions,
+          },
+          confirmRetroactive,
         },
       });
+      if (!result.ok) {
+        setPendingConfirm(kind);
+        setMessage(
+          `This change would alter the recorded open/closed status of ${result.conflictDate}, which is on or before today (${result.today}). Confirm to save it anyway, or cancel and adjust the change.`,
+        );
+        return;
+      }
+      setPendingConfirm(null);
       await Promise.all(
         ["admin-config", "dashboard", "numbers"].map((key) =>
           queries.invalidateQueries({ queryKey: [key] }),
@@ -68,14 +84,20 @@ export function BusinessCalendarSettings() {
         {!calendar && (
           <p>No calendar has been configured. The owner must set one before viewing reports.</p>
         )}
-        {calendar?.schedules.map((s) => (
-          <p key={s.effective_from} className="text-sm">
-            From {s.effective_from}:{" "}
-            {s.open_weekdays
-              .map((day) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day])
-              .join(", ") || "Closed every day"}
-          </p>
-        ))}
+        {[...(calendar?.schedules ?? [])]
+          .sort((a, b) => b.effective_from.localeCompare(a.effective_from))
+          .map((s, i, sorted) => {
+            const previous = sorted[i - 1];
+            return (
+              <p key={s.effective_from} className="text-sm">
+                From {s.effective_from}{" "}
+                {i === 0 || !previous ? "(current)" : `to ${addDays(previous.effective_from, -1)}`}:{" "}
+                {s.open_weekdays
+                  .map((day) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day])
+                  .join(", ") || "Closed every day"}
+              </p>
+            );
+          })}
         {isOwner && (
           <>
             <fieldset disabled={busy} className="space-y-3">
@@ -104,6 +126,11 @@ export function BusinessCalendarSettings() {
                   </label>
                 ))}
               </div>
+              {calendar?.schedules.some((s) => s.effective_from === effective) && (
+                <p className="text-sm text-muted-foreground">
+                  A schedule already exists for {effective} — saving will replace it.
+                </p>
+              )}
               <Button disabled={!effective} onClick={() => void update("schedule")}>
                 Save schedule
               </Button>
@@ -130,6 +157,11 @@ export function BusinessCalendarSettings() {
                 Reason
                 <Input value={reason} maxLength={140} onChange={(e) => setReason(e.target.value)} />
               </label>
+              {calendar?.exceptions.some((e) => e.business_date === exceptionDate) && (
+                <p className="text-sm text-muted-foreground">
+                  An exception already exists for {exceptionDate} — saving will replace it.
+                </p>
+              )}
               <Button disabled={!exceptionDate || !reason} onClick={() => void update("exception")}>
                 Save exception
               </Button>
@@ -145,6 +177,20 @@ export function BusinessCalendarSettings() {
           <p role="status" className="text-sm">
             {message}
           </p>
+        )}
+        {pendingConfirm && (
+          <div className="flex gap-2">
+            <Button
+              variant="destructive"
+              disabled={busy}
+              onClick={() => void update(pendingConfirm, true)}
+            >
+              Confirm retroactive change
+            </Button>
+            <Button variant="outline" disabled={busy} onClick={() => setPendingConfirm(null)}>
+              Cancel
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>
