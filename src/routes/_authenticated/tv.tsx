@@ -6,21 +6,16 @@ import { AccessGate } from "@/components/access-gate";
 import { TvBackground } from "@/components/tv/tv-background";
 import { TvHeader } from "@/components/tv/tv-header";
 import { TvNumbersScreen } from "@/components/tv/tv-numbers-screen";
-import {
-  TvShopScreen,
-  type TvNextUpItem,
-  type TvScheduleRow,
-} from "@/components/tv/tv-shop-screen";
+import { TvShopScreen } from "@/components/tv/tv-shop-screen";
 import { TvStatusBar } from "@/components/tv/tv-status-bar";
 import { cn } from "@/lib/utils";
 import { useDashboard } from "./hub";
-import { useBoard, type BoardJob } from "./board";
+import { useBoard } from "./board";
+import { buildTvBoard } from "@/lib/tv-board";
 import { listDisplayNotifications } from "@/lib/notifications.functions";
 
 /** Each screen's time on air before rotating to the next. */
 export const SCREEN_SECONDS = 18;
-/** Most schedule rows shown at once — the summary counts still reflect everything. */
-const SCHEDULE_ROW_LIMIT = 9;
 
 /** Which screen is showing after `elapsed` seconds: numbers, then shop, repeating. */
 export function screenAt(elapsedSeconds: number): "numbers" | "shop" {
@@ -46,75 +41,6 @@ export const Route = createFileRoute("/_authenticated/tv")({
   ),
 });
 
-function lastName(name: string | null): string {
-  if (!name) return "Customer not recorded";
-  const parts = name.trim().split(/\s+/);
-  return parts[parts.length - 1] || name;
-}
-
-function shortTime(iso: string | null, timezone = "America/Chicago"): string {
-  if (!iso) return "—";
-  return new Date(iso)
-    .toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: timezone })
-    .replace(/\s?[AP]M$/i, "");
-}
-
-function buildSchedule(board: ReturnType<typeof useBoard>["data"]): TvScheduleRow[] {
-  if (!board) return [];
-  const rows: (TvScheduleRow & { sortKey: number | null })[] = [];
-
-  for (const job of board.appointmentsToday) {
-    rows.push({
-      id: job.id,
-      time: shortTime(job.appointment_at, board.timezone),
-      vehicleCustomer: `${job.vehicle_label ?? "Vehicle not recorded"} · ${lastName(job.customer_name)}`,
-      job: job.requested_service ?? "Service not recorded",
-      status: "upcoming",
-      sortKey: job.appointment_at ? new Date(job.appointment_at).getTime() : null,
-    });
-  }
-  for (const job of board.appointmentsWithoutTime) {
-    rows.push({
-      id: job.id,
-      time: "—",
-      vehicleCustomer: `${job.vehicle_label ?? "Vehicle not recorded"} · ${lastName(job.customer_name)}`,
-      job: job.requested_service ?? "Service not recorded",
-      status: "upcoming",
-      sortKey: null,
-    });
-  }
-  for (const job of [...board.jobs, ...board.jobsWithoutArrival] as BoardJob[]) {
-    rows.push({
-      id: job.id,
-      time: shortTime(job.arrival_at, board.timezone),
-      vehicleCustomer: `${job.vehicle_label ?? "Vehicle not recorded"} · ${lastName(job.customer_name)}`,
-      job: job.requested_service ?? "Service not recorded",
-      status: "in_shop",
-      sortKey: job.arrival_at ? new Date(job.arrival_at).getTime() : null,
-    });
-  }
-  for (const job of board.done as BoardJob[]) {
-    const anchor = job.arrival_at ?? job.appointment_at;
-    rows.push({
-      id: job.id,
-      time: shortTime(anchor, board.timezone),
-      vehicleCustomer: `${job.vehicle_label ?? "Vehicle not recorded"} · ${lastName(job.customer_name)}`,
-      job: job.requested_service ?? "Service not recorded",
-      status: "done",
-      sortKey: anchor ? new Date(anchor).getTime() : null,
-    });
-  }
-
-  rows.sort((a, b) => {
-    if (a.sortKey === null && b.sortKey === null) return 0;
-    if (a.sortKey === null) return 1;
-    if (b.sortKey === null) return -1;
-    return a.sortKey - b.sortKey;
-  });
-
-  return rows.map(({ sortKey: _sortKey, ...row }) => row);
-}
-
 function TvMode() {
   const dashboard = useDashboard();
   const board = useBoard();
@@ -127,38 +53,27 @@ function TvMode() {
     refetchOnWindowFocus: "always",
   });
   const [elapsed, setElapsed] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [now, setNow] = useState(Date.now);
 
   useEffect(() => {
-    const timer = setInterval(() => setElapsed((e) => e + 1), 1000);
+    const timer = setInterval(() => {
+      setNow(Date.now());
+      if (!paused) setElapsed((e) => e + 1);
+    }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [paused]);
 
   const screen = screenAt(elapsed);
 
-  const schedule = buildSchedule(board.data);
-  const visibleSchedule = schedule.slice(0, SCHEDULE_ROW_LIMIT);
-  const counts = {
-    inShop: (board.data?.jobs.length ?? 0) + (board.data?.jobsWithoutArrival.length ?? 0),
-    upcoming:
-      (board.data?.appointmentsToday.length ?? 0) +
-      (board.data?.appointmentsWithoutTime.length ?? 0),
-    done: board.data?.done.length ?? 0,
-  };
-  const nextUp: TvNextUpItem[] = (board.data?.appointmentsToday ?? []).slice(0, 3).map((job) => ({
-    id: job.id,
-    time: shortTime(job.appointment_at, board.data?.timezone),
-    vehicleCustomer: `${job.vehicle_label ?? "Vehicle not recorded"} · ${lastName(job.customer_name)}`,
-  }));
-  const nextAppointment = board.data?.appointmentsToday[0]?.appointment_at
-    ? shortTime(board.data.appointmentsToday[0].appointment_at, board.data.timezone)
-    : null;
-
+  const tvBoard = board.data ? buildTvBoard(board.data, now) : null;
+  const counts = tvBoard?.counts ?? { inShop: 0, upcoming: 0, done: 0 };
   const problem =
     dashboard.error instanceof Error
       ? dashboard.error.message
       : board.error instanceof Error
         ? board.error.message
-        : (board.data?.appointmentError ?? null);
+        : (board.data?.workflowError ?? board.data?.appointmentError ?? null);
   const staleMinutes = Math.round(
     (Date.now() - Math.min(dashboard.dataUpdatedAt, board.dataUpdatedAt)) / 60_000,
   );
@@ -204,12 +119,50 @@ function TvMode() {
             </div>
           )}
 
-          <div key={screen} className="tv-screen-enter flex min-h-0 flex-1 flex-col">
-            {screen === "numbers" ? (
-              <TvNumbersScreen dashboard={dashboard.data} />
-            ) : (
-              <TvShopScreen rows={visibleSchedule} counts={counts} nextUp={nextUp} />
+          <div
+            className={cn(
+              "min-h-0 flex-1 flex-col",
+              screen === "numbers" ? "flex tv-screen-enter" : "hidden",
             )}
+          >
+            <TvNumbersScreen dashboard={dashboard.data} />
+          </div>
+          <div
+            className={cn(
+              "min-h-0 flex-1 flex-col",
+              screen === "shop" ? "flex tv-screen-enter" : "hidden",
+            )}
+          >
+            <TvShopScreen
+              rows={tvBoard?.schedule ?? []}
+              nextUp={tvBoard?.nextUp ?? []}
+              timezone={board.data?.timezone ?? "America/Chicago"}
+              now={now}
+              paused={paused || screen !== "shop"}
+            />
+          </div>
+          <div className="absolute bottom-16 right-4 flex gap-1 rounded-md bg-background/90 p-1 text-xs text-muted-foreground">
+            <button
+              type="button"
+              className="rounded px-2 py-1 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary"
+              aria-label={
+                paused ? "Resume TV rotation and scrolling" : "Pause TV rotation and scrolling"
+              }
+              aria-pressed={paused}
+              onClick={() => setPaused((value) => !value)}
+            >
+              {paused ? "Resume" : "Pause"}
+            </button>
+            <button
+              type="button"
+              className="rounded px-2 py-1 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary"
+              aria-label="Next TV screen"
+              onClick={() =>
+                setElapsed((value) => (Math.floor(value / SCREEN_SECONDS) + 1) * SCREEN_SECONDS)
+              }
+            >
+              Next screen ›
+            </button>
           </div>
         </main>
 
@@ -217,7 +170,7 @@ function TvMode() {
           inShop={counts.inShop}
           upcoming={counts.upcoming}
           done={counts.done}
-          nextAppointment={nextAppointment}
+          nextAppointment={tvBoard?.nextAppointment ?? null}
         />
       </div>
     </div>

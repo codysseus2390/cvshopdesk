@@ -1,5 +1,36 @@
 # HANDOFF.md — Living Handoff Document
 
+## 2026-09-23 — Live workflow and TV layout release
+
+Feature branch: `codex/tv-workflow-live`, based on release `95ad16a`.
+TV now places Next up & in shop at left and the rolling 12-hour appointment
+schedule at lower right, uses explicit shop-time AM/PM, scrolls both lists,
+and has small pause/next controls. Check-in timers remain live while paused.
+Inspecting through Servicing map to in shop; Ready maps to done. Board refresh
+is 15 seconds. Workflow is projected from the private authenticated webhook
+inbox, preserving earliest check-in and applying events in provider-time order.
+No snapshot histories are overwritten and no customer actions are sent.
+
+Autoflow's documented visits endpoint only returns closed history. An initial
+18-visit baseline was read from the signed-in active workflow and original
+status histories; staging is seeded in shop_jobs with autoflow: visit identities.
+Future visits/status changes come from the existing Status Update subscription.
+Production receives the webhook; staging has an independent database.
+Migration 0025 is now present in BOTH environments. Earlier notes saying
+production/appointments are unconfigured are stale: production 95ad16a has
+working appointments and a verified webhook inbox. Do not deploy main because
+0023/0024 remain outside this release.
+
+Validation: 106 unit tests pass, 17 database tests skipped; typecheck passes;
+full ESLint passes with 17 pre-existing warnings. Build/browser deployment
+verification and production baseline rollout are in progress.
+
+Next: finish build, publish feature/release branches, verify preview and build
+production with its own environment values. Never promote a staging-configured
+artifact directly into production.
+
+---
+
 ## 2026-09-23 — Appointment feed implementation (not yet deployed)
 
 On codex/autoflow-release, added a read-only appointment feed to listBoard for
@@ -143,4 +174,3 @@ See `docs/lovable-dependency-audit.md` (16 findings). KEEP `.lovable/project.jso
 Dashboard panels wired into hub. Figma audit still remaining. Data integrity rules intact.
 
 ---
-

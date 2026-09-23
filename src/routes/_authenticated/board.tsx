@@ -39,7 +39,7 @@ export function useBoard() {
   return useQuery({
     queryKey: ["board"],
     queryFn: () => fetchBoard(),
-    refetchInterval: 60_000,
+    refetchInterval: 15_000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: "always",
     staleTime: 0,
@@ -98,7 +98,9 @@ function BoardPage() {
           <span className="text-xs text-muted-foreground">{waitingSince(job.arrival_at)}</span>
         </div>
         {job.local_note && <p className="text-sm">In-app note: {job.local_note}</p>}
-        {edit?.id === job.id ? (
+        {job.id.startsWith("autoflow:") ? (
+          <p className="text-xs text-muted-foreground">Status updates from Autoflow</p>
+        ) : edit?.id === job.id ? (
           <div className="flex flex-wrap gap-2 pt-2">
             <Input
               className="max-w-40"
@@ -139,7 +141,8 @@ function BoardPage() {
       title="Jobs & appointments"
       subtitle={
         <>
-          Appointments: {data?.appointmentSource ?? "loading"}. Last import snapshot:{" "}
+          Appointments: {data?.appointmentSource ?? "loading"} · Workflow:{" "}
+          {data?.workflowSource ?? "loading"}. Last import snapshot:{" "}
           {data?.lastSnapshot ? new Date(data.lastSnapshot).toLocaleString() : "none yet"} · screen
           refreshed {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : "—"}
         </>
@@ -204,9 +207,12 @@ function BoardPage() {
               <p className="text-xs text-muted-foreground">Oldest arrival first</p>
             </CardHeader>
             <CardContent className="space-y-3">
-              {data.jobs.length === 0 && data.jobsWithoutArrival.length === 0 && (
-                <p className="text-sm text-muted-foreground">No unfinished job records.</p>
-              )}
+              {data.workflowError && <p className="text-destructive">{data.workflowError}</p>}
+              {!data.workflowError &&
+                data.jobs.length === 0 &&
+                data.jobsWithoutArrival.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No unfinished job records.</p>
+                )}
               {data.jobs.map((job) => (
                 <JobRow key={job.id} job={job} />
               ))}
