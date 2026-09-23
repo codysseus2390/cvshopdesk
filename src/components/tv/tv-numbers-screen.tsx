@@ -64,14 +64,7 @@ export function TvNumbersScreen({ dashboard }: { dashboard: DashboardData | unde
         />
       ))}
       {/* Fourth cell: per-mechanic breakdown, matching the dashboard panel. */}
-      <TvProductivityCard
-        mechanics={dashboard?.mechanics}
-        shop={[
-          dashboard?.previousDayProductivity ?? null,
-          week?.mechanic_productivity ?? null,
-          mtd?.mechanic_productivity ?? null,
-        ]}
-      />
+      <TvProductivityCard mechanics={dashboard?.mechanics} />
     </div>
   );
 }

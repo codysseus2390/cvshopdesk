@@ -11,18 +11,12 @@ export type TvMechanics = DashboardData["mechanics"];
  * Per-mechanic productivity, laid out like the dashboard panel of the same
  * name — one row per mechanic, one column per reporting period — but wearing
  * the TV surface instead of the light card.
- *
- * The shop-wide totals the TV used to show as a single KPI are kept as a
- * summary row at the bottom rather than dropped.
  */
 export function TvProductivityCard({
   mechanics,
-  shop,
   className,
 }: {
   mechanics: TvMechanics | undefined;
-  /** Shop-wide productivity, in the same [previousDay, week, month] order. */
-  shop: [number | null, number | null, number | null];
   className?: string;
 }) {
   const names = mechanics?.names ?? [];
@@ -73,13 +67,6 @@ export function TvProductivityCard({
                 month={mechanics?.month[name] ?? null}
               />
             ))}
-            <MechanicRow
-              name="Shop"
-              accent="shop"
-              previousDay={shop[0]}
-              week={shop[1]}
-              month={shop[2]}
-            />
           </tbody>
         </table>
       </div>
@@ -90,7 +77,6 @@ export function TvProductivityCard({
 const AVATAR: Record<string, string> = {
   primary: "bg-primary/25 text-[oklch(0.86_0.13_45)]",
   secondary: "bg-secondary/25 text-[oklch(0.85_0.12_130)]",
-  shop: "bg-[oklch(0.32_0.012_60)] text-[oklch(0.86_0.02_72)]",
 };
 
 function MechanicRow({
@@ -101,7 +87,7 @@ function MechanicRow({
   month,
 }: {
   name: string;
-  accent: "primary" | "secondary" | "shop";
+  accent: "primary" | "secondary";
   previousDay: number | null | undefined;
   week: number | null | undefined;
   month: number | null | undefined;
@@ -111,7 +97,7 @@ function MechanicRow({
     typeof month === "number" && Number.isFinite(month) ? Math.max(0, Math.min(100, month)) : null;
 
   return (
-    <tr className={cn("border-t border-border", accent === "shop" && "border-t-2 border-t-border")}>
+    <tr className="border-t border-border">
       <th className="py-2 text-left align-middle">
         <span className="flex items-center gap-3">
           <span
