@@ -1,5 +1,41 @@
 # HANDOFF.md — Living Handoff Document
 
+## Latest checkpoint — Phases 1–2 complete for owner review, 2026-09-22
+
+Branch `feat/shopdesk-astra-implementation`, head `08ee417` (the lead will merge this handoff as one more merge commit on top — handoff merged on top of 08ee417). Worktree `C:\Users\ivinb\Documents\Codex\2026-09-22\final-round-5-of-5-is\work\shopdesk`. Team process: Wrench tickets P12-01..P12-15 (no P12-05), one owner/branch/worktree per ticket under `...\work\agents\<slug>`, lead merged `--no-ff` one at a time; Grok paused (Wrench coordinated, verdicts route to Cody).
+
+### Completed, per ticket
+- P12-01: closed Phase 1 SQL/RLS policy gaps in draft migration 0023.
+- P12-02: routed app permission checks through effective permissions; rejected zero-row writes; stripped productivity fields from `getAdminConfig`; preserved the `canReadAuditEvents` owner/manager invariant.
+- P12-03: landed the calendar a/b/c contract (0024-missing → explicit error naming the migration, null → legacy behavior, configured → rules), a retroactive-edit guard + `save_business_calendar` RPC, a validated shop-timezone helper (no more guessed `America/Chicago`), and Hank's previous-open-day agreement with the dashboard.
+- P12-06: Cedar's numbered UI diff list (`docs/astra-p1-2-ui-diff-list.md`).
+- P12-07: calendar/timezone regression tests against P12-03's contract.
+- P12-13 (lead follow-up): fixed Hank's report tools, which had been passing role `""` and denying every user since 5aecab6; wired calendar-aware MTD/YTD so Hank agrees with the dashboard.
+- P12-08: UI — Previous open day labels, closed-day entry warning + history tag, calendar settings sort/current-marker/scheduled/replace notice/retroactive confirm, TV clock/appointment neutral timezone state + wake refresh, permission-gated Notifications/Hank controls.
+- P12-04: permission matrix tests (PGlite integration, 7/7, plus 8 server-function unit files).
+- P12-14 (lead follow-up): fixed the calendar audit writing two rows per change (moved to a BEFORE guard trigger / AFTER audit trigger split).
+- P12-15 (lead follow-up): fixed Beacon's two P12-09 blockers — TV "Time unavailable" overflow fit and an accessible Hank denied-state.
+
+### Reviews
+Deadbolt re-audit (`deadbolt-p12-10-reaudit.md`, scope 1e89846..71410d3): **PASS**, baseline was FAIL closed; all 16 original items closed or re-confirmed as documented invariants. Two new non-blocking notes: retroactive flag on `save_business_calendar` is self-reported by the caller, not independently recomputed (WARNING, routed to Iron as a follow-up, not blocking); Hank's `list_ai_action_log` tool declares a looser permission (`view_dashboard`) than the underlying RLS (`use_assistant`) — RLS is the hard floor, no leak (INFO). Hank's tools were confirmed to run on the user's RLS-scoped client, not service role. 0023/0024 judged safe to apply to STAGING for testing but were **not applied** — that requires separate owner authorization. Beacon: PASS after the P12-15 re-check (both TV-fit and Hank a11y blockers closed). Gauge (`gauge-p12-11.md`, re-review at 08ee417): overall verdict **MERGE**. Bay's copy reviews are done.
+
+### Validation at 08ee417 (per Deadbolt/Gauge's own runs)
+typecheck 0 errors; lint 0 errors / 17 pre-existing warnings; `test:unit` 175 passed / 17 skipped (DB-URL-gated); `test:integration` 7/7 (PGlite, 25 migrations replayed); `git diff --check` clean. `bun run build` was reported by the lead as SUCCEEDED at 71410d3 (Nitro step completed, previous sandbox `EPERM` not reproduced) — Gauge did not re-run it for P12-15 (UI-only diff, not rebuilt), so treat that specific claim as lead-reported rather than independently re-verified at 08ee417.
+
+### Explicit boundaries
+Migrations 0023/0024 remain **DRAFT and applied nowhere** (staging is still at ≤0022; production untouched). The dashboard preview's shop-calendar error is expected: it is caused by unapplied 0024, and shows "Shop calendar unavailable: the database update 0024_business_calendar has not been applied to this environment" rather than a guessed value. No deploy, no PR, no merge to `main`. The integration branch was pushed to origin as feature-branch checkpoints only.
+
+### Still outstanding / known issues
+No browser, Figma, or real-TV verification (no verified test backend; 0024 unapplied). No real Supabase token/browser session-boundary tests (A→B slow response, second tab, revocation). TV items still needing a real render: the "UNAVAILABLE" line at the 88px track (truncate now bounds the failure mode but hasn't been confirmed on-device), and "Previous open day · [date]" wrap risk on the numbers screen at 1280×720. Yearly monthly-snapshot rollup calendar coverage (`numbers-math.ts` `aggregatePeriod` yearly branch, `monthly-numbers.server.ts`) is deferred to Phase 3. Open WARNINGs: a shared exported constant for "Time unavailable" instead of the duplicated literal; the retroactive-flag trust boundary noted above; the Hank action-log tool's looser declared permission; Hank's "New conversation" is still native-`disabled` and out of tab order (pre-existing, app-wide pattern, not new). `shopToday()`'s no-arg `America/Chicago` default remains only for UI date-picker defaults in `history.tsx`/`tools.tsx`. The 17 DB-gated unit checks still need `SUPABASE_DB_URL` against a verified non-production DB.
+
+### Exact next step
+Wait for the owner's explicit "continue." Then begin Phase 3 (Reporting and chart data, `plan.md` §5) — start by diagnosing the blank YoY graph from the real payload, and fold in the deferred yearly-rollup calendar coverage above. Applying 0023/0024 to staging requires separate, explicit owner authorization.
+
+### Where things are
+Ticket file and reviews: `C:\Users\ivinb\Documents\Codex\2026-09-22\final-round-5-of-5-is\outputs\` (see `phase1-2-tickets.md` and `outputs\reviews\`). Per-ticket agent worktrees: `...\work\agents\` (all merged; safe to remove later with `git worktree remove`).
+
+---
+
 ## Latest checkpoint — second owner-requested pause, 2026-09-22
 
 The owner resumed the build, explicitly authorized pushing to `codysseus2390/cvshopdesk` on `feat/shopdesk-astra-implementation`, then asked for another stopping point. **Stop here until asked to resume.** The implementation remains incomplete and is not release-ready. The earlier section below records the baseline, worktree, plan hash, project IDs, tooling, and original outstanding scope.
