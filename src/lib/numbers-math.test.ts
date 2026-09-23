@@ -9,6 +9,7 @@ import {
   NUMBER_METRICS,
   type NumbersRow,
 } from "./numbers-math";
+import type { BusinessCalendar } from "./business-calendar";
 
 const salesDef = NUMBER_METRICS[0]!;
 const gpPercentDef = NUMBER_METRICS[2]!;
@@ -111,6 +112,68 @@ describe("goals", () => {
 
   it("does not prorate percentage goals", () => {
     expect(goalFor(gpPercentDef, { method: "fixed", monthly: 45 }, week, null)).toBe(45);
+  });
+});
+
+describe("calendar-aware goals", () => {
+  const monFri: BusinessCalendar = {
+    schedules: [{ effective_from: "2020-01-01", open_weekdays: [1, 2, 3, 4, 5] }],
+    exceptions: [],
+  };
+  const multiSchedule: BusinessCalendar = {
+    schedules: [
+      { effective_from: "2020-01-01", open_weekdays: [1, 2, 3, 4, 5] },
+      { effective_from: "2026-07-01", open_weekdays: [1, 2, 3, 4, 5, 6] },
+    ],
+    exceptions: [],
+  };
+
+  it("prorates a weekly fixed goal by that week's confirmed open days, not a flat 7-day fraction", () => {
+    const week = resolvePeriod("weekly", "2026-09-16"); // Mon 2026-09-14 - Sun 2026-09-20
+    const rule = { method: "fixed" as const, monthly: 3000 };
+    // Sept 2026 has 22 confirmed Mon-Fri open days; the week itself has 5 of them.
+    expect(goalFor(salesDef, rule, week, null, monFri)).toBeCloseTo((3000 * 5) / 22);
+  });
+
+  it("resolves an earlier week against the schedule effective then, and a later week against the new one", () => {
+    const rule = { method: "fixed" as const, monthly: 500 };
+    const beforeBoundary = resolvePeriod("weekly", "2026-06-24"); // Mon 06-22 - Sun 06-28, old Mon-Fri schedule
+    const afterBoundary = resolvePeriod("weekly", "2026-07-08"); // Mon 07-06 - Sun 07-12, new Mon-Sat schedule
+    expect(goalFor(salesDef, rule, beforeBoundary, null, multiSchedule)).toBeCloseTo(
+      (500 * 5) / 22,
+    );
+    expect(goalFor(salesDef, rule, afterBoundary, null, multiSchedule)).toBeCloseTo((500 * 6) / 27);
+  });
+
+  it("returns unavailable (null), never 0 or Infinity, when the shop has zero open days", () => {
+    const neverOpen: BusinessCalendar = {
+      schedules: [{ effective_from: "2020-01-01", open_weekdays: [] }],
+      exceptions: [],
+    };
+    const week = resolvePeriod("weekly", "2026-09-16");
+    const rule = { method: "fixed" as const, monthly: 3000 };
+    const result = goalFor(salesDef, rule, week, null, neverOpen);
+    expect(result).toBeNull();
+    expect(result).not.toBe(0);
+    expect(result === null || Number.isFinite(result)).toBe(true);
+  });
+
+  it("keeps a growth goal at its real, unprorated full-period target when a calendar is supplied", () => {
+    // Plan §4: growth targets keep the full-period target and only apply open-day
+    // allocation to a separate pacing display, never inside goalFor itself.
+    const month = resolvePeriod("monthly", "2026-09-01");
+    const week = resolvePeriod("weekly", "2026-09-16");
+    const rule = { method: "growth" as const, growth_pct: 10 };
+    expect(goalFor(salesDef, rule, month, 90_000, monFri)).toBeCloseTo(99_000, 6);
+    expect(goalFor(salesDef, rule, month, 90_000, monFri)).toBe(
+      goalFor(salesDef, rule, month, 90_000, undefined),
+    );
+    expect(goalFor(salesDef, rule, week, 90_000, monFri)).toBeCloseTo(99_000, 6);
+  });
+
+  it("never substitutes zero for an absent growth baseline, even with a calendar present", () => {
+    const month = resolvePeriod("monthly", "2026-09-01");
+    expect(goalFor(salesDef, { method: "growth", growth_pct: 10 }, month, null, monFri)).toBeNull();
   });
 });
 
