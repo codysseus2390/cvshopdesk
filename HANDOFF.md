@@ -1,5 +1,60 @@
 # HANDOFF.md — Living Handoff Document
 
+## Active checkpoint — preview-first restart, 2026-09-23
+
+Branch: `fix/preview-release-gates`. Implementation commit:
+`3918d96f1f2c97d352281fea61d71ae01046338b` (this handoff is a follow-up commit).
+The unchanged `plan.md` remains the active plan. Do not discard Phase 1-2 code or
+revert main casually. Original P3 branch and other worktrees are preserved.
+
+### Completed
+
+- GitHub main protection applied and independently read back: PR required, strict checks
+  (unit, integration, typecheck, lint, build, Secret scan, Vercel, Preview accepted),
+  admin enforcement, no force pushes/deletions, resolved conversations.
+- Vercel `cvshopdesk` auto-assign production domains explicitly disabled and read back
+  as changed by the account user, replacing the temporary system rollback freeze.
+  No promotion. Live hostname checked still at PR 27 (`54a5d33`).
+- Exact backend allowlists, public/server key validation, zero-row deployment schema
+  probes, and read-only commit-bound journal/catalog preflight. Shared project constants
+  are in `scripts/backend-targets.mjs`. No secret values printed or committed.
+- CI now includes migration integration tests. Updated PR template and release workflow;
+  lint no longer scans the independent nested `.claude/worktrees` checkout.
+- Root supervised Sol implementation and independent Gauge review; reviewer blocker on
+  server-only credentials fixed, shared-ref warning fixed. No Claude review claimed.
+
+### Validation
+
+28 release-guard tests passed (including real catalog SQL against disposable PGlite with
+all 25 migrations); app unit tests 175 passed / 17 live-DB tests skipped; migration
+integration 7/7; typecheck passed; lint passed with 17 existing warnings; build passed.
+Initial restricted build failed Nitro readlink EPERM; the filesystem-authorized rerun
+completed client, SSR and Nitro. Hosted CI/Preview results must be checked on the PR.
+No real staging token/browser/TV test was performed at this checkpoint.
+
+### Exact blocker and next step
+
+Read-only staging audit: all 22 journal entries through 0021 match repository timestamps
+and LF hashes. Journal entries 0022-0024 are missing. Catalog checks show 0022's function
+body/grants and customer policies already present; 0023 permission helper and 0024 calendar
+column/RPC are absent. Do not blindly replay 0022 or stamp history merely to unblock a build.
+
+Next: verify a usable staging backup/restore path, independently review complete 0022
+catalog parity, prepare the explicit journal-only reconciliation and 0023/0024 staging
+migration run, then obtain the required staging-write approval before execution. Confirm
+the two Cedar shop identities and existing-row seed behavior for 0024. Rerun schema
+preflight and signed-in role/session tests before owner preview acceptance or Phase 3.
+No production DDL, main merge, or live promotion is authorized by this checkpoint.
+
+Relevant files: `docs/release-workflow.md`, `.github/main-branch-protection.json`,
+`scripts/{deployment-env,release-schema}.mjs`, their tests, CI workflow and `vercel.json`.
+The local PowerShell feed is `logs/agent-activity.log`; it is ignored by Git and curated
+by the root agent, not an automatic transcript. Keep it updated while doing new work.
+
+Older checkpoints below are history, not current deployment or migration approval.
+
+---
+
 ## Latest checkpoint — Phases 1–2 complete for owner review, 2026-09-22
 
 Branch `feat/shopdesk-astra-implementation`, head `08ee417` (the lead will merge this handoff as one more merge commit on top — handoff merged on top of 08ee417). Worktree `C:\Users\ivinb\Documents\Codex\2026-09-22\final-round-5-of-5-is\work\shopdesk`. Team process: Wrench tickets P12-01..P12-15 (no P12-05), one owner/branch/worktree per ticket under `...\work\agents\<slug>`, lead merged `--no-ff` one at a time; Grok paused (Wrench coordinated, verdicts route to Cody).
