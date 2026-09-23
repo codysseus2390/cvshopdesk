@@ -34,6 +34,11 @@ grant execute on function public.can_edit_records(uuid,uuid) to authenticated;
 
 -- Restrictive policies intersect existing ownership/shop checks instead of opening
 -- a second permissive path. Definer RPCs require separate guards below.
+-- Deliberate scope decision: customers/vehicles/inventory_items/shop_jobs/tire_orders
+-- SELECT stays membership-scoped (has_shop_access via each table's existing "shop
+-- members read ..." permissive policy). Only writes are tied to edit_records here;
+-- these are record-editing tables, not the financial/AI reads Deadbolt gap 6 flagged,
+-- and no permission key currently distinguishes "can view records" from plain membership.
 do $$
 declare t text;
 begin
@@ -43,6 +48,13 @@ begin
     execute format('create policy effective_permission_delete on public.%I as restrictive for delete to authenticated using (public.has_shop_permission(shop_id, ''edit_records''))', t);
   end loop;
 end $$;
+
+-- tire_orders DELETE previously stayed on the old is_shop_manager permissive policy
+-- (Deadbolt BLOCKER 5), so an explicit edit_records grant to a non-manager staff
+-- member could not actually delete an order. Route it through the same effective
+-- permission the restrictive policies above already use.
+alter policy "managers delete tire orders" on public.tire_orders
+  using (public.has_shop_permission(shop_id, 'edit_records'));
 
 create policy effective_productivity_read on public.technician_productivity as restrictive
   for select to authenticated using (public.has_shop_permission(shop_id, 'view_productivity'));
@@ -55,6 +67,19 @@ create policy effective_productivity_insert on public.technician_productivity as
 create policy effective_productivity_update on public.technician_productivity as restrictive
   for update to authenticated using (public.has_shop_permission(shop_id, 'edit_dashboard_numbers'))
   with check (public.has_shop_permission(shop_id, 'edit_dashboard_numbers'));
+
+-- Deadbolt gap 6: financial history, raw import extraction, and the AI action log
+-- were only membership-scoped, so a revoked view_dashboard/upload_imports/use_assistant
+-- override still let a signed-in shop member read them. Tie the read to the same
+-- permission the corresponding write/feature already uses.
+create policy effective_dashboard_read on public.metric_snapshots as restrictive
+  for select to authenticated using (public.has_shop_permission(shop_id, 'view_dashboard'));
+-- Keeps the existing productivity-field restriction above (effective_productivity_history_read)
+-- in addition to this general dashboard-read gate; restrictive policies AND together.
+create policy effective_corrections_read on public.metric_corrections as restrictive
+  for select to authenticated using (public.has_shop_permission(shop_id, 'view_dashboard'));
+create policy effective_ai_actions_read on public.ai_actions as restrictive
+  for select to authenticated using (public.has_shop_permission(shop_id, 'use_assistant'));
 
 create policy effective_settings_insert on public.shop_settings as restrictive
   for insert to authenticated with check (public.has_shop_permission(shop_id, 'change_settings'));
@@ -69,6 +94,8 @@ create policy effective_import_insert on public.imports as restrictive
 create policy effective_import_update on public.imports as restrictive
   for update to authenticated using (public.has_shop_permission(shop_id, 'upload_imports') or public.has_shop_permission(shop_id, 'approve_imports'))
   with check (public.has_shop_permission(shop_id, 'upload_imports') or public.has_shop_permission(shop_id, 'approve_imports'));
+create policy effective_import_read on public.imports as restrictive
+  for select to authenticated using (public.has_shop_permission(shop_id, 'upload_imports') or public.has_shop_permission(shop_id, 'approve_imports'));
 
 -- Replace older role-only permissive policies so explicit grants work too.
 alter policy "managers create settings" on public.shop_settings
@@ -104,6 +131,28 @@ alter policy "managers decide membership" on public.shop_members
   with check (public.has_shop_permission(shop_id, 'manage_staff') and role <> 'owner');
 alter policy "shop members upload files" on storage.objects
   with check (bucket_id = 'shop-uploads' and public.has_shop_permission(((storage.foldername(name))[1])::uuid, 'upload_imports'));
+-- INSERT above was already migrated; UPDATE/DELETE were still is_shop_manager
+-- (Deadbolt WARNING 9). Route them through the same upload_imports permission.
+alter policy "shop managers update uploads" on storage.objects
+  using (bucket_id = 'shop-uploads' and public.has_shop_permission(((storage.foldername(name))[1])::uuid, 'upload_imports'))
+  with check (bucket_id = 'shop-uploads' and public.has_shop_permission(((storage.foldername(name))[1])::uuid, 'upload_imports'));
+alter policy "shop managers delete uploads" on storage.objects
+  using (bucket_id = 'shop-uploads' and public.has_shop_permission(((storage.foldername(name))[1])::uuid, 'upload_imports'));
+
+-- ai_settings INSERT/UPDATE were still is_shop_manager (Deadbolt BLOCKER 2); route
+-- through change_settings, the same permission the app-level save check uses.
+alter policy ai_settings_insert on public.ai_settings
+  with check (public.has_shop_permission(shop_id, 'change_settings'));
+alter policy ai_settings_update on public.ai_settings
+  using (public.has_shop_permission(shop_id, 'change_settings'))
+  with check (public.has_shop_permission(shop_id, 'change_settings'));
+
+-- audit_events SELECT deliberately stays on is_shop_manager rather than a named
+-- PermissionKey: it is an owner/manager-only invariant, not a grantable/revocable
+-- permission like the others above. P12-02 adds a matching named TS helper
+-- (e.g. canReadAuditEvents(role)) documented with a comment cross-referencing this one.
+comment on policy "managers read audit events" on public.audit_events is
+  'Deliberate owner/manager invariant, not permission-key-gated. See P12-02''s canReadAuditEvents(role) helper in src/lib/permissions.ts.';
 
 -- Definer functions bypass RLS, so their operation guards are explicit.
 CREATE OR REPLACE FUNCTION public.save_shop_metrics(
@@ -164,6 +213,12 @@ begin
   update public.metric_snapshots set is_current = true where id = v_new_id;
   return v_new_id;
 end $function$;
+-- Deadbolt WARNING 10: default PUBLIC execute on a SECURITY DEFINER function is not
+-- currently exploitable here (auth.uid() is null for anon/unauthenticated callers and
+-- the guard above raises), but it is inconsistent with every other definer function in
+-- this file and trips the Supabase advisor. Make the deny explicit.
+revoke all on function public.save_shop_metrics(uuid, date, public.report_scope, numeric, numeric, integer, integer, public.metric_source, uuid, text, jsonb, text) from public, anon;
+grant execute on function public.save_shop_metrics(uuid, date, public.report_scope, numeric, numeric, integer, integer, public.metric_source, uuid, text, jsonb, text) to authenticated;
 
 CREATE OR REPLACE FUNCTION public.save_period_productivity(
   p_shop_id uuid,
@@ -215,6 +270,8 @@ begin
 
   return v_id;
 end $function$;
+revoke all on function public.save_period_productivity(uuid, date, text, numeric, text, public.report_scope, text) from public, anon;
+grant execute on function public.save_period_productivity(uuid, date, text, numeric, text, public.report_scope, text) to authenticated;
 
 create or replace function public._save_metric_snapshot(
   p_shop_id uuid, p_business_date date, p_scope public.report_scope,
