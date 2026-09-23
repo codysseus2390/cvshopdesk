@@ -21,13 +21,30 @@ production/appointments are unconfigured are stale: production 95ad16a has
 working appointments and a verified webhook inbox. Do not deploy main because
 0023/0024 remain outside this release.
 
-Validation: 106 unit tests pass, 17 database tests skipped; typecheck passes;
-full ESLint passes with 17 pre-existing warnings. Build/browser deployment
-verification and production baseline rollout are in progress.
+Released code: `4b084a12c65ddb7044d4b5b25187722d4db0d81c` on feature and
+release branches. Git credential manager had no usable local sign-in; the
+connected GitHub API published the exact tested tree (87f3f5e), then local Git
+was aligned with that identical commit. Main was not touched.
 
-Next: finish build, publish feature/release branches, verify preview and build
-production with its own environment values. Never promote a staging-configured
-artifact directly into production.
+Validation: 106 unit tests pass, 17 database tests skipped; typecheck and build
+pass; full ESLint passes with 17 pre-existing warnings. GitHub Actions run
+35924546940 passed all five jobs, including the secret scan.
+Preview 8Q4idpcDq2XQgCRZ4GRQozga8vuK is ready at
+https://cvshopdesk-5rvzg5q5t-codysseus90.vercel.app . Browser verified the
+15-row unfinished queue, 5 in shop / 10 upcoming / 3 done, timers, scrolling,
+pause and next-screen controls. No appointment falls within the current
+12-hour window; the full Schedule page correctly shows later appointments.
+
+Production H4fv3QK9zdoqcsEKTfvBkMEQ7tf9 was built afresh with Production
+environment values, then assigned to app.cedarvalleytire.com. Vercel confirms
+Production / Current / Ready. Both databases now contain the 18 verified
+baseline visits. New production webhooks arrived for Servicing and Close
+during release. Staging has its own independent inbox; it is not a mirror of
+production. The branch alias may point at the production rebuild; use the
+unique preview URL above when testing staging.
+
+Next: complete the signed-in live-domain browser check once the owner signs
+in to the production tab. The deployed app currently presents its login page.
 
 ---
 
