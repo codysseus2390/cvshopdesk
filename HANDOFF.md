@@ -17,10 +17,18 @@ all 13 prior snapshots are retained and linked via superseded_by. One active
 visit has RO 0 and no reason text in Autoflow; missing text remains missing.
 No workflow statuses, customer messages, or source data were changed.
 
-Focused description/workflow/TV tests pass (13 tests); typecheck and targeted
-lint pass. Full suite and deployment verification are in progress.
-Next: publish this fix to the configured release branch, build Preview and
-Production separately, and verify the live TV after the owner signs in.
+Released commit: `8df9df0b67f3b77233eaafe303dc38dc897fd101` on feature and
+configured release branches. All 111 unit tests pass (17 DB tests skipped),
+typecheck/lint/build/secret scan pass in Actions run 35931903986.
+Preview Ec1UaisUrAPjDLuRKPrhYW6nPDPH:
+https://cvshopdesk-dfz63iuya-codysseus90.vercel.app
+Browser verification showed real descriptions below the corresponding vehicles,
+including tire install, check engine light, and oil change / air filter.
+Production DxYyn9xazVbFCYPdfA1nhqxtBR1F was rebuilt with Production settings
+and promoted to app.cedarvalleytire.com. No main merge or schema change.
+Next: optional signed-in production visual check; the live-domain tab still
+requires the owner's login. Description changes refresh within about a minute
+plus the 15-second board polling interval.
 
 ---
 
