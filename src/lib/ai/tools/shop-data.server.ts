@@ -47,7 +47,7 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
       const { buildNumbersReport } = await import("@/lib/numbers.server");
       const report = await buildNumbersReport(
         ctx.supabase,
-        { shopId: ctx.shopId, role: "", timezone: ctx.timezone, name: "" },
+        { shopId: ctx.shopId, role: ctx.role, timezone: ctx.timezone, name: "" },
         parsed.period ?? "monthly",
         parsed.anchor,
       );
@@ -95,6 +95,7 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
       // day when configured, otherwise the plain previous calendar day — so Hank
       // agrees with the dashboard on a Monday instead of always saying Sunday.
       const calendar = await readBusinessCalendar(ctx.supabase, ctx.shopId);
+      const calendarOrUndefined = calendar ?? undefined;
       let yesterday: string;
       if (calendar) {
         const open = previousOpenDay(ctx.today, calendar);
@@ -104,7 +105,7 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
         yesterday = addDays(ctx.today, -1);
       }
       const { buildNumbersReport } = await import("@/lib/numbers.server");
-      const shop = { shopId: ctx.shopId, role: "", timezone: ctx.timezone, name: "" };
+      const shop = { shopId: ctx.shopId, role: ctx.role, timezone: ctx.timezone, name: "" };
       const [weekReport, monthReport] = await Promise.all([
         buildNumbersReport(ctx.supabase, shop, "weekly", ctx.today),
         buildNumbersReport(ctx.supabase, shop, "monthly", ctx.today),
@@ -116,8 +117,8 @@ export const SHOP_DATA_TOOLS: ShopAiTool[] = [
           shopToday: ctx.today,
           today:
             rows.find((row) => row.business_date === ctx.today && row.scope === "daily") ?? null,
-          monthToDate: monthToDate(rows, ctx.today.slice(0, 7), ctx.today),
-          yearToDate: yearToDate(rows, year, ctx.today),
+          monthToDate: monthToDate(rows, ctx.today.slice(0, 7), ctx.today, calendarOrUndefined),
+          yearToDate: yearToDate(rows, year, ctx.today, calendarOrUndefined),
           recentDaily: rows.filter((row) => row.scope === "daily").slice(-14),
           mechanicProductivity: {
             today: overallProductivity(
