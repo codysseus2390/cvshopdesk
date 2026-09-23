@@ -8,6 +8,40 @@ export type Database = {
   };
   public: {
     Tables: {
+      autoflow_webhook_events: {
+        Row: {
+          id: string;
+          shop_id: string;
+          autoflow_shop_id: string;
+          event_id: string;
+          event_type: string;
+          payload: Json;
+          received_at: string;
+          processing_status: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          autoflow_shop_id: string;
+          event_id: string;
+          event_type: string;
+          payload: Json;
+          received_at?: string;
+          processing_status?: string;
+        };
+        Update: {
+          processing_status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "autoflow_webhook_events_shop_id_fkey";
+            columns: ["shop_id"];
+            isOneToOne: false;
+            referencedRelation: "shops";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ai_actions: {
         Row: {
           after_values: Json | null;

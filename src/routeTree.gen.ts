@@ -25,6 +25,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedShopAiRouteImport } from './routes/_authenticated/shop-ai'
 import { Route as AuthenticatedToolsRouteImport } from './routes/_authenticated/tools'
 import { Route as AuthenticatedTvRouteImport } from './routes/_authenticated/tv'
+import { Route as ApiWebhooksAutoflowRouteImport } from './routes/api/webhooks/autoflow'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -105,6 +106,11 @@ const AuthenticatedTvRoute = AuthenticatedTvRouteImport.update({
   path: '/tv',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiWebhooksAutoflowRoute = ApiWebhooksAutoflowRouteImport.update({
+  id: '/api/webhooks/autoflow',
+  path: '/api/webhooks/autoflow',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/shop-ai': typeof AuthenticatedShopAiRoute
   '/tools': typeof AuthenticatedToolsRoute
   '/tv': typeof AuthenticatedTvRoute
+  '/api/webhooks/autoflow': typeof ApiWebhooksAutoflowRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/shop-ai': typeof AuthenticatedShopAiRoute
   '/tools': typeof AuthenticatedToolsRoute
   '/tv': typeof AuthenticatedTvRoute
+  '/api/webhooks/autoflow': typeof ApiWebhooksAutoflowRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/_authenticated/shop-ai': typeof AuthenticatedShopAiRoute
   '/_authenticated/tools': typeof AuthenticatedToolsRoute
   '/_authenticated/tv': typeof AuthenticatedTvRoute
+  '/api/webhooks/autoflow': typeof ApiWebhooksAutoflowRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/shop-ai'
     | '/tools'
     | '/tv'
+    | '/api/webhooks/autoflow'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/shop-ai'
     | '/tools'
     | '/tv'
+    | '/api/webhooks/autoflow'
   id:
     | '__root__'
     | '/'
@@ -212,12 +223,14 @@ export interface FileRouteTypes {
     | '/_authenticated/shop-ai'
     | '/_authenticated/tools'
     | '/_authenticated/tv'
+    | '/api/webhooks/autoflow'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiWebhooksAutoflowRoute: typeof ApiWebhooksAutoflowRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -334,6 +347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTvRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/webhooks/autoflow': {
+      id: '/api/webhooks/autoflow'
+      path: '/api/webhooks/autoflow'
+      fullPath: '/api/webhooks/autoflow'
+      preLoaderRoute: typeof ApiWebhooksAutoflowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -376,6 +396,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiWebhooksAutoflowRoute: ApiWebhooksAutoflowRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

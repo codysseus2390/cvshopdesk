@@ -1,5 +1,30 @@
 # HANDOFF.md — Living Handoff Document
 
+## 2026-09-23 — Autoflow-only production release preparation
+
+Branch codex/autoflow-release starts from deployed production commit 54a5d33.
+Only Autoflow receiver/transport changes were carried over. Do not deploy main:
+production is intentionally rolled back because migrations 0023/0024 are absent.
+The separate codex/autoflow-integration branch and draft PR #30 remain on main.
+
+Staging migration 0025 is applied and verified, including private permissions and
+transactional duplicate tests. Its Drizzle history was recorded. Production is
+unchanged. Owner saved separate production and staging server keys in Vercel;
+server URLs were verified against the matching projects. The verified Autoflow
+shop ID and hosted webhook secret are still required. Do not deploy main or
+promote a preview build with staging environment values to production.
+The receiver remains disabled pending configuration and delivery testing.
+Credentials belong only in ignored local files and Vercel secrets. Never print them.
+
+Release validation: typecheck and production build passed. 92 unit tests passed,
+17 existing database-dependent tests skipped. The disposable PGlite inbox test
+could not allocate WebAssembly memory on this machine (including single-worker
+retry); its equivalent staging permission/deduplication transaction passed earlier.
+Next: obtain the Autoflow shop ID, configure a staging-only webhook secret, rebuild
+preview, and verify HTTP delivery before applying the additive production migration.
+
+---
+
 This file is updated by an agent at the end of every session or whenever a task is
 handed off. The next agent should read this before starting any work.
 
