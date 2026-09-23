@@ -274,7 +274,11 @@ export const listMetricHistory = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await resolveShop(supabase as unknown as Supa, userId);
+    const shop = await resolveShop(supabase as unknown as Supa, userId);
+    const allowed = await readShopPermissions(supabase, shop.shopId, shop.role);
+    if (!allowed("view_dashboard")) {
+      throw new Error("You do not have permission to view metric history.");
+    }
     const { data: rows, error } = await supabase
       .from("metric_snapshots")
       .select(
