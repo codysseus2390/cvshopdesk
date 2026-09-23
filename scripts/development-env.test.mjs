@@ -4,12 +4,17 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { readDevelopmentEnv, validateDevelopmentEnv } from "./development-env.mjs";
+import {
+  STAGING_PROJECT_REF,
+  PRODUCTION_PROJECT_REF,
+  HISTORICAL_PRODUCTION_PROJECT_REF,
+} from "./backend-targets.mjs";
 
 const productionProjectId = "production-ref";
 const staging = {
   SHOPDESK_ENVIRONMENT: "development",
-  SUPABASE_URL: "https://staging-ref.supabase.co",
-  VITE_SUPABASE_URL: "https://staging-ref.supabase.co",
+  SUPABASE_URL: `https://${STAGING_PROJECT_REF}.supabase.co`,
+  VITE_SUPABASE_URL: `https://${STAGING_PROJECT_REF}.supabase.co`,
   SUPABASE_PUBLISHABLE_KEY: "sb_publishable_testPublicKey",
   VITE_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_testPublicKey",
 };
@@ -39,6 +44,27 @@ test("rejects production even when labelled staging", () => {
     productionProjectId,
   );
   assert.equal(problems.filter((problem) => problem.includes("production project")).length, 2);
+});
+test("rejects current, historical, and unknown hosted backends", () => {
+  for (const ref of [PRODUCTION_PROJECT_REF, HISTORICAL_PRODUCTION_PROJECT_REF, "unverified-ref"]) {
+    assert.ok(
+      validateDevelopmentEnv({
+        ...staging,
+        SUPABASE_URL: `https://${ref}.supabase.co`,
+        VITE_SUPABASE_URL: `https://${ref}.supabase.co`,
+      }).length > 0,
+    );
+  }
+});
+test("rejects a public JWT bound to another project", () => {
+  const key = `header.${Buffer.from(JSON.stringify({ role: "anon", ref: PRODUCTION_PROJECT_REF })).toString("base64url")}.signature`;
+  assert.ok(
+    validateDevelopmentEnv({
+      ...staging,
+      SUPABASE_PUBLISHABLE_KEY: key,
+      VITE_SUPABASE_PUBLISHABLE_KEY: key,
+    }).some((message) => message.includes("different backend")),
+  );
 });
 test("rejects mixed targets and private browser credentials", () => {
   const problems = validateDevelopmentEnv(

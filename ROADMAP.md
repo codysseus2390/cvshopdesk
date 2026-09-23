@@ -1,5 +1,16 @@
 # ROADMAP.md — Cedar Valley ShopDesk
 
+## Active restart — 2026-09-23
+
+The preserved `plan.md` is the active implementation plan; older priorities below
+are historical context, not instructions to restart completed work.
+
+- Phase 0: preview-first release safeguards and verified backend baseline (in progress).
+- Phases 1-2: code preserved on main through PR 28; staging migration/browser proof
+  is still missing. Do not equate merged code with a usable deployment.
+- Phases 3-8: continue only after the prerequisite staging checks pass.
+- See `docs/release-workflow.md` for the phase PR, owner acceptance and release gates.
+
 **Immediate goal:** Get the existing foundation into a professional, stable state before
 adding new features. The sequence is:
 

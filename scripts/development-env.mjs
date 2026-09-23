@@ -1,6 +1,11 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseEnv } from "node:util";
+import {
+  STAGING_PROJECT_REF,
+  PRODUCTION_PROJECT_REF,
+  HISTORICAL_PRODUCTION_PROJECT_REF,
+} from "./backend-targets.mjs";
 
 export function readDevelopmentEnv(root, overrides = process.env) {
   const env = {};
@@ -12,11 +17,8 @@ export function readDevelopmentEnv(root, overrides = process.env) {
   return Object.assign(env, overrides);
 }
 
-export function validateDevelopmentEnv(env, productionProjectId) {
+export function validateBackendEnv(env, { allowedRefs, allowLocal = false, blockedRefs = [] }) {
   const problems = [];
-  if (!["development", "staging"].includes(env.SHOPDESK_ENVIRONMENT)) {
-    problems.push("Set SHOPDESK_ENVIRONMENT=development or staging in .env.local.");
-  }
   const targets = [];
   for (const name of ["SUPABASE_URL", "VITE_SUPABASE_URL"]) {
     let target;
@@ -30,11 +32,24 @@ export function validateDevelopmentEnv(env, productionProjectId) {
     if (target.protocol !== "https:" && !(local && target.protocol === "http:")) {
       problems.push(`${name} must use HTTPS, or HTTP for a local backend.`);
     }
-    if (target.hostname.includes("replace-with-") || target.username || target.password) {
+    if (
+      target.hostname.includes("replace-with-") ||
+      target.username ||
+      target.password ||
+      target.pathname !== "/" ||
+      target.search ||
+      target.hash
+    ) {
       problems.push(`${name} must contain a real backend URL without credentials.`);
     }
-    if (target.hostname.toLowerCase().includes(productionProjectId.toLowerCase())) {
+    if (blockedRefs.some((ref) => target.hostname === `${ref}.supabase.co`)) {
       problems.push(`${name} points at the production project. Use a separate staging project.`);
+    }
+    if (
+      !(local && allowLocal) &&
+      !allowedRefs.some((ref) => target.origin === `https://${ref}.supabase.co`)
+    ) {
+      problems.push(`${name} is not an explicitly allowed backend for this environment.`);
     }
     targets.push(target.href.replace(/\/$/, ""));
   }
@@ -46,7 +61,14 @@ export function validateDevelopmentEnv(env, productionProjectId) {
     let isPublic = key.startsWith("sb_publishable_");
     try {
       const payload = JSON.parse(Buffer.from(key.split(".")[1] ?? "", "base64url").toString());
-      isPublic ||= payload.role === "anon";
+      isPublic = payload.role === "anon";
+      if (
+        payload.ref &&
+        targets.length === 2 &&
+        !targets.every((url) => url === `https://${payload.ref}.supabase.co`)
+      ) {
+        problems.push(`${name} belongs to a different backend project.`);
+      }
     } catch {
       // New publishable keys are opaque, rather than JWTs.
     }
@@ -62,6 +84,22 @@ export function validateDevelopmentEnv(env, productionProjectId) {
         `${name} exposes a private credential to the browser. Remove its VITE_ prefix.`,
       );
     }
+  }
+  return problems;
+}
+
+export function validateDevelopmentEnv(env, additionalProductionRef) {
+  const problems = validateBackendEnv(env, {
+    allowedRefs: [STAGING_PROJECT_REF],
+    allowLocal: true,
+    blockedRefs: [
+      PRODUCTION_PROJECT_REF,
+      HISTORICAL_PRODUCTION_PROJECT_REF,
+      additionalProductionRef,
+    ].filter(Boolean),
+  });
+  if (!["development", "staging"].includes(env.SHOPDESK_ENVIRONMENT)) {
+    problems.push("Set SHOPDESK_ENVIRONMENT=development or staging in .env.local.");
   }
   return problems;
 }

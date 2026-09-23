@@ -1,5 +1,10 @@
 # PROJECT_CONTEXT.md — Cedar Valley ShopDesk
 
+> Release restart, 2026-09-23: follow `docs/release-workflow.md` for current hosting,
+> backend identities and approval gates. Some historical descriptions below predate
+> the Vercel migration and are not safe deployment targets. Current staging is
+> `fsmyugwrfuvqrrhufryf`; production is `cblabtksphjsnkkyfnmo`.
+
 Internal shop-management and operations platform for **Cedar Valley Tire & Auto Service**.
 Not a public product today, but the architecture and UX are being kept clean enough that
 the system could eventually be adapted and offered to other automotive repair shops.

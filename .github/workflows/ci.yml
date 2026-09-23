@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        command: ["test:unit", "typecheck", "lint", "build"]
+        command: ["test:unit", "test:integration", "typecheck", "lint", "build"]
     env:
       # Build-only dummy settings. No app/backend/provider secrets are supplied.
       SUPABASE_URL: https://ci.invalid

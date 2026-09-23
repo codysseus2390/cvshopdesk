@@ -2,15 +2,15 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { STAGING_PROJECT_REF } from "./backend-targets.mjs";
 
 // Offline SQL preparation only. This script never connects to a database.
 const root = fileURLToPath(new URL("../", import.meta.url));
 const projectRef = process.argv[2];
-const productionRef = readFileSync(resolve(root, "supabase/config.toml"), "utf8").match(
-  /project_id\s*=\s*"([^"]+)"/,
-)?.[1];
-if (!productionRef || !/^[a-z]{20}$/.test(projectRef ?? "") || projectRef === productionRef) {
-  throw new Error("Provide a verified, separate Supabase staging project reference.");
+if (projectRef !== STAGING_PROJECT_REF) {
+  throw new Error(
+    "Only the explicitly verified staging project is allowed. This script is fresh-database-only.",
+  );
 }
 
 const folder = resolve(root, "drizzle/migrations");
