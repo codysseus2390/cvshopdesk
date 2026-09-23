@@ -85,7 +85,10 @@ function TvMode() {
       : null;
 
   return (
-    <div className="dark relative flex h-screen flex-col overflow-hidden bg-background text-foreground">
+    <div
+      className="tv-display dark relative flex h-screen flex-col overflow-hidden bg-background text-foreground"
+      data-paused={paused}
+    >
       <TvBackground />
 
       <div className="relative z-10 flex h-full min-h-0 flex-col">
@@ -95,7 +98,7 @@ function TvMode() {
           alert={alert}
         />
 
-        <main className="flex min-h-0 flex-1 flex-col gap-4 p-4">
+        <main className="tv-main flex min-h-0 flex-1 flex-col gap-4">
           {(announcements.data?.length ?? 0) > 0 && (
             <div className="flex shrink-0 gap-4">
               {(announcements.data ?? []).slice(0, 2).map((item) => (
@@ -119,29 +122,33 @@ function TvMode() {
             </div>
           )}
 
-          <div
-            className={cn(
-              "min-h-0 flex-1 flex-col",
-              screen === "numbers" ? "flex tv-screen-enter" : "hidden",
-            )}
-          >
-            <TvNumbersScreen dashboard={dashboard.data} />
+          <div className="tv-screen-stage">
+            <div
+              className="tv-screen"
+              data-active={screen === "numbers"}
+              aria-hidden={screen !== "numbers"}
+              inert={screen !== "numbers"}
+            >
+              <TvNumbersScreen dashboard={dashboard.data} />
+            </div>
+            <div
+              className="tv-screen"
+              data-active={screen === "shop"}
+              aria-hidden={screen !== "shop"}
+              inert={screen !== "shop"}
+            >
+              <TvShopScreen
+                rows={tvBoard?.schedule ?? []}
+                nextUp={tvBoard?.nextUp ?? []}
+                done={board.data?.done ?? []}
+                timezone={board.data?.timezone ?? "America/Chicago"}
+                now={now}
+                paused={paused || screen !== "shop"}
+              />
+            </div>
+            <div key={screen} className="tv-transition-sweep" aria-hidden="true" />
           </div>
-          <div
-            className={cn(
-              "min-h-0 flex-1 flex-col",
-              screen === "shop" ? "flex tv-screen-enter" : "hidden",
-            )}
-          >
-            <TvShopScreen
-              rows={tvBoard?.schedule ?? []}
-              nextUp={tvBoard?.nextUp ?? []}
-              timezone={board.data?.timezone ?? "America/Chicago"}
-              now={now}
-              paused={paused || screen !== "shop"}
-            />
-          </div>
-          <div className="absolute bottom-16 right-4 flex gap-1 rounded-md bg-background/90 p-1 text-xs text-muted-foreground">
+          <div className="tv-controls flex gap-1 rounded-md bg-background/90 p-1 text-xs text-muted-foreground">
             <button
               type="button"
               className="rounded px-2 py-1 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary"

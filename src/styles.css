@@ -455,249 +455,706 @@
   z-index: 0;
 }
 
-/* ===========================================================================
-   TV mode
-   One shared surface for every screen: a slab of brushed shop metal that is
-   always very slightly in motion — a sheen travelling across the grain, two
-   machined discs turning, and the overhead shop light drifting. Every layer is
-   deliberately low-contrast (2-13%); from across the shop it should read as a
-   living surface, never as decoration competing with the numbers.
-   Motion is disabled wholesale by the prefers-reduced-motion block below.
-   =========================================================================== */
-
-.tv-metal {
+/* TV display — Figma: P7whBvxGPIv9NXz4aj3UDC. Keep effects behind live text. */
+.tv-display {
+  --tv-orange: #ff790c;
+  --tv-green: #77f32d;
+  --tv-silver: #c7d6e0;
+  --tv-accent: var(--tv-orange);
+  --tv-gutter: clamp(16px, 2.4vw, 44px);
+  --tv-gap: clamp(10px, 1vw, 20px);
+  --color-primary: var(--tv-orange);
+  --color-secondary: var(--tv-green);
+  --color-muted-foreground: #b6bec4;
+  color: #f5f6f3;
+  background: #070b0d;
+}
+.tv-display [data-status="in_shop"] {
+  --tv-accent: var(--tv-orange);
+}
+.tv-display [data-status="upcoming"] {
+  --tv-accent: var(--tv-silver);
+}
+.tv-display [data-status="done"] {
+  --tv-accent: var(--tv-green);
+}
+.tv-carbon {
   position: absolute;
   inset: 0;
-  z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  /* Confine the blend modes below to this layer so they never reach the UI. */
+  background:
+    repeating-linear-gradient(132deg, #ffffff04 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(42deg, #0000 0 210px, #ffffff04 212px 330px, #0000 332px 540px),
+    #070b0d;
+}
+.tv-ambient-glow {
+  position: absolute;
+  inset: -15%;
+  background:
+    radial-gradient(ellipse at 90% 5%, #ff790c22, transparent 40%),
+    radial-gradient(ellipse at 10% 95%, #ff790c20, transparent 38%);
+  animation: tv-ambient-drift 24s ease-in-out infinite alternate;
+}
+.tv-light-trail {
+  position: absolute;
+  width: 135vw;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ff790c, #ffcf80, #ff790c, transparent);
+  box-shadow:
+    0 0 14px 2px #ff790c99,
+    0 0 45px 12px #ff790c22;
+  rotate: 32deg;
+  animation: tv-trail-drift 4s ease-in-out infinite alternate;
+}
+.tv-light-trail-one {
+  left: 60%;
+  top: 3%;
+}
+.tv-light-trail-two {
+  left: -65%;
+  top: 48%;
+  animation-delay: -1s;
+}
+.tv-light-trail-three {
+  left: 40%;
+  top: 83%;
+  animation-delay: -2s;
+}
+.tv-light-trail-four {
+  left: -72%;
+  top: 95%;
+  animation-delay: -3s;
+}
+@keyframes tv-trail-drift {
+  to {
+    transform: translateY(28px);
+  }
+}
+@keyframes tv-ambient-drift {
+  to {
+    transform: translate3d(-3%, 3%, 0) scale(1.06);
+  }
+}
+.tv-header {
+  display: grid;
+  grid-template-columns: minmax(210px, 28%) 1fr minmax(180px, 19%);
+  align-items: center;
+  flex-shrink: 0;
+  min-height: clamp(100px, 16vh, 172px);
+  padding: 12px var(--tv-gutter);
+  gap: clamp(18px, 2.6vw, 48px);
+}
+.tv-brand {
+  min-width: 0;
+}
+.tv-brand-logo {
+  width: 100%;
+  max-height: 78px;
+  object-fit: contain;
+}
+.tv-brand p {
+  margin-top: 10px;
+  font-size: clamp(8px, 0.7vw, 13px);
+  text-transform: uppercase;
+  letter-spacing: 0.36em;
+  text-align: center;
+  color: #c1c9cf;
+}
+.tv-heading {
+  border-left: 1px solid #ffffff44;
+  padding-left: clamp(20px, 2.6vw, 48px);
+  min-width: 0;
+}
+.tv-heading h1 {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 3.8vw, 72px);
+  font-weight: 700;
+  line-height: 1.15;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.tv-heading h1 span {
+  color: var(--tv-orange);
+  text-shadow: 0 0 24px #ff790c24;
+}
+.tv-tagline {
+  margin-top: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  font-size: clamp(8px, 0.8vw, 15px);
+  color: #c1c9cf;
+}
+.tv-display .tv-clock-plate {
+  min-width: 0;
+  border-left: 1px solid #ffffff28;
+  padding: 4px 0 8px 20px;
+  background: #070b0de6;
+}
+.tv-display .tv-clock-plate > p:first-child {
+  font-size: clamp(42px, 5vw, 86px);
+}
+.tv-display .tv-clock-plate > p:last-child {
+  font-size: clamp(11px, 1.15vw, 20px);
+  padding-top: 8px;
+  margin-top: 8px;
+  border-top: 1px solid #ff790caa;
+}
+.tv-main {
+  padding: 0 var(--tv-gutter) var(--tv-gap);
+}
+.tv-screen-stage {
+  position: relative;
   isolation: isolate;
-  background-color: oklch(0.165 0.009 60);
-  background-image:
-    /* micro-striations, then coarser tool marks, then wide rolling bands */
-    repeating-linear-gradient(91deg, rgb(255 255 255 / 7%) 0 1px, transparent 1px 3px),
-    repeating-linear-gradient(91deg, rgb(0 0 0 / 30%) 0 2px, transparent 2px 9px),
-    repeating-linear-gradient(91deg, rgb(255 255 255 / 3.5%) 0 34px, transparent 34px 118px),
-    linear-gradient(
-      176deg,
-      oklch(0.235 0.011 60) 0%,
-      oklch(0.168 0.009 60) 52%,
-      oklch(0.135 0.008 55) 100%
-    );
+  flex: 1;
+  min-height: 0;
 }
-
-/* Machined disc — a wheel on the balancer, turning slowly enough that you
-   only notice it if you watch for it. */
-.tv-metal-disc {
-  position: absolute;
-  right: -42vh;
-  bottom: -58vh;
-  width: 150vh;
-  height: 150vh;
-  border-radius: 9999px;
-  opacity: 0.85;
-  background: conic-gradient(
-    from 0deg,
-    rgb(255 255 255 / 0%) 0deg,
-    rgb(255 255 255 / 3.4%) 16deg,
-    rgb(255 255 255 / 0%) 34deg,
-    rgb(0 0 0 / 10%) 58deg,
-    rgb(255 255 255 / 0%) 78deg,
-    rgb(255 255 255 / 2.6%) 98deg,
-    rgb(255 255 255 / 0%) 122deg,
-    rgb(0 0 0 / 8%) 150deg,
-    rgb(255 255 255 / 0%) 176deg,
-    rgb(255 255 255 / 3.8%) 196deg,
-    rgb(255 255 255 / 0%) 218deg,
-    rgb(0 0 0 / 10%) 246deg,
-    rgb(255 255 255 / 0%) 270deg,
-    rgb(255 255 255 / 2.4%) 292deg,
-    rgb(255 255 255 / 0%) 316deg,
-    rgb(0 0 0 / 8%) 342deg,
-    rgb(255 255 255 / 0%) 360deg
-  );
-  -webkit-mask-image: radial-gradient(
-    closest-side,
-    transparent 18%,
-    #000 34%,
-    #000 78%,
-    transparent 100%
-  );
-  mask-image: radial-gradient(closest-side, transparent 18%, #000 34%, #000 78%, transparent 100%);
-  animation: tv-disc-spin 150s linear infinite;
-}
-
-/* Second, smaller disc in the opposite corner turning the other way, so the
-   surface never settles into a single obvious rotation. */
-.tv-metal-disc-alt {
-  top: -26vh;
-  right: auto;
-  bottom: auto;
-  left: -30vh;
-  width: 78vh;
-  height: 78vh;
-  opacity: 0.6;
-  animation-duration: 104s;
-  animation-direction: reverse;
-}
-
-@keyframes tv-disc-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Anisotropic highlight travelling across the brushed grain — the one thing
-   that actually makes the surface read as metal rather than dark paint. */
-.tv-metal-sheen {
-  position: absolute;
-  inset: -25% -70%;
-  mix-blend-mode: screen;
-  background: linear-gradient(
-    101deg,
-    transparent 0%,
-    transparent 36%,
-    color-mix(in oklch, var(--color-primary) 9%, transparent) 44%,
-    rgb(255 246 235 / 12%) 50%,
-    color-mix(in oklch, var(--color-primary) 7%, transparent) 56%,
-    transparent 64%,
-    transparent 100%
-  );
-  animation: tv-sheen 27s cubic-bezier(0.45, 0, 0.55, 1) infinite;
-}
-
-@keyframes tv-sheen {
-  0% {
-    transform: translate3d(-34%, 0, 0);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  86% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate3d(34%, 0, 0);
-    opacity: 0;
-  }
-}
-
-/* Overhead shop light: ember from the top right, the green accent from the
-   bottom left, both drifting. */
-.tv-metal-glow {
-  position: absolute;
-  inset: -10%;
-  background-image:
-    radial-gradient(
-      900px 620px at 86% -6%,
-      color-mix(in oklch, var(--color-primary) 13%, transparent),
-      transparent 62%
-    ),
-    radial-gradient(
-      780px 540px at 6% 104%,
-      color-mix(in oklch, var(--color-secondary) 9%, transparent),
-      transparent 66%
-    );
-  animation: tv-glow-drift 38s ease-in-out infinite alternate;
-}
-
-@keyframes tv-glow-drift {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  100% {
-    transform: translate3d(-2.5%, 2%, 0) scale(1.06);
-  }
-}
-
-/* Faint tread diagonal + film grain, to break up the gradients. */
-.tv-metal-grain {
+.tv-screen {
   position: absolute;
   inset: 0;
-  mix-blend-mode: overlay;
-  background-image:
-    repeating-linear-gradient(
-      -28deg,
-      rgb(255 255 255 / 1.6%) 0 3px,
-      transparent 3px 8px,
-      rgb(0 0 0 / 3%) 8px 11px,
-      transparent 11px 30px
-    ),
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-  background-size:
-    auto,
-    220px 220px;
-}
-
-/* Edge falloff so the panels sit forward of the metal. */
-.tv-metal-vignette {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse 92% 82% at 50% 42%, transparent 50%, rgb(0 0 0 / 38%) 100%);
-}
-
-/* Top and bottom chrome: full-bleed bars, divided into flush cells rather
-   than floating pills, so the screen has a hard top and bottom edge. */
-.tv-bar {
-  background: linear-gradient(180deg, oklch(0.26 0.014 60 / 92%), oklch(0.205 0.012 60 / 92%));
-  backdrop-filter: blur(6px);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 7%),
-    0 1px 0 rgb(0 0 0 / 45%);
-}
-
-/* The clock sits on its own opaque plate — on a bright shop TV a translucent
-   clock washes straight out, so this one never shares a background with the
-   moving metal behind it. */
-.tv-clock-plate {
-  background: oklch(0.145 0.01 60);
-  box-shadow:
-    inset 1px 0 0 rgb(255 255 255 / 5%),
-    inset 0 1px 0 rgb(255 255 255 / 5%);
-}
-
-/* Content panel. Deliberately semi-transparent so the sheen travels through
-   the numbers instead of stopping at their edges. */
-.tv-slab {
-  background: oklch(0.225 0.013 60 / 52%);
-  backdrop-filter: blur(2px) saturate(115%);
-  box-shadow:
-    0 18px 50px rgb(0 0 0 / 45%),
-    inset 0 1px 0 rgb(255 255 255 / 6%);
-}
-
-/* Per-panel accent wash, driven by --tv-accent on the element. */
-.tv-accent-wash::before {
-  content: "";
-  position: absolute;
-  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  opacity: 0;
+  transform: translate3d(-24px, 0, 0) scale(0.985);
+  visibility: hidden;
   pointer-events: none;
-  background-image: radial-gradient(
-    85% 75% at 100% -10%,
-    color-mix(in oklch, var(--tv-accent) 12%, transparent),
-    transparent 60%
+  transition:
+    opacity 850ms ease,
+    transform 850ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s 850ms;
+}
+.tv-screen[data-active="true"] {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+  z-index: 1;
+}
+.tv-transition-sweep {
+  position: absolute;
+  inset: -12% -5%;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    transparent 42%,
+    #ff790c12 48%,
+    #ffbd5c24 50%,
+    transparent 56%
+  );
+  opacity: 0;
+  animation: tv-screen-sweep 1000ms ease-out both;
+}
+@keyframes tv-screen-sweep {
+  0% {
+    transform: translateX(-70%);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(70%);
+    opacity: 0;
+  }
+}
+.tv-workflow-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.92fr 0.83fr;
+  gap: var(--tv-gap);
+  min-height: 0;
+  flex: 1;
+}
+.tv-lit-panel {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid color-mix(in srgb, var(--tv-accent) 58%, #343b3f);
+  border-radius: clamp(12px, 1.2vw, 22px);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--tv-accent) 7%, #111619),
+    #0b1012ed 52%,
+    #131718ee
+  );
+  box-shadow:
+    inset 0 1px 0 #ffffff14,
+    0 12px 28px #0006;
+}
+.tv-lit-panel::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: -1px;
+  border: 1px solid var(--tv-accent);
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 18px color-mix(in srgb, var(--tv-accent) 16%, transparent),
+    0 0 13px color-mix(in srgb, var(--tv-accent) 28%, transparent);
+  opacity: 0.5;
+  animation: tv-light-breathe 4s ease-in-out infinite;
+}
+@keyframes tv-light-breathe {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.tv-workflow-column,
+.tv-schedule-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.tv-column-header {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 0.9vw, 18px);
+  padding: clamp(12px, 1.1vw, 22px);
+  flex-shrink: 0;
+}
+.tv-column-header h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(22px, 1.9vw, 36px);
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+.tv-column-header p {
+  color: #b6bec4;
+  margin-top: 5px;
+  font-size: clamp(11px, 0.95vw, 18px);
+}
+.tv-ring-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(40px, 4vw, 72px);
+  height: clamp(40px, 4vw, 72px);
+  border-radius: 50%;
+  border: 3px solid var(--tv-accent);
+  color: var(--tv-accent);
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--tv-accent) 40%, transparent));
+}
+.tv-ring-icon svg {
+  width: 61%;
+  height: 61%;
+  stroke-width: 2;
+}
+.tv-scrolling-list {
+  padding: 0 clamp(8px, 0.7vw, 14px) 12px;
+  scroll-behavior: auto;
+  overscroll-behavior: contain;
+  border-radius: 0 0 18px 18px;
+}
+.tv-scrolling-list:focus-visible {
+  outline: 2px solid var(--tv-accent);
+  outline-offset: -3px;
+}
+.tv-customer-card {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 8px;
+  border: 1px solid #ffffff14;
+  border-radius: 11px;
+  padding: clamp(10px, 0.8vw, 16px) 12px clamp(10px, 0.8vw, 16px) clamp(16px, 1.4vw, 26px);
+  background: linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--tv-accent) 9%, #14191c),
+    #14191c 55%,
+    #101416
   );
 }
-
-/* TV mode — screen crossfade. Understated: opacity + a few px of horizontal
-   drift, no bounce or scale. */
-@keyframes tv-screen-in {
-  from {
-    opacity: 0;
-    transform: translateX(10px);
+.tv-customer-rail {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: clamp(4px, 0.4vw, 7px);
+  background: var(--tv-accent);
+  box-shadow: 0 0 14px 3px color-mix(in srgb, var(--tv-accent) 65%, transparent);
+  animation: tv-light-breathe 4s ease-in-out infinite;
+}
+.tv-customer-card:nth-child(2n) .tv-customer-rail {
+  animation-delay: -1s;
+}
+.tv-customer-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  justify-content: space-between;
+}
+.tv-customer-heading h3,
+.tv-appointment h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(19px, 1.35vw, 27px);
+  line-height: 1.2;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.tv-customer-badge {
+  font-family: var(--font-display);
+  font-size: clamp(9px, 0.67vw, 13px);
+  white-space: nowrap;
+  padding: 3px 9px;
+  border: 1px solid color-mix(in srgb, var(--tv-accent) 70%, transparent);
+  border-radius: 999px;
+  color: var(--tv-accent);
+  background: color-mix(in srgb, var(--tv-accent) 9%, transparent);
+}
+.tv-customer-vehicle {
+  color: #c4ccd1;
+  font-size: clamp(12px, 0.94vw, 18px);
+  line-height: 1.35;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+}
+.tv-customer-service {
+  color: #c4ccd1;
+  font-size: clamp(12px, 0.9vw, 17px);
+  line-height: 1.35;
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+.tv-customer-timer {
+  color: var(--tv-accent);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: clamp(11px, 0.78vw, 15px);
+  font-variant-numeric: tabular-nums;
+  margin-top: 8px;
+}
+.tv-customer-timer svg {
+  width: 13px;
+  height: 13px;
+}
+.tv-timer-caption {
+  color: #aab4ba;
+  font-size: 0.85em;
+}
+.tv-column-empty {
+  display: flex;
+  min-height: 160px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+  text-align: center;
+  color: #aab4ba;
+  font-size: clamp(14px, 1.1vw, 21px);
+  line-height: 1.5;
+}
+.tv-column-empty > svg {
+  width: 54px;
+  height: 54px;
+  margin-bottom: 20px;
+  opacity: 0.35;
+}
+.tv-done-message {
+  padding-top: 40px;
+}
+.tv-done-message span {
+  font-size: 0.9em;
+  margin-top: 6px;
+}
+.tv-schedule-panel {
+  margin-top: 26px;
+}
+.tv-schedule-panel .tv-column-header {
+  border-bottom: 1px solid #ffffff20;
+  margin: 0 12px 10px;
+  padding: 18px 0;
+}
+.tv-schedule-panel h2 {
+  font-size: clamp(18px, 1.5vw, 28px);
+}
+.tv-schedule-icon {
+  color: var(--tv-orange);
+  width: clamp(28px, 3vw, 52px);
+  height: auto;
+  flex-shrink: 0;
+}
+.tv-schedule-empty {
+  min-height: 100%;
+}
+.tv-schedule-signature {
+  text-align: center;
+  padding: 20px 12px;
+  margin: 0 18px;
+  border-top: 1px solid #ffffff28;
+  color: #b6bec4;
+  font-style: italic;
+  font-size: clamp(12px, 1vw, 19px);
+  flex-shrink: 0;
+}
+.tv-appointment {
+  padding: 14px 8px;
+  border-bottom: 1px solid #ffffff20;
+  color: #c4ccd1;
+  font-size: clamp(12px, 0.9vw, 17px);
+  overflow-wrap: anywhere;
+}
+.tv-appointment-time {
+  font-family: var(--font-display);
+  color: var(--tv-orange);
+  font-size: clamp(18px, 1.5vw, 28px);
+  margin-bottom: 6px;
+}
+.tv-footer {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 24px;
+  padding: 0 var(--tv-gutter) 16px;
+}
+.tv-footer-totals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: 65%;
+  border: 1px solid #ffffff24;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #181e20f5, #0b0e10f5);
+}
+.tv-footer-stat {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 1.3vw, 24px);
+  padding: clamp(9px, 0.85vw, 16px) clamp(12px, 1.4vw, 26px);
+  min-width: 0;
+}
+.tv-footer-stat + .tv-footer-stat {
+  border-left: 1px solid #ffffff28;
+}
+.tv-footer-stat .tv-ring-icon {
+  width: clamp(34px, 3.7vw, 68px);
+  height: clamp(34px, 3.7vw, 68px);
+}
+.tv-footer-stat strong {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 3.6vw, 64px);
+  line-height: 1;
+}
+.tv-footer-stat p {
+  font-family: var(--font-display);
+  font-size: clamp(13px, 1.15vw, 22px);
+  color: var(--tv-accent);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.tv-footer-stat span:not(.tv-ring-icon) {
+  display: block;
+  font-size: clamp(9px, 0.7vw, 13px);
+  color: #abb4ba;
+  margin-top: 3px;
+}
+.tv-footer-signature {
+  flex: 1;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: #bec6cc;
+  font-size: clamp(8px, 0.65vw, 12px);
+  padding-bottom: 16px;
+}
+.tv-footer-signature span {
+  display: block;
+  border-top: 1px solid #ffffff26;
+  margin-top: 13px;
+  padding-top: 13px;
+  letter-spacing: 0.5em;
+}
+.tv-controls {
+  position: absolute;
+  right: var(--tv-gutter);
+  bottom: 13px;
+  z-index: 5;
+}
+.tv-numbers-grid {
+  gap: var(--tv-gap);
+}
+.tv-metric-panel {
+  min-height: 0;
+  padding: clamp(14px, 1.6vw, 30px) clamp(18px, 2.2vw, 42px);
+  overflow: hidden;
+}
+.tv-metric-heading {
+  flex-shrink: 0;
+}
+.tv-metric-heading h2 {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 2vw, 38px);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+.tv-metric-heading .tv-ring-icon {
+  width: clamp(42px, 4vw, 72px);
+  height: clamp(42px, 4vw, 72px);
+}
+.tv-metric-value {
+  font-size: clamp(54px, min(6.7vw, 10.5vh), 124px);
+  text-shadow: 0 0 22px color-mix(in srgb, var(--tv-accent) 20%, transparent);
+}
+.tv-metric-watermark {
+  position: absolute;
+  width: 22%;
+  height: 46%;
+  right: 5%;
+  top: 19%;
+  color: var(--tv-accent);
+  opacity: 0.09;
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+.tv-productivity-caption {
+  font-size: clamp(8px, 0.75vw, 14px);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #b6bec4;
+  margin-top: 4px;
+}
+.tv-productivity-table {
+  scrollbar-width: thin;
+}
+.tv-slab {
+  background: #101416ed;
+  box-shadow: 0 10px 24px #0005;
+}
+.tv-display[data-paused="true"] *,
+.tv-display[data-paused="true"] *::before,
+.tv-display[data-paused="true"] *::after {
+  animation-play-state: paused !important;
+}
+.tv-screen[aria-hidden="true"] *,
+.tv-screen[aria-hidden="true"] *::before {
+  animation-play-state: paused;
+}
+@media (max-width: 1399px) {
+  .tv-customer-badge {
+    display: none;
   }
-  to {
-    opacity: 1;
-    transform: translateX(0);
+  .tv-footer-totals {
+    width: 70%;
+  }
+  .tv-footer-stat {
+    gap: 10px;
+    padding-inline: 12px;
+  }
+  .tv-column-header {
+    gap: 8px;
+  }
+  .tv-column-header .tv-ring-icon {
+    width: 36px;
+    height: 36px;
+    border-width: 2px;
+  }
+  .tv-column-header h2 {
+    font-size: 22px;
+  }
+  .tv-schedule-panel h2 {
+    font-size: 18px;
+  }
+  .tv-schedule-icon {
+    width: 27px;
   }
 }
-
-.tv-screen-enter {
-  animation: tv-screen-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+@media (max-height: 800px) {
+  .tv-metric-panel {
+    padding-block: 14px;
+  }
+  .tv-productivity-table {
+    margin-top: 10px;
+  }
+  .tv-productivity-table th,
+  .tv-productivity-table td {
+    padding-block: 4px;
+  }
+  .tv-productivity-table th span span:first-child {
+    width: 28px;
+    height: 28px;
+  }
+  .tv-productivity-table td > span:first-child {
+    font-size: 22px;
+  }
+  .tv-brand p {
+    margin-top: 5px;
+  }
+  .tv-schedule-signature {
+    padding-block: 12px;
+  }
 }
-
+@media (max-width: 900px) {
+  .tv-header {
+    grid-template-columns: 25% 1fr 22%;
+    gap: 12px;
+  }
+  .tv-heading {
+    padding-left: 12px;
+  }
+  .tv-heading h1 {
+    font-size: 26px;
+  }
+  .tv-tagline,
+  .tv-brand p {
+    display: none;
+  }
+  .tv-display .tv-clock-plate {
+    padding-left: 8px;
+  }
+  .tv-display .tv-clock-plate > p:first-child {
+    font-size: 34px;
+  }
+  .tv-workflow-grid {
+    grid-template-columns: 1fr 1fr;
+    overflow-y: auto;
+  }
+  .tv-workflow-column,
+  .tv-schedule-panel {
+    min-height: 300px;
+    margin-top: 0;
+  }
+  .tv-footer-totals {
+    width: 100%;
+  }
+  .tv-footer-signature,
+  .tv-footer-stat .tv-ring-icon,
+  .tv-footer-stat span:not(.tv-ring-icon) {
+    display: none;
+  }
+  .tv-footer {
+    padding-bottom: 40px;
+  }
+  .tv-controls {
+    bottom: 8px;
+  }
+  .tv-metric-heading h2 {
+    font-size: 18px;
+  }
+  .tv-productivity-caption {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tv-display *,
+  .tv-display *::before,
+  .tv-display *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .tv-transition-sweep {
+    display: none;
+  }
+}
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,

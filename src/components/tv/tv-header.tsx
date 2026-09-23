@@ -16,14 +16,24 @@ export function TvHeader({
   alert?: string | null;
 }) {
   return (
-    <header className="tv-bar flex shrink-0 items-stretch border-b border-border">
-      <div className="flex items-center px-7">
-        <CedarLogo className="h-12 w-auto shrink-0" />
+    <header className="tv-header">
+      <div className="tv-brand">
+        <CedarLogo className="tv-brand-logo" />
+        <p>Trusted care keeps you rolling</p>
       </div>
-      <div className="flex flex-1 flex-col justify-center border-l border-border px-7 py-4">
-        <p className="font-display text-3xl font-bold uppercase leading-none tracking-[0.18em] text-primary">
-          {title}
-        </p>
+      <div className="tv-heading">
+        <h1>
+          {title === "Shop numbers" ? (
+            <>
+              Shop <span>numbers</span>
+            </>
+          ) : (
+            <>
+              Today's <span>shop</span>
+            </>
+          )}
+        </h1>
+        <p className="tv-tagline">Vehicles · People · Further together</p>
         {alert && <p className="mt-1.5 text-sm font-bold text-destructive">{alert}</p>}
       </div>
       <TvClock timezone={timezone} />

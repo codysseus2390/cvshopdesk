@@ -29,22 +29,23 @@ export function TvProductivityCard({
 
   return (
     <div
-      className={cn("tv-accent-wash relative flex min-w-0 flex-col px-8 py-6", className)}
-      style={{ "--tv-accent": "var(--color-secondary)" } as React.CSSProperties}
+      className={cn(
+        "tv-lit-panel tv-metric-panel tv-productivity-panel relative flex min-w-0 flex-col",
+        className,
+      )}
+      data-status="done"
     >
-      <div className="relative flex items-center gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+      <div className="tv-metric-heading relative flex items-center gap-3">
+        <span className="tv-ring-icon">
           <Wrench className="h-5 w-5" />
         </span>
-        <p className="font-display text-lg font-semibold uppercase tracking-[0.1em] text-[oklch(0.84_0.02_72)]">
-          Mechanic productivity
-        </p>
-        <p className="ml-auto text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-          Production % by reporting period
-        </p>
+        <div>
+          <h2>Mechanic productivity</h2>
+          <p className="tv-productivity-caption">Production % by reporting period</p>
+        </div>
       </div>
 
-      <div className="relative mt-4 flex min-h-0 flex-1 flex-col">
+      <div className="tv-productivity-table relative mt-4 flex min-h-0 flex-1 flex-col overflow-auto">
         <table className="h-full w-full table-fixed border-collapse">
           <thead>
             <tr className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">

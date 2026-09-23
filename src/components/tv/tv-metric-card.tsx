@@ -30,28 +30,16 @@ export function TvMetricCard({
 }) {
   return (
     <div
-      className={cn("tv-accent-wash relative flex min-w-0 flex-col px-8 py-6", className)}
-      style={
-        {
-          "--tv-accent": accent === "primary" ? "var(--color-primary)" : "var(--color-secondary)",
-        } as React.CSSProperties
-      }
+      className={cn("tv-lit-panel tv-metric-panel relative flex min-w-0 flex-col", className)}
+      data-status={accent === "primary" ? "in_shop" : "done"}
     >
-      <div className="relative flex items-center gap-3">
-        <span
-          className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
-            accent === "primary"
-              ? "bg-primary text-primary-foreground"
-              : "bg-secondary text-secondary-foreground",
-          )}
-        >
+      <div className="tv-metric-heading relative flex items-center gap-3">
+        <span className="tv-ring-icon">
           <Icon className="h-5 w-5" />
         </span>
-        <p className="font-display text-lg font-semibold uppercase tracking-[0.1em] text-[oklch(0.84_0.02_72)]">
-          {label}
-        </p>
+        <h2>{label}</h2>
       </div>
+      <Icon className="tv-metric-watermark" aria-hidden="true" />
 
       <div className="relative flex flex-1 flex-col justify-center">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
@@ -62,7 +50,7 @@ export function TvMetricCard({
             — <span className="text-base font-semibold normal-case">Awaiting shop numbers</span>
           </p>
         ) : (
-          <p className="mt-1 font-display text-[clamp(3rem,6.2vw,5.4rem)] font-bold leading-[0.9] tracking-tight tabular-nums text-[#fffdf8]">
+          <p className="tv-metric-value mt-1 font-display font-bold leading-[0.95] tracking-tight tabular-nums text-[#fffdf8]">
             {month.value}
           </p>
         )}
