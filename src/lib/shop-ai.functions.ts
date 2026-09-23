@@ -288,6 +288,7 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
           supabase: context.supabase,
           shopId: membership.shopId,
           userId,
+          role: membership.role,
           timezone: membership.timezone,
           today: membership.today,
           can: membership.can,

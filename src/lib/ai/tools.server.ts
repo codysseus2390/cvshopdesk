@@ -32,6 +32,8 @@ export interface ShopAiToolContext {
   supabase: any;
   shopId: string;
   userId: string;
+  /** The signed-in member's role in this shop, e.g. "owner" | "manager" | "staff". */
+  role: string;
   timezone: string;
   /**
    * The shop's current business date, computed from its own validated,
