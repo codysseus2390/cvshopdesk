@@ -1,5 +1,35 @@
 # HANDOFF.md — Living Handoff Document
 
+## 2026-09-23 — Autoflow transport and status webhook inbox
+
+Branch: `codex/autoflow-integration`, based on main `cb3e96f`.
+Added `src/lib/autoflow.server.ts` and its unit tests: read-only API transport,
+shop-subdomain validation, sanitized failures, and the documented webhook hash
+check. Setup/contract notes are in `docs/autoflow-integration.md`; blank credential
+variables are in `.env.example`. Local credentials belong only in ignored
+`.env.local`. Never print that file or copy its values into this handoff.
+
+Added `/api/webhooks/autoflow`, disabled unless explicitly configured, and draft
+Drizzle migration 0025 for a service-role-only deduplicated inbox. Shop UUID comes
+from server config; provider shop ID/domain must match. Stored bodies remain
+untrusted `pending_review`; no board updates or callback URL requests occur.
+The hash only covers the event ID, not the payload.
+
+Validation: 189 unit tests passed / 17 existing DB-gated tests skipped, including
+14 Autoflow tests. TypeScript and production build passed. Lint: no errors and
+17 existing warnings. Local built route returned 503 when disabled. Live read-only
+Autoflow appointments request returned the expected envelope without printing any
+customer records. No remote migration, receiver deployment, or board sync occurred.
+
+Next: confirm target hosting/staging environment and both shop IDs; review/apply
+0025 to staging, configure server-only variables, deploy and test delivery. The
+owner entered https://app.cedarvalleytire.com/api/webhooks/autoflow in Autoflow.
+Keep the subscription disabled until the receiver is ready. Credentials supplied
+in conversation should be rotated before live activation. Earlier reporting and
+calendar work below is separate from this integration task.
+
+---
+
 ## Latest checkpoint — Phases 1–2 complete for owner review, 2026-09-22
 
 Branch `feat/shopdesk-astra-implementation`, head `08ee417` (the lead will merge this handoff as one more merge commit on top — handoff merged on top of 08ee417). Worktree `C:\Users\ivinb\Documents\Codex\2026-09-22\final-round-5-of-5-is\work\shopdesk`. Team process: Wrench tickets P12-01..P12-15 (no P12-05), one owner/branch/worktree per ticket under `...\work\agents\<slug>`, lead merged `--no-ff` one at a time; Grok paused (Wrench coordinated, verdicts route to Cody).
