@@ -70,6 +70,13 @@ and [password protection guidance](https://supabase.com/docs/guides/auth/passwor
 
 ## Still not release-ready
 
+The first post-repair Preview (`0bfd160`) reached a different, confirmed preflight
+defect: anonymous SELECT on private shop_settings returned 401/42501. The public
+key itself passed `/auth/v1/settings`, while an invalid key failed. The follow-up
+changes only the public credential probe to Auth settings and retains the server-key
+calendar schema probe. Database grants remain unchanged. The Preview service key
+is a configured Vercel sensitive variable and cannot be retrieved in an env pull.
+
 PR 29 stays draft. A fresh hosted Preview build, signed-in role/session and browser
 checks, and owner acceptance of the exact candidate remain required. A local
 deployment probe was blocked by development environment settings/missing local

@@ -51,8 +51,10 @@ containing staging variables onto `app.cedarvalleytire.com`.
 ## Backend and migration gates
 
 - Staging: `fsmyugwrfuvqrrhufryf`; production: `cblabtksphjsnkkyfnmo`.
-- `check:deployment` runs before Vercel builds: exact environment/backend binding and a
-  zero-row REST schema check. It is not an RLS, migration-journal, or browser-test substitute.
+- `check:deployment` runs before Vercel builds: exact environment/backend binding,
+  public-key verification through Auth settings, and an independent server-key zero-row
+  calendar schema check. Anonymous users must not need access to protected app tables.
+  This is not an RLS, migration-journal, or signed-in browser-test substitute.
 - `bun run check:release-schema --environment staging --commit <full-SHA>` uses an externally
   supplied `SUPABASE_DB_URL` on a clean tracked checkout. It runs read-only catalog/journal
   checks and emits sanitized JSON. Use `production` only for an explicitly scoped read-only
@@ -72,10 +74,11 @@ Phase 1-2 code is on main through PR 28; live traffic was rolled back to PR 27 c
 `54a5d33b6a4006aa084c90bfec1e9d2d440f875b`. Keep that working deployment while repairing
 the release process. Do not discard or restart the completed code from scratch.
 
-Staging was observed with a journal through 0021, while 0022 objects exist; production
-was observed without a Drizzle journal. Recheck before any change. The 0024 calendar column
-and RPC are still absent on staging as of this restart. Do not blindly replay migrations
-or declare the phase usable based on local tests alone.
+At the initial restart, staging had a journal through 0021 with 0022 objects already
+present; production was observed without a Drizzle journal. Staging was subsequently
+reconciled and migrated through 0024 after verified recovery on 2026-09-23; see
+`staging-recovery-2026-09-23.md`. Production was not migrated. Recheck before changes;
+do not replay completed migrations or declare the phase usable from local tests alone.
 
 Phase 0 remains incomplete until GitHub/Vercel protections are verified, journal drift is
 reconciled safely, and Phase 1-2 staging browser/token checks pass. Then continue Phase 3,

@@ -28,6 +28,35 @@ function keyHeaders(key) {
   return headers;
 }
 
+async function checkPublicAuth(url, key, request) {
+  try {
+    const response = await request(url, {
+      method: "GET",
+      headers: keyHeaders(key),
+      signal: AbortSignal.timeout(10000),
+      redirect: "error",
+    });
+    if (!response.ok) {
+      const status = Number.isInteger(response.status) ? ` (HTTP ${response.status})` : "";
+      return `Public backend auth preflight failed${status}. Verify the publishable key and Auth API before deploying.`;
+    }
+    const settings = await response.json();
+    if (
+      settings === null ||
+      typeof settings !== "object" ||
+      Array.isArray(settings) ||
+      settings.external === null ||
+      typeof settings.external !== "object" ||
+      Array.isArray(settings.external) ||
+      typeof settings.disable_signup !== "boolean"
+    )
+      return "Public backend auth preflight returned an unexpected response.";
+  } catch {
+    return "Public backend auth preflight could not complete. Deployment is blocked until the backend can be verified.";
+  }
+  return null;
+}
+
 async function checkZeroRowAccess(url, key, request, label) {
   try {
     const response = await request(url, {
@@ -60,18 +89,16 @@ export async function checkDeployment(env, request = fetch) {
   const serverProblem = serverKeyProblem(env.SUPABASE_SERVICE_ROLE_KEY, ref);
   if (serverProblem) problems.push(serverProblem);
   if (problems.length) return problems;
-  // Read-only, zero-row schema check. Full SQL/RLS and journal verification is
-  // a separate release gate; this catches the missing-column production incident.
+  // Auth settings verifies the public key without requiring anonymous access
+  // to the private shop_settings table.
+  const authUrl = new URL("/auth/v1/settings", env.SUPABASE_URL);
+  const publicProblem = await checkPublicAuth(authUrl, env.SUPABASE_PUBLISHABLE_KEY, request);
+  if (publicProblem) return [publicProblem];
+  // Read-only, zero-row schema check with the server key. Full SQL/RLS and
+  // journal verification is a separate release gate.
   const url = new URL("/rest/v1/shop_settings", env.SUPABASE_URL);
   url.searchParams.set("select", "business_calendar");
   url.searchParams.set("limit", "0");
-  const publicProblem = await checkZeroRowAccess(
-    url,
-    env.SUPABASE_PUBLISHABLE_KEY,
-    request,
-    "Public backend schema",
-  );
-  if (publicProblem) return [publicProblem];
   const privilegedProblem = await checkZeroRowAccess(
     url,
     env.SUPABASE_SERVICE_ROLE_KEY,

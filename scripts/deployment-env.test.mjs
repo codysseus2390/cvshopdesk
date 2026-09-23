@@ -19,6 +19,11 @@ const jwt = (role, ref) =>
     "signature",
   ].join(".");
 
+const validAuthSettings = () =>
+  new Response(JSON.stringify({ external: { email: true }, disable_signup: false }), {
+    status: 200,
+  });
+
 test("preview cannot use production, mixed, or unknown backends", async () => {
   for (const env of [
     config("preview", PRODUCTION_PROJECT_REF),
@@ -35,29 +40,38 @@ test("preview cannot use production, mixed, or unknown backends", async () => {
     assert.ok(result.length > 0);
   }
 });
-test("verified targets perform only a zero-row schema GET", async () => {
+test("verified targets check public Auth settings and server schema with read-only GETs", async () => {
   for (const [environment, ref] of [
     ["preview", STAGING_PROJECT_REF],
     ["production", PRODUCTION_PROJECT_REF],
   ]) {
-    const keys = [];
+    const calls = [];
     assert.deepEqual(
       await checkDeployment(config(environment, ref), async (url, options) => {
         assert.equal(url.origin, `https://${ref}.supabase.co`);
+        assert.equal(options.method, "GET");
+        assert.equal(options.redirect, "error");
+        assert.ok(options.signal instanceof AbortSignal);
+        assert.ok(!options.signal.aborted);
+        assert.equal(options.headers.Authorization, undefined);
+        assert.equal(options.headers.Accept, "application/json");
+        calls.push({ path: url.pathname, key: options.headers.apikey });
+        if (url.pathname === "/auth/v1/settings") {
+          assert.equal(url.search, "");
+          return validAuthSettings();
+        }
         assert.equal(url.pathname, "/rest/v1/shop_settings");
         assert.equal(url.searchParams.get("select"), "business_calendar");
         assert.equal(url.searchParams.get("limit"), "0");
         assert.equal([...url.searchParams.keys()].length, 2);
-        assert.equal(options.method, "GET");
-        assert.equal(options.redirect, "error");
-        assert.ok(options.signal);
-        assert.equal(options.headers.Authorization, undefined);
-        keys.push(options.headers.apikey);
         return new Response("[]", { status: 200 });
       }),
       [],
     );
-    assert.deepEqual(keys, ["sb_publishable_test", "sb_secret_test"]);
+    assert.deepEqual(calls, [
+      { path: "/auth/v1/settings", key: "sb_publishable_test" },
+      { path: "/rest/v1/shop_settings", key: "sb_secret_test" },
+    ]);
   }
 });
 test("missing, swapped, wrong-role, and wrong-project server credentials fail before requests", async () => {
@@ -89,6 +103,34 @@ test("legacy service_role JWT uses the same bearer and apikey headers as the ser
           assert.equal(options.headers.apikey, key);
           assert.equal(options.headers.Authorization, `Bearer ${key}`);
         }
+        return calls === 1 ? validAuthSettings() : new Response("[]", { status: 200 });
+      },
+    ),
+    [],
+  );
+  assert.equal(calls, 2);
+});
+test("legacy anon JWT uses bearer auth only for the public Auth settings request", async () => {
+  const key = jwt("anon", STAGING_PROJECT_REF);
+  let calls = 0;
+  assert.deepEqual(
+    await checkDeployment(
+      {
+        ...config("preview", STAGING_PROJECT_REF),
+        SUPABASE_PUBLISHABLE_KEY: key,
+        VITE_SUPABASE_PUBLISHABLE_KEY: key,
+      },
+      async (url, options) => {
+        calls++;
+        if (calls === 1) {
+          assert.equal(url.pathname, "/auth/v1/settings");
+          assert.equal(options.headers.apikey, key);
+          assert.equal(options.headers.Authorization, `Bearer ${key}`);
+          return validAuthSettings();
+        }
+        assert.equal(url.pathname, "/rest/v1/shop_settings");
+        assert.equal(options.headers.apikey, "sb_secret_test");
+        assert.equal(options.headers.Authorization, undefined);
         return new Response("[]", { status: 200 });
       },
     ),
@@ -98,10 +140,14 @@ test("legacy service_role JWT uses the same bearer and apikey headers as the ser
 });
 test("public access and server access are verified independently", async () => {
   let calls = 0;
-  const failedPublic = await checkDeployment(config("preview", STAGING_PROJECT_REF), async () => {
-    calls++;
-    return new Response("private public-response text", { status: 401 });
-  });
+  const failedPublic = await checkDeployment(
+    config("preview", STAGING_PROJECT_REF),
+    async (url) => {
+      calls++;
+      assert.equal(url.pathname, "/auth/v1/settings");
+      return new Response("private public-response text", { status: 401 });
+    },
+  );
   assert.equal(calls, 1);
   assert.ok(failedPublic.length);
   assert.ok(!failedPublic.join().includes("private public-response text"));
@@ -110,24 +156,80 @@ test("public access and server access are verified independently", async () => {
   const failedServer = await checkDeployment(config("preview", STAGING_PROJECT_REF), async () => {
     calls++;
     return calls === 1
-      ? new Response("[]", { status: 200 })
+      ? validAuthSettings()
       : new Response("private server-response text", { status: 401 });
   });
   assert.equal(calls, 2);
   assert.ok(failedServer.length);
   assert.ok(!failedServer.join().includes("private server-response text"));
 });
-test("missing migration, inaccessible database, and malformed responses block build", async () => {
-  for (const request of [
-    async () => new Response("{}", { status: 400 }),
-    async () => new Response("{}", { status: 401 }),
-    async () => new Response("{}", { status: 200 }),
-    async () => {
-      throw new Error("private connection details");
-    },
+test("private table denial to anonymous users does not block a valid public key", async () => {
+  let calls = 0;
+  assert.deepEqual(
+    await checkDeployment(config("preview", STAGING_PROJECT_REF), async (url, options) => {
+      calls++;
+      if (url.pathname === "/auth/v1/settings") {
+        assert.equal(options.headers.apikey, "sb_publishable_test");
+        return validAuthSettings();
+      }
+      assert.equal(url.pathname, "/rest/v1/shop_settings");
+      assert.equal(options.headers.apikey, "sb_secret_test");
+      return new Response("[]", { status: 200 });
+    }),
+    [],
+  );
+  assert.equal(calls, 2);
+});
+test("malformed Auth settings and public-key failures block before server schema access", async () => {
+  for (const response of [
+    new Response("invalid key", { status: 401 }),
+    new Response("{}", { status: 200 }),
+    new Response("null", { status: 200 }),
+    new Response("[]", { status: 200 }),
+    new Response(JSON.stringify({ external: null, disable_signup: false }), { status: 200 }),
+    new Response(JSON.stringify({ external: [], disable_signup: false }), { status: 200 }),
+    new Response(JSON.stringify({ external: {}, disable_signup: "false" }), { status: 200 }),
+    new Response("not json", { status: 200 }),
   ]) {
-    const problems = await checkDeployment(config("preview", STAGING_PROJECT_REF), request);
+    let calls = 0;
+    const problems = await checkDeployment(config("preview", STAGING_PROJECT_REF), async (url) => {
+      calls++;
+      assert.equal(url.pathname, "/auth/v1/settings");
+      return response;
+    });
     assert.ok(problems.length > 0);
+    assert.equal(calls, 1);
+    assert.ok(!problems.join().includes("invalid key"));
+  }
+});
+test("missing server column, inaccessible schema, and malformed schema responses block build", async () => {
+  for (const serverResponse of [
+    new Response('{"code":"42703","message":"column missing"}', { status: 400 }),
+    new Response("private response", { status: 401 }),
+    new Response("{}", { status: 200 }),
+    new Response("[{}]", { status: 200 }),
+  ]) {
+    let calls = 0;
+    const problems = await checkDeployment(config("preview", STAGING_PROJECT_REF), async () => {
+      calls++;
+      return calls === 1 ? validAuthSettings() : serverResponse;
+    });
+    assert.ok(problems.length > 0);
+    assert.equal(calls, 2);
+    assert.ok(!problems.join().includes("private response"));
+    assert.ok(!problems.join().includes("column missing"));
+  }
+});
+test("request errors are sanitized and fail closed at either gate", async () => {
+  for (const failingCall of [1, 2]) {
+    let calls = 0;
+    const problems = await checkDeployment(config("preview", STAGING_PROJECT_REF), async () => {
+      calls++;
+      if (calls === failingCall) throw new Error("private connection details");
+      return validAuthSettings();
+    });
+    assert.ok(problems.length > 0);
+    assert.equal(calls, failingCall);
     assert.ok(!problems.join().includes("private connection details"));
   }
 });

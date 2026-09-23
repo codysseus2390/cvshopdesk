@@ -21,6 +21,15 @@ role/session/browser checks are required before exact-commit owner acceptance.
 Local deployment probing is not a substitute: current development settings lack
 the Preview-only server key and are not accepted as a Preview environment.
 
+Follow-up at checkpoint `0bfd1609ce32590c59b047eaab0a8ca47b0cf768`: all six hosted
+CI checks and the commit-bound staging schema check passed. Vercel then exposed a
+preflight defect: the valid public key was required to SELECT protected shop_settings,
+correctly denied with HTTP 401 / SQLSTATE 42501. Live Auth settings accepted that key
+and rejected an invalid key. The focused follow-up verifies the public key through
+Auth settings while retaining the independent privileged zero-row calendar check.
+No anonymous grants were added. Vercel's Preview server key is configured as sensitive;
+its omission from downloaded local variables is expected, not a missing hosted key.
+
 Exact next action: verify the new checkpoint's hosted Vercel Preview build against
 the repaired staging backend, then test login/Dashboard/Numbers/TV and role/session
 boundaries. Review advisor notices; do not silently change unrelated permissions.
