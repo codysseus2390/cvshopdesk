@@ -71,8 +71,38 @@ export const listBoard = createServerFn({ method: "GET" })
     const rows = data ?? [];
     const today = shopToday(timezone);
     const split = splitBoard(rows, Date.now(), { date: today, timezone });
+    const { loadAutoflowAppointments } = await import("./autoflow-appointments.server");
+    let appointmentSource = "imports";
+    let appointmentError: string | null = null;
+    try {
+      const appointments = await loadAutoflowAppointments(member.shop_id, timezone, today);
+      if (appointments !== null) {
+        const live = splitBoard(appointments, Date.now(), { date: today, timezone });
+        split.appointments = live.appointments;
+        split.appointmentsWithoutTime = live.appointmentsWithoutTime;
+        appointmentSource = "Autoflow";
+      }
+    } catch {
+      // Keep the imported job queue available, but never label imports as live appointments.
+      split.appointments = [];
+      split.appointmentsWithoutTime = [];
+      appointmentSource = "Autoflow";
+      appointmentError = "Autoflow appointments could not be refreshed. Retrying automatically.";
+    }
     return {
       ...split,
+      appointmentSource,
+      appointmentError,
+      appointmentsToday: split.appointments.filter(
+        (row) =>
+          row.appointment_at &&
+          new Intl.DateTimeFormat("en-CA", {
+            timeZone: timezone,
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }).format(new Date(row.appointment_at)) === today,
+      ),
       timezone,
       shopToday: today,
       fetchedAt: new Date().toISOString(),

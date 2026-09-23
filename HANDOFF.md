@@ -1,5 +1,29 @@
 # HANDOFF.md — Living Handoff Document
 
+## 2026-09-23 — Appointment feed implementation (not yet deployed)
+
+On codex/autoflow-release, added a read-only appointment feed to listBoard for
+the authenticated approved member's configured shop. Reads active appointments
+from today through 30 days ahead. Replaces the displayed imported appointments
+only when enabled; imported jobs and stored local notes remain unchanged.
+Board refreshes every minute; TV shows today's appointments in the shop timezone.
+Invalid/missing times stay missing; provider errors show an explicit warning.
+Only display fields are returned (no phone, VIN, questionnaire, or API credentials).
+
+Five appointment tests passed. Typecheck is blocked by repeated local memory
+exhaustion, even outside the sandbox. Run CI typecheck/lint/build before release.
+New server settings: AUTOFLOW_APPOINTMENTS_ENABLED=true plus AUTOFLOW_API_KEY and
+AUTOFLOW_API_PASSWORD, scoped to release Preview first. Existing subdomain and
+ShopDesk shop mapping are reused. These new settings are NOT yet saved to Vercel.
+
+Owner approved a preview share link and explicitly said NOT to revoke it. The
+Vercel UI stalled during creation, so verify whether sharing was saved. Browser
+crashed/timed out; recovered after resetting browser tool. No production rollout.
+Next: publish checkpoint, verify CI, save the three appointment settings in
+release Preview, and verify real appointments on /board and /tv before production.
+
+---
+
 ## 2026-09-23 — Autoflow-only production release preparation
 
 Branch codex/autoflow-release starts from deployed production commit 54a5d33.
@@ -10,18 +34,28 @@ The separate codex/autoflow-integration branch and draft PR #30 remain on main.
 Staging migration 0025 is applied and verified, including private permissions and
 transactional duplicate tests. Its Drizzle history was recorded. Production is
 unchanged. Owner saved separate production and staging server keys in Vercel;
-server URLs were verified against the matching projects. The verified Autoflow
-shop ID and hosted webhook secret are still required. Do not deploy main or
+server URLs were verified against the matching projects. Autoflow shop ID 2966
+was verified through a read-only API request and the signed-in shop URL. Five
+Autoflow variables (including the existing webhook secret and enabled=true) are
+saved only for Preview branch codex/autoflow-release, using the staging shop UUID.
+Do not deploy main or
 promote a preview build with staging environment values to production.
-The receiver remains disabled pending configuration and delivery testing.
+Production remains unconfigured. The existing Autoflow subscription points at
+production and is enabled with Status Update only. No customer actions were sent.
+Preview HTTP tests were intercepted by Vercel Deployment Protection (401), not
+the receiver; neither signature validation nor HTTP storage is verified yet.
+The Vercel connector also denied access to this project. Temporary preview share
+access was requested from the owner; do not create it without their response.
+Preview rebuild DvP4WhgXMAubMkDjtJycSP43hbh2 uses remote commit 9e24d81.
+Local release commit 9853b34 and remote 9e24d81 have the same source tree.
 Credentials belong only in ignored local files and Vercel secrets. Never print them.
 
 Release validation: typecheck and production build passed. 92 unit tests passed,
 17 existing database-dependent tests skipped. The disposable PGlite inbox test
 could not allocate WebAssembly memory on this machine (including single-worker
 retry); its equivalent staging permission/deduplication transaction passed earlier.
-Next: obtain the Autoflow shop ID, configure a staging-only webhook secret, rebuild
-preview, and verify HTTP delivery before applying the additive production migration.
+Next: verify the preview rebuild, obtain authorized temporary testing access, and
+verify signed HTTP delivery plus duplicate handling before applying production migration.
 
 ---
 

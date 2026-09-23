@@ -52,10 +52,10 @@ function lastName(name: string | null): string {
   return parts[parts.length - 1] || name;
 }
 
-function shortTime(iso: string | null): string {
+function shortTime(iso: string | null, timezone = "America/Chicago"): string {
   if (!iso) return "—";
   return new Date(iso)
-    .toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+    .toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: timezone })
     .replace(/\s?[AP]M$/i, "");
 }
 
@@ -63,10 +63,10 @@ function buildSchedule(board: ReturnType<typeof useBoard>["data"]): TvScheduleRo
   if (!board) return [];
   const rows: (TvScheduleRow & { sortKey: number | null })[] = [];
 
-  for (const job of [...board.appointments]) {
+  for (const job of board.appointmentsToday) {
     rows.push({
       id: job.id,
-      time: shortTime(job.appointment_at),
+      time: shortTime(job.appointment_at, board.timezone),
       vehicleCustomer: `${job.vehicle_label ?? "Vehicle not recorded"} · ${lastName(job.customer_name)}`,
       job: job.requested_service ?? "Service not recorded",
       status: "upcoming",
@@ -86,7 +86,7 @@ function buildSchedule(board: ReturnType<typeof useBoard>["data"]): TvScheduleRo
   for (const job of [...board.jobs, ...board.jobsWithoutArrival] as BoardJob[]) {
     rows.push({
       id: job.id,
-      time: shortTime(job.arrival_at),
+      time: shortTime(job.arrival_at, board.timezone),
       vehicleCustomer: `${job.vehicle_label ?? "Vehicle not recorded"} · ${lastName(job.customer_name)}`,
       job: job.requested_service ?? "Service not recorded",
       status: "in_shop",
@@ -97,7 +97,7 @@ function buildSchedule(board: ReturnType<typeof useBoard>["data"]): TvScheduleRo
     const anchor = job.arrival_at ?? job.appointment_at;
     rows.push({
       id: job.id,
-      time: shortTime(anchor),
+      time: shortTime(anchor, board.timezone),
       vehicleCustomer: `${job.vehicle_label ?? "Vehicle not recorded"} · ${lastName(job.customer_name)}`,
       job: job.requested_service ?? "Service not recorded",
       status: "done",
@@ -140,16 +140,17 @@ function TvMode() {
   const counts = {
     inShop: (board.data?.jobs.length ?? 0) + (board.data?.jobsWithoutArrival.length ?? 0),
     upcoming:
-      (board.data?.appointments.length ?? 0) + (board.data?.appointmentsWithoutTime.length ?? 0),
+      (board.data?.appointmentsToday.length ?? 0) +
+      (board.data?.appointmentsWithoutTime.length ?? 0),
     done: board.data?.done.length ?? 0,
   };
-  const nextUp: TvNextUpItem[] = (board.data?.appointments ?? []).slice(0, 3).map((job) => ({
+  const nextUp: TvNextUpItem[] = (board.data?.appointmentsToday ?? []).slice(0, 3).map((job) => ({
     id: job.id,
-    time: shortTime(job.appointment_at),
+    time: shortTime(job.appointment_at, board.data?.timezone),
     vehicleCustomer: `${job.vehicle_label ?? "Vehicle not recorded"} · ${lastName(job.customer_name)}`,
   }));
-  const nextAppointment = board.data?.appointments[0]?.appointment_at
-    ? shortTime(board.data.appointments[0].appointment_at)
+  const nextAppointment = board.data?.appointmentsToday[0]?.appointment_at
+    ? shortTime(board.data.appointmentsToday[0].appointment_at, board.data.timezone)
     : null;
 
   const problem =
@@ -157,7 +158,7 @@ function TvMode() {
       ? dashboard.error.message
       : board.error instanceof Error
         ? board.error.message
-        : null;
+        : (board.data?.appointmentError ?? null);
   const staleMinutes = Math.round(
     (Date.now() - Math.min(dashboard.dataUpdatedAt, board.dataUpdatedAt)) / 60_000,
   );

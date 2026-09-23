@@ -4,7 +4,8 @@ Status: API transport and disabled-by-default status webhook inbox implemented.
 Staging database migration applied; live receiver and job-board sync are not enabled.
 The release branch starts from production commit `54a5d33` to preserve the existing
 rollback. Do not deploy main until its unrelated migrations 0023/0024 are addressed.
-Shop URL confirmed by the owner: https://cedarvalley.autotext.me/admin/v5.php.
+Shop admin URL: https://cedarvalley.autotext.me/Admin/v5.php.
+Verified Autoflow shop ID: `2966` (read-only API and signed-in shop URL).
 API base: https://cedarvalley.autotext.me/api/v1/.
 
 ## Credentials
@@ -81,7 +82,19 @@ The built local route returns 503 when disabled. Migration 0025 was applied to
 staging and its RLS, service-role privileges, and duplicate handling were verified
 in a rolled-back transaction. Production has not received the migration.
 
+The release Preview branch has all five Autoflow receiver settings, scoped to
+staging. HTTP delivery tests currently stop at Vercel Deployment Protection;
+its 401 must not be reported as successful webhook signature rejection. Verify
+delivery using authorized preview access before production activation.
+
 ## Next implementation steps
+
+Appointment display is now implemented behind AUTOFLOW_APPOINTMENTS_ENABLED=true.
+It requires the API key/password in the hosted server environment, and checks the
+approved member's shop against AUTOFLOW_SHOPDESK_SHOP_ID before calling Autoflow.
+The board reads active appointments for today through 30 days ahead every minute;
+TV filters to today. This feed does not book appointments or write customer data.
+Hosted configuration and browser verification are still pending.
 
 1. Rotate credentials disclosed in conversation before live activation and set them
    directly in the target hosting environment. Do not log customer records or keys.
