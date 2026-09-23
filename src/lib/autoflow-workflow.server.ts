@@ -1,4 +1,5 @@
 import { projectAutoflowWorkflow, type InboxEvent, type WorkflowRow } from "./autoflow-workflow";
+import { loadAutoflowDescriptions } from "./autoflow-descriptions.server";
 
 /** The caller must first verify approved membership in shopId. */
 export async function loadAutoflowWorkflow(
@@ -30,5 +31,6 @@ export async function loadAutoflowWorkflow(
     events.push(...data);
     if (data.length < 500) break;
   }
-  return projectAutoflowWorkflow(events, seeds, providerShopId, subdomain, timezone);
+  const rows = projectAutoflowWorkflow(events, seeds, providerShopId, subdomain, timezone);
+  return loadAutoflowDescriptions(rows, shopId, env);
 }

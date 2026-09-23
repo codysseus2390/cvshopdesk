@@ -13,7 +13,12 @@ const eventSchema = z.object({
     timestamp: z.string().datetime({ offset: true }),
   }),
   shop: z.object({ id, domain: z.string() }),
-  ticket: z.object({ id, status: z.string().trim().min(1).max(120) }),
+  ticket: z.object({
+    id,
+    status: z.string().trim().min(1).max(120),
+    invoice: id.nullish(),
+    remote_id: id.nullish(),
+  }),
   customer: z.object({ firstname: text, lastname: text }).nullish(),
   vehicle: z
     .object({ year: z.union([z.number(), z.string()]).nullish(), make: text, model: text })
@@ -38,6 +43,8 @@ export type WorkflowRow = Omit<
   technician: string | null;
   disposition: string | null;
   completed_at: string | null;
+  repair_order_number?: string | null;
+  remote_ticket_id?: string | null;
 };
 export interface InboxEvent {
   payload: unknown;
@@ -52,7 +59,18 @@ export function projectAutoflowWorkflow(
   subdomain: string,
   timezone: string,
 ): WorkflowRow[] {
-  const rows = new Map(seeds.map((row) => [row.identity_key, { ...row }]));
+  const rows = new Map<string, WorkflowRow>(
+    seeds.map((row) => [
+      row.identity_key,
+      {
+        ...row,
+        repair_order_number:
+          row.repair_order_number ??
+          row.flags.find((flag) => flag.startsWith("autoflow_ro:"))?.slice(12) ??
+          null,
+      },
+    ]),
+  );
   const parsed = events
     .map((record) => {
       const result = eventSchema.safeParse(record.payload);
@@ -70,6 +88,11 @@ export function projectAutoflowWorkflow(
   for (const { event, instant } of parsed) {
     const identity = `autoflow:${event.ticket.id}`;
     const prior = rows.get(identity);
+    // The RO reference is needed even when a verified baseline is newer than this event.
+    if (prior) {
+      prior.repair_order_number ??= event.ticket.invoice ?? null;
+      prior.remote_ticket_id ??= event.ticket.remote_id ?? null;
+    }
     const checkin = /^(check\s*in|checked\s*in)$/i.test(event.ticket.status);
     // Preserve the earliest known check-in across all later workflow transitions.
     const arrival =
@@ -103,6 +126,8 @@ export function projectAutoflowWorkflow(
       id: identity,
       identity_key: identity,
       record_kind: "job",
+      repair_order_number: event.ticket.invoice ?? prior?.repair_order_number ?? null,
+      remote_ticket_id: event.ticket.remote_id ?? prior?.remote_ticket_id ?? null,
       customer_name: base.customer_name ?? prior?.customer_name ?? null,
       vehicle_label: base.vehicle_label ?? prior?.vehicle_label ?? null,
       arrival_at: arrival,

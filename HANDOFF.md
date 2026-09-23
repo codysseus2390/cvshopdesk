@@ -1,5 +1,29 @@
 # HANDOFF.md — Living Handoff Document
 
+## 2026-09-23 — TV job-description correction
+
+Branch `codex/tv-job-descriptions` continues the production release, not main.
+Root cause: workflow seeds and status webhooks did not populate requested_service.
+Autoflow's work_orders API returns 404 for these visits, but documented GET
+dvi/{RoNumber} returns content.reason_vehicle_is_here[].details. The new server
+loader reads only those descriptions, validates invoice and remote ticket IDs,
+decodes escaped text for React text rendering, coalesces reads for 60 seconds,
+and limits concurrent calls to four. A failed details read preserves known text
+and leaves the workflow visible. Status events now retain invoice/remote IDs.
+
+Existing active visits' RO mappings were verified in Autoflow. Both databases
+have 13 corrected snapshots with autoflow_ro: flags and 10 known descriptions;
+all 13 prior snapshots are retained and linked via superseded_by. One active
+visit has RO 0 and no reason text in Autoflow; missing text remains missing.
+No workflow statuses, customer messages, or source data were changed.
+
+Focused description/workflow/TV tests pass (13 tests); typecheck and targeted
+lint pass. Full suite and deployment verification are in progress.
+Next: publish this fix to the configured release branch, build Preview and
+Production separately, and verify the live TV after the owner signs in.
+
+---
+
 ## 2026-09-23 — Live workflow and TV layout release
 
 Feature branch: `codex/tv-workflow-live`, based on release `95ad16a`.
