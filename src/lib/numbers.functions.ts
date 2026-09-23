@@ -222,6 +222,9 @@ export const saveMechanicProductivityEntry = createServerFn({ method: "POST" })
       .upsert(rows, { onConflict: "shop_id,business_date,technician" })
       .select("technician, business_date, period_scope, productivity_pct");
     if (error) throw new Error(error.message);
+    if (rows.length > 0 && (!saved || saved.length === 0)) {
+      throw new Error("Productivity entries were not saved. Nothing was changed.");
+    }
     return { previousDay: data.previous_day, periodAnchor: data.period_anchor, rows: saved ?? [] };
   });
 
@@ -360,20 +363,23 @@ export const saveNumbersGoals = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const shop = await requirePermission(context.supabase, context.userId, "change_settings");
-    if (shop.role !== "owner" && shop.role !== "manager") {
-      throw new Error("Only the owner and admins can change goals.");
-    }
     const sb = context.supabase as unknown as Supa;
-    const { error } = await sb.from("shop_settings").upsert(
-      {
-        shop_id: shop.shopId,
-        goal_rules: data.goal_rules,
-        updated_by: context.userId,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "shop_id" },
-    );
+    const { data: saved, error } = await sb
+      .from("shop_settings")
+      .upsert(
+        {
+          shop_id: shop.shopId,
+          goal_rules: data.goal_rules,
+          updated_by: context.userId,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "shop_id" },
+      )
+      .select("shop_id");
     if (error) throw new Error(error.message);
+    if (!saved || saved.length === 0) {
+      throw new Error("Goals were not saved. Nothing was changed.");
+    }
     await sb.rpc("log_audit_event", {
       p_action: "numbers_goals_saved",
       p_target: "shop_settings.goal_rules",

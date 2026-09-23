@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { APP_ROLES, PERMISSIONS } from "@/lib/permissions";
+import { APP_ROLES, PERMISSIONS, can, canReadAuditEvents } from "@/lib/permissions";
 import type { GoalRules } from "@/lib/numbers-math";
 import { readShopPermissions } from "./permissions.server";
 import { requireShopPermission } from "./permissions.server";
@@ -63,17 +63,28 @@ export const getAdminConfig = createServerFn({ method: "GET" })
     if (permissionError) throw new Error("Unable to verify your permissions. Please try again.");
     if (settingsError) throw new Error("Unable to load shop settings. Please try again.");
 
+    const resolvedOverrides = (overrides ?? []) as {
+      role: string;
+      permission: string;
+      allowed: boolean;
+    }[];
+    // technician_goals is productivity config: never send it to a caller who is
+    // not allowed to see productivity data, even though it lives in the same
+    // shop_settings row as non-productivity dashboard config.
+    const canViewProductivity = can(membership.role, "view_productivity", resolvedOverrides);
+
     return {
       role: membership.role,
       shopId: membership.shop_id,
-      overrides: (overrides ?? []) as { role: string; permission: string; allowed: boolean }[],
+      overrides: resolvedOverrides,
       settings: {
         business_calendar: calendarSchema.safeParse(settings?.business_calendar).data ?? null,
         hidden_widgets: (settings?.hidden_widgets ?? []) as string[],
         targets: (settings?.targets ?? {}) as Record<string, number | null>,
         goal_rules: (settings?.goal_rules ?? {}) as GoalRules,
-        technician_goals: (settings?.technician_goals ??
-          []) as ShopSettingsPayload["technician_goals"],
+        technician_goals: canViewProductivity
+          ? ((settings?.technician_goals ?? []) as ShopSettingsPayload["technician_goals"])
+          : [],
         updated_at: (settings?.updated_at ?? null) as string | null,
       },
     };
@@ -94,20 +105,28 @@ export const setRolePermission = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Supa;
     const membership = await currentMembership(context.supabase, context.userId);
-    if (membership.role !== "owner") throw new Error("Only the owner can change permissions.");
+    if (!can(membership.role, "manage_permissions")) {
+      throw new Error("Only the owner can change permissions.");
+    }
 
-    const { error } = await sb.from("role_permissions").upsert(
-      {
-        shop_id: membership.shop_id,
-        role: data.role,
-        permission: data.permission,
-        allowed: data.allowed,
-        updated_by: context.userId,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "shop_id,role,permission" },
-    );
+    const { data: saved, error } = await sb
+      .from("role_permissions")
+      .upsert(
+        {
+          shop_id: membership.shop_id,
+          role: data.role,
+          permission: data.permission,
+          allowed: data.allowed,
+          updated_by: context.userId,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "shop_id,role,permission" },
+      )
+      .select("shop_id");
     if (error) throw new Error(error.message);
+    if (!saved || saved.length === 0) {
+      throw new Error("The permission change was not saved. Nothing was changed.");
+    }
 
     await sb.rpc("log_audit_event", {
       p_action: "permission_changed",
@@ -149,18 +168,24 @@ export const saveShopSettings = createServerFn({ method: "POST" })
       throw new Error("You do not have permission to change dashboard settings.");
     }
 
-    const { error } = await sb.from("shop_settings").upsert(
-      {
-        shop_id: membership.shop_id,
-        hidden_widgets: data.hidden_widgets,
-        targets: data.targets,
-        technician_goals: data.technician_goals,
-        updated_by: context.userId,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "shop_id" },
-    );
+    const { data: saved, error } = await sb
+      .from("shop_settings")
+      .upsert(
+        {
+          shop_id: membership.shop_id,
+          hidden_widgets: data.hidden_widgets,
+          targets: data.targets,
+          technician_goals: data.technician_goals,
+          updated_by: context.userId,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "shop_id" },
+      )
+      .select("shop_id");
     if (error) throw new Error(error.message);
+    if (!saved || saved.length === 0) {
+      throw new Error("Dashboard settings were not saved. Nothing was changed.");
+    }
 
     await sb.rpc("log_audit_event", {
       p_action: "dashboard_settings_saved",
@@ -170,13 +195,23 @@ export const saveShopSettings = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Activity log of important changes. Visible to the owner and admins. */
+/**
+ * Activity log of important changes. Visible to the owner and admins only — a
+ * deliberate, non-overridable invariant (see `canReadAuditEvents` in
+ * permissions.ts and the matching SQL comment on migration 0023's
+ * "managers read audit events" policy).
+ */
 export const listAuditEvents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const membership = await currentMembership(context.supabase, context.userId);
+    if (!canReadAuditEvents(membership.role)) {
+      throw new Error("You do not have permission to view the audit log.");
+    }
     const { data, error } = await context.supabase
       .from("audit_events")
       .select("id, actor_email, action, target, detail, created_at")
+      .eq("shop_id", membership.shop_id)
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw new Error(error.message);
@@ -187,44 +222,63 @@ export const listAuditEvents = createServerFn({ method: "GET" })
 export const KNOWN_ROLES = APP_ROLES;
 
 /**
- * Retroactive-edit guard: rejects a schedule/exception write that would change the
- * open/closed status of a date on or before the shop's local today unless the
- * caller sends `confirmRetroactive: true`. Forward-dated changes always save
- * without it. The confirmed retroactive marking is carried through to the
- * save_business_calendar() RPC, which sets it as a transaction-local Postgres
- * setting so the 0024 trigger's audit row records it distinctly (see migration
- * 0024_business_calendar.sql).
+ * Retroactive-edit guard: a schedule/exception write that would change the
+ * open/closed status of a date on or before the shop's local today is not saved
+ * unless the caller sends `confirmRetroactive: true`. That unconfirmed case is
+ * not an error — it is a structured result (`ok: false`,
+ * `requiresRetroactiveConfirmation: true`) so a UI caller can show a confirmation
+ * step without parsing error-message text. Forward-dated changes always save
+ * without it. Genuine failures (permission, unreadable shop timezone, or the RPC
+ * itself failing) are still thrown. The confirmed retroactive marking is carried
+ * through to the save_business_calendar() RPC, which sets it as a
+ * transaction-local Postgres setting so the 0024 trigger's audit row records it
+ * distinctly (see migration 0024_business_calendar.sql).
  */
 export const saveBusinessCalendar = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => saveBusinessCalendarInputSchema.parse(input))
-  .handler(async ({ data, context }) => {
-    const member = await requireShopPermission(context.supabase, context.userId, "manage_security");
-    const sb = context.supabase as unknown as Supa;
-
-    const { data: shopRow, error: shopError } = await sb
-      .from("shops")
-      .select("timezone")
-      .eq("id", member.shop_id)
-      .maybeSingle();
-    if (shopError) throw new Error("Unable to verify the shop's timezone. Please try again.");
-    const timezone = resolveShopTimeZone(shopRow?.timezone as string | null | undefined);
-    const today = shopToday(timezone);
-
-    const oldCalendar = await readBusinessCalendarLenient(context.supabase, member.shop_id);
-    const conflictDate = earliestRetroactiveStatusChange(oldCalendar, data.calendar, today);
-    if (conflictDate && !data.confirmRetroactive) {
-      throw new Error(
-        `This change would alter the recorded open/closed status of ${conflictDate} (and possibly other dates on or before today, ${today}). Confirm to save this retroactive change anyway.`,
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<
+      | { ok: true; retroactive: boolean }
+      | { ok: false; requiresRetroactiveConfirmation: true; conflictDate: string; today: string }
+    > => {
+      const member = await requireShopPermission(
+        context.supabase,
+        context.userId,
+        "manage_security",
       );
-    }
+      const sb = context.supabase as unknown as Supa;
 
-    const { error } = await sb.rpc("save_business_calendar", {
-      p_shop_id: member.shop_id,
-      p_business_calendar: data.calendar,
-      p_retroactive: Boolean(conflictDate),
-      p_retroactive_from: conflictDate,
-    });
-    if (error) throw new Error("The calendar could not be saved. Please try again.");
-    return { ok: true, retroactive: Boolean(conflictDate) };
-  });
+      const { data: shopRow, error: shopError } = await sb
+        .from("shops")
+        .select("timezone")
+        .eq("id", member.shop_id)
+        .maybeSingle();
+      if (shopError) throw new Error("Unable to verify the shop's timezone. Please try again.");
+      const timezone = resolveShopTimeZone(shopRow?.timezone as string | null | undefined);
+      const today = shopToday(timezone);
+
+      const oldCalendar = await readBusinessCalendarLenient(context.supabase, member.shop_id);
+      const conflictDate = earliestRetroactiveStatusChange(oldCalendar, data.calendar, today);
+      if (conflictDate && !data.confirmRetroactive) {
+        return {
+          ok: false,
+          requiresRetroactiveConfirmation: true,
+          conflictDate,
+          today,
+        };
+      }
+
+      const { error } = await sb.rpc("save_business_calendar", {
+        p_shop_id: member.shop_id,
+        p_business_calendar: data.calendar,
+        p_retroactive: Boolean(conflictDate),
+        p_retroactive_from: conflictDate,
+      });
+      if (error) throw new Error("The calendar could not be saved. Please try again.");
+      return { ok: true, retroactive: Boolean(conflictDate) };
+    },
+  );

@@ -277,11 +277,17 @@ export const setMemberCredentials = createServerFn({ method: "POST" })
     if (authError) throw new Error(authError.message);
 
     if (data.email) {
-      const { error: syncError } = await context.supabase
+      const { data: synced, error: syncError } = await context.supabase
         .from("shop_members")
         .update({ email: data.email })
-        .eq("id", member.id);
+        .eq("id", member.id)
+        .select("id");
       if (syncError) throw new Error(syncError.message);
+      if (!synced || synced.length === 0) {
+        throw new Error(
+          "The sign-in email was changed, but the shop record could not be updated to match. Please try again.",
+        );
+      }
     }
 
     await (

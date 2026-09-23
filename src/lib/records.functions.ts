@@ -3,6 +3,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { normalizeRows, splitBoard } from "./import-records";
 import { shopToday } from "./metrics-math";
+import { resolveShopTimeZone } from "./timezone";
+import { requireShopPermission } from "./permissions.server";
 
 export const listInventory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -58,7 +60,7 @@ export const listBoard = createServerFn({ method: "GET" })
       .eq("status", "approved")
       .maybeSingle();
     if (!member?.shop_id) throw new Error("You do not have access to a shop yet.");
-    const timezone = (member.shops?.timezone as string | undefined) ?? "America/Chicago";
+    const timezone = resolveShopTimeZone(member.shops?.timezone as string | null | undefined);
 
     const { data, error } = await context.supabase
       .from("shop_jobs")
@@ -96,7 +98,8 @@ export const updateJobLocalState = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+    await requireShopPermission(context.supabase, context.userId, "edit_records");
+    const { data: updated, error } = await context.supabase
       .from("shop_jobs")
       .update({
         local_status: data.local_status,
@@ -104,8 +107,12 @@ export const updateJobLocalState = createServerFn({ method: "POST" })
         local_updated_by: context.userId,
         local_updated_at: new Date().toISOString(),
       })
-      .eq("id", data.jobId);
+      .eq("id", data.jobId)
+      .select("id");
     if (error) throw new Error(error.message);
+    if (!updated || updated.length === 0) {
+      throw new Error("That job could not be updated.");
+    }
     return { ok: true };
   });
 
