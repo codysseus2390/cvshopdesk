@@ -20,6 +20,7 @@ import { TalkButton } from "@/components/shop-ai/talk-button";
 import { ComposerMenu, CREATE_IMAGE_PREFIX } from "@/components/shop-ai/composer-menu";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate } from "@/components/access-gate";
+import { usePermissions } from "@/components/use-permissions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
@@ -118,6 +119,7 @@ function ShopAiPage() {
     refetchOnWindowFocus: true,
   });
 
+  const perms = usePermissions();
   const loadSettings = useServerFn(getAiSettings);
   const { data: config } = useQuery({ queryKey: ["ai-settings"], queryFn: () => loadSettings() });
   const assistantName = config?.settings.assistantName || ASSISTANT_DEFAULTS.name;
@@ -296,13 +298,23 @@ function ShopAiPage() {
     >
       <div className="mx-auto flex h-[calc(100vh-180px)] w-full max-w-3xl flex-col">
         <div className="mb-3 flex shrink-0 items-center justify-end">
-          {(config?.role === "owner" || config?.role === "manager") && (
+          {perms.can("change_settings") ? (
             <Button
               variant="outline"
               size="sm"
               onClick={reset}
               disabled={mutation.isPending}
               className="rounded-xl"
+            >
+              <RotateCcw className="mr-2 h-3.5 w-3.5" /> New conversation
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled
+              className="rounded-xl"
+              title="Owner/manager can start a new conversation."
             >
               <RotateCcw className="mr-2 h-3.5 w-3.5" /> New conversation
             </Button>

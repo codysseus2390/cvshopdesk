@@ -6,6 +6,8 @@ import { listMetricHistory } from "@/lib/metrics.functions";
 import { getImportFileUrl } from "@/lib/imports.functions";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate } from "@/components/access-gate";
+import { usePermissions } from "@/components/use-permissions";
+import { isOpenDay } from "@/lib/business-calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +35,8 @@ export const Route = createFileRoute("/_authenticated/history")({
 });
 
 function HistoryPage() {
+  const perms = usePermissions();
+  const calendar = perms.settings?.business_calendar ?? null;
   const today = shopToday();
   const [from, setFrom] = useState(`${today.slice(0, 8)}01`);
   const [to, setTo] = useState(today);
@@ -105,11 +109,14 @@ function HistoryPage() {
                         <td>{formatCount(row.tires_sold)}</td>
                         <td>{formatCount(row.car_count)}</td>
                         <td>{row.source}</td>
-                        <td>
+                        <td className="space-x-1">
                           {row.is_current ? (
                             <Badge>Current</Badge>
                           ) : (
                             <Badge variant="secondary">Replaced</Badge>
+                          )}
+                          {calendar && isOpenDay(row.business_date, calendar) === false && (
+                            <Badge variant="secondary">Closed-day entry</Badge>
                           )}
                         </td>
                         <td>

@@ -100,7 +100,10 @@ function Dashboard() {
     const missing = data.mtd.coverage[key].days_missing_value;
     const field =
       key === "gross_profit" ? "gross profit" : key === "tires_sold" ? "tire count" : "car count";
-    return missing > 0 ? `${missing} saved day(s) have no ${field}` : goalNote(key, data.mtd[key]);
+    if (missing <= 0) return goalNote(key, data.mtd[key]);
+    return data.calendarConfigured
+      ? `${field} missing for ${missing} open day(s) this month`
+      : `${missing} saved day(s) have no ${field}`;
   };
   const kpiProps = (key: KpiKey, currency: boolean) => {
     const format = currency ? formatCurrency : formatCount;
@@ -112,7 +115,10 @@ function Dashboard() {
         ...(shows("today")
           ? [
               {
-                label: "Previous day",
+                label:
+                  data?.previousDayKind === "open"
+                    ? `Previous open day · ${prevDayLabel}`
+                    : "Previous day",
                 value: format(previousDayValues[key]),
               },
             ]
@@ -135,7 +141,11 @@ function Dashboard() {
       ? `From the accepted month-to-date report as of ${data.mtd.as_of}${data.mtd.stale ? ` · ${data.mtd.days_behind} day(s) behind the shop day, coverage incomplete` : ""}`
       : data.mtd.basis === "none"
         ? "No confirmed records for this month yet. Nothing is assumed to be zero."
-        : `Sum of ${data.mtd.covered_days} confirmed day(s) through ${data.mtd.as_of}${data.mtd.missing_days > 0 ? ` · ${data.mtd.missing_days} day(s) still missing` : ""}`;
+        : `Sum of ${data.mtd.covered_days} confirmed day(s) through ${data.mtd.as_of}${
+            data.mtd.missing_days > 0
+              ? ` · ${data.mtd.missing_days} ${data.calendarConfigured ? "open day(s)" : "day(s)"} still missing`
+              : ""
+          }`;
 
   const CHART_METRICS = [
     { key: "gross_profit", label: "Gross profit", currency: true },
@@ -197,7 +207,13 @@ function Dashboard() {
                 {shows("today") && (
                   <span className="flex items-center gap-1.5">
                     <CalendarDays className="h-4 w-4 text-primary" />
-                    <span>{prevDayLabel ? `Previous day ${prevDayLabel}` : "Previous day"}</span>
+                    <span>
+                      {data.previousDayKind === "open"
+                        ? `Previous open day · ${prevDayLabel}`
+                        : prevDayLabel
+                          ? `Previous day ${prevDayLabel}`
+                          : "Previous day"}
+                    </span>
                   </span>
                 )}
                 {shows("today") && <span className="text-muted-foreground/60">·</span>}
@@ -253,7 +269,10 @@ function Dashboard() {
             </div>
           </section>
 
-          <DashboardMiddleRow mechanics={data.mechanics} />
+          <DashboardMiddleRow
+            mechanics={data.mechanics}
+            calendarConfigured={data.calendarConfigured}
+          />
 
           {(shows("monthly_chart") || shows("ytd")) && (
             <section className="stagger-in grid items-start gap-3 lg:grid-cols-[minmax(0,2.2fr)_minmax(15rem,.9fr)_minmax(15rem,.9fr)]">

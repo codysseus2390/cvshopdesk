@@ -21,6 +21,22 @@ export function TvNumbersScreen({ dashboard }: { dashboard: DashboardData | unde
   const week = dashboard?.week;
   const mtd = dashboard?.mtd;
 
+  const prevDayLabel = dashboard?.previousDay
+    ? new Date(`${dashboard.previousDay}T00:00:00Z`).toLocaleDateString(undefined, {
+        timeZone: "UTC",
+        month: "short",
+        day: "numeric",
+      })
+    : null;
+  // Lead decision: keep the date on screen in both branches (TV has no hover) —
+  // "Prev open day · [date]" when the calendar is configured, "Previous day · [date]"
+  // when it isn't, matching the hub's date-row pill instead of dropping the date.
+  const prevDayCellLabel = prevDayLabel
+    ? dashboard?.previousDayKind === "open"
+      ? `Prev open day · ${prevDayLabel}`
+      : `Previous day · ${prevDayLabel}`
+    : "Previous day";
+
   const metrics: {
     label: string;
     icon: LucideIcon;
@@ -61,7 +77,7 @@ export function TvNumbersScreen({ dashboard }: { dashboard: DashboardData | unde
           accent={metric.accent}
           month={period("This month", metric.values[0], metric.format)}
           week={period("This week", metric.values[1], metric.format)}
-          previousDay={period("Previous day", metric.values[2], metric.format)}
+          previousDay={period(prevDayCellLabel, metric.values[2], metric.format)}
           // Hairline rules between cells instead of gaps, so the panel reads as
           // one instrument cluster.
           className={cn(index % 2 === 0 && "border-r border-border", index < 2 && "border-b")}
