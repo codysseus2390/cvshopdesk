@@ -11,6 +11,7 @@
 
 import { openDates, missingOpenDates, type BusinessCalendar } from "./business-calendar";
 import { addDays } from "./numbers-math";
+import { resolveShopTimeZone } from "./timezone";
 export type Scope = "daily" | "mtd" | "ytd" | "invoice" | "inventory" | "jobs" | "other";
 
 export interface MetricRow {
@@ -447,10 +448,20 @@ export function formatCount(value: number | null): string {
   return value.toLocaleString("en-US");
 }
 
-/** Business date in the shop's timezone (America/Chicago). */
-export function shopToday(timeZone = "America/Chicago", now = new Date()): string {
+/**
+ * Business date in the shop's timezone.
+ *
+ * `timeZone` must be a real, validated IANA zone when supplied for authoritative
+ * shop business-day math (dashboard, reports, goal pacing) — an invalid or missing
+ * value throws instead of silently defaulting, per the shared timezone contract
+ * (see ./timezone.ts). Omitting `timeZone` entirely is reserved for non-authoritative
+ * UI convenience callers (e.g. initializing a date picker's default value) that have
+ * no shop context to validate against; that legacy no-arg path is unchanged.
+ */
+export function shopToday(timeZone?: string, now = new Date()): string {
+  const zone = timeZone === undefined ? "America/Chicago" : resolveShopTimeZone(timeZone);
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone,
+    timeZone: zone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

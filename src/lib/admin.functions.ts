@@ -5,7 +5,11 @@ import { APP_ROLES, PERMISSIONS } from "@/lib/permissions";
 import type { GoalRules } from "@/lib/numbers-math";
 import { readShopPermissions } from "./permissions.server";
 import { requireShopPermission } from "./permissions.server";
-import { calendarSchema } from "./calendar.schema";
+import { calendarSchema, saveBusinessCalendarInputSchema } from "./calendar.schema";
+import { readBusinessCalendarLenient } from "./calendar.server";
+import { earliestRetroactiveStatusChange } from "./business-calendar";
+import { resolveShopTimeZone } from "./timezone";
+import { shopToday } from "./metrics-math";
 
 const permissionKeys = PERMISSIONS.map((p) => p.key) as [string, ...string[]];
 const assignableRoles = ["manager", "staff", "display"] as const;
@@ -182,24 +186,45 @@ export const listAuditEvents = createServerFn({ method: "GET" })
 /** Roles that exist in the model, for the interface. */
 export const KNOWN_ROLES = APP_ROLES;
 
+/**
+ * Retroactive-edit guard: rejects a schedule/exception write that would change the
+ * open/closed status of a date on or before the shop's local today unless the
+ * caller sends `confirmRetroactive: true`. Forward-dated changes always save
+ * without it. The confirmed retroactive marking is carried through to the
+ * save_business_calendar() RPC, which sets it as a transaction-local Postgres
+ * setting so the 0024 trigger's audit row records it distinctly (see migration
+ * 0024_business_calendar.sql).
+ */
 export const saveBusinessCalendar = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => calendarSchema.parse(input))
+  .validator((input: unknown) => saveBusinessCalendarInputSchema.parse(input))
   .handler(async ({ data, context }) => {
     const member = await requireShopPermission(context.supabase, context.userId, "manage_security");
-    const { data: saved, error } = await context.supabase
-      .from("shop_settings")
-      .upsert(
-        {
-          shop_id: member.shop_id,
-          business_calendar: data,
-          updated_by: context.userId,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "shop_id" },
-      )
-      .select("shop_id")
-      .single();
-    if (error || !saved) throw new Error("The calendar could not be saved. Please try again.");
-    return { ok: true };
+    const sb = context.supabase as unknown as Supa;
+
+    const { data: shopRow, error: shopError } = await sb
+      .from("shops")
+      .select("timezone")
+      .eq("id", member.shop_id)
+      .maybeSingle();
+    if (shopError) throw new Error("Unable to verify the shop's timezone. Please try again.");
+    const timezone = resolveShopTimeZone(shopRow?.timezone as string | null | undefined);
+    const today = shopToday(timezone);
+
+    const oldCalendar = await readBusinessCalendarLenient(context.supabase, member.shop_id);
+    const conflictDate = earliestRetroactiveStatusChange(oldCalendar, data.calendar, today);
+    if (conflictDate && !data.confirmRetroactive) {
+      throw new Error(
+        `This change would alter the recorded open/closed status of ${conflictDate} (and possibly other dates on or before today, ${today}). Confirm to save this retroactive change anyway.`,
+      );
+    }
+
+    const { error } = await sb.rpc("save_business_calendar", {
+      p_shop_id: member.shop_id,
+      p_business_calendar: data.calendar,
+      p_retroactive: Boolean(conflictDate),
+      p_retroactive_from: conflictDate,
+    });
+    if (error) throw new Error("The calendar could not be saved. Please try again.");
+    return { ok: true, retroactive: Boolean(conflictDate) };
   });
