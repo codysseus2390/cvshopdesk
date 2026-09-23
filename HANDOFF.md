@@ -1,5 +1,38 @@
 # HANDOFF.md — Living Handoff Document
 
+## Staging repair approved; backup access blocked — 2026-09-23
+
+Owner explicitly approved staging-only journal repair and migrations 0023/0024 after
+a verified recoverable backup. Do not ask for this same approval again. Main merges,
+production database changes and production promotion remain unapproved.
+
+At branch head `8c5cab74235d9db2dd696f2e9d95536c547f840f`, read-only checks found:
+
+- Staging project `fsmyugwrfuvqrrhufryf` is ACTIVE_HEALTHY, PostgreSQL 17, organization
+  plan Free. No local `SUPABASE_DB_URL` or management token is configured. No local
+  backup or PostgreSQL backup utilities were found in the checked standard locations.
+  A Supabase SQL connector is available, but no verified backup/restore path yet.
+- Independent Sol review confirms complete 0022 parity: function source, SQL language,
+  boolean result, stable/definer/search_path/default argument/owner/grants; both new
+  customer policies' command/roles/expressions/permissiveness; old policies absent.
+  The 22 recorded journal entries match through 0021; 0022 is physically applied but
+  unrecorded. Still no journal-only correction and no migrations were executed.
+- Only Cedar shop `7abf0d1f-1faf-488a-b356-ce635e278bc2` exists in staging. It has no
+  shop_settings row and 21 metric snapshots, earliest 2025-01-31. Migration 0024 will
+  insert settings and the planned Mon-Fri calendar effective 2025-01-01. The second
+  seeded shop ID is absent. Initial seeding precedes the calendar audit triggers.
+
+Exact next step: owner supplies the **staging** database connection string privately
+as `SUPABASE_DB_URL` in ignored `.env.local` (never in chat/PR). Verify the allowlisted
+target without logging credentials, obtain PostgreSQL 17-compatible backup tools,
+take a logical backup and rehearse recovery in an isolated database. Then execute
+the already-approved staging-only reconciliation and migrations with fresh guards.
+Do not reset a password, buy an upgrade, improvise a partial export as a full backup,
+or bypass the backup gate to continue. The Supabase dashboard browser inspection timed
+out; no provider backup was verified. PR 29 remains draft and Preview accepted pending.
+
+---
+
 ## Active checkpoint — preview-first restart, 2026-09-23
 
 Branch: `fix/preview-release-gates`. Implementation commit:
