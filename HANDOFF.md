@@ -10,15 +10,19 @@ Board refreshes every minute; TV shows today's appointments in the shop timezone
 Invalid/missing times stay missing; provider errors show an explicit warning.
 Only display fields are returned (no phone, VIN, questionnaire, or API credentials).
 
-Five appointment tests passed. Typecheck is blocked by repeated local memory
-exhaustion, even outside the sandbox. Run CI typecheck/lint/build before release.
+Five appointment tests passed locally. Local typecheck repeatedly exhausted
+memory. Remote build, unit tests, lint, and secret scan passed on 8f61fad; CI found
+strict index-signature access errors, corrected in remote 7bd815e and local a3f618d.
+CI run 35914834015 is validating the correction. Vercel built the feature preview,
+but appointment credentials/enable setting are still absent: do not claim live data.
 New server settings: AUTOFLOW_APPOINTMENTS_ENABLED=true plus AUTOFLOW_API_KEY and
 AUTOFLOW_API_PASSWORD, scoped to release Preview first. Existing subdomain and
 ShopDesk shop mapping are reused. These new settings are NOT yet saved to Vercel.
 
 Owner approved a preview share link and explicitly said NOT to revoke it. The
 Vercel UI stalled during creation, so verify whether sharing was saved. Browser
-crashed/timed out; recovered after resetting browser tool. No production rollout.
+crashed/timed out; browser control still times out after resets. Asked owner to
+restart Codex and reopen this task. No production rollout.
 Next: publish checkpoint, verify CI, save the three appointment settings in
 release Preview, and verify real appointments on /board and /tv before production.
 
@@ -139,3 +143,4 @@ See `docs/lovable-dependency-audit.md` (16 findings). KEEP `.lovable/project.jso
 Dashboard panels wired into hub. Figma audit still remaining. Data integrity rules intact.
 
 ---
+
