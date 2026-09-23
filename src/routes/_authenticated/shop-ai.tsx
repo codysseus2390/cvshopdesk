@@ -309,15 +309,20 @@ function ShopAiPage() {
               <RotateCcw className="mr-2 h-3.5 w-3.5" /> New conversation
             </Button>
           ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled
-              className="rounded-xl"
-              title="Owner/manager can start a new conversation."
-            >
-              <RotateCcw className="mr-2 h-3.5 w-3.5" /> New conversation
-            </Button>
+            <div className="flex flex-col items-end gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled
+                className="rounded-xl"
+                aria-describedby="new-conversation-denied-reason"
+              >
+                <RotateCcw className="mr-2 h-3.5 w-3.5" /> New conversation
+              </Button>
+              <p id="new-conversation-denied-reason" className="text-xs text-muted-foreground">
+                Only people who can change settings can start a new conversation.
+              </p>
+            </div>
           )}
         </div>
 
