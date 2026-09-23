@@ -45,6 +45,57 @@ describe("confirmed shop calendar", () => {
   });
 });
 
+describe("leap day / February 29", () => {
+  it("treats Feb 29 in a leap year as a normal confirmed weekday", () => {
+    // 2028-02-29 is a Tuesday.
+    expect(isOpenDay("2028-02-29", calendar)).toBe(true);
+  });
+
+  it("prorates a range ending on Feb 29 using the leap year's real days-in-month", () => {
+    // Feb 2028 has 21 confirmed open (Mon-Fri) days; Feb 24 (Thu) - Feb 29 (Tue)
+    // contains 4 of them (24, 25, 28, 29 - the 26/27 weekend is excluded).
+    expect(proratedGoal(2100, "2028-02-24", "2028-02-29", calendar)).toBe(400);
+  });
+});
+
+describe("a week crossing both a month and a year boundary", () => {
+  it("allocates Dec 28 - Jan 3 across December's and January's own denominators", () => {
+    // Dec 2026: 23 confirmed open days total, 4 of them (28-31) fall in range.
+    // Jan 2027: 21 confirmed open days total, 1 of them (Jan 1, a Friday) falls in range.
+    const expected = (1000 * 4) / 23 + (1000 * 1) / 21;
+    expect(proratedGoal(1000, "2026-12-28", "2027-01-03", calendar)).toBeCloseTo(expected);
+  });
+});
+
+describe("multiple schedules / effective-date boundary", () => {
+  const multiSchedule: BusinessCalendar = {
+    schedules: [
+      { effective_from: "2020-01-01", open_weekdays: [1, 2, 3, 4, 5] },
+      { effective_from: "2026-07-01", open_weekdays: [1, 2, 3, 4, 5, 6] },
+    ],
+    exceptions: [],
+  };
+
+  it("keeps resolving a date before the later schedule's effective date against the older schedule", () => {
+    // 2026-06-27 is a Saturday, still closed under the original Mon-Fri schedule.
+    expect(isOpenDay("2026-06-27", multiSchedule)).toBe(false);
+  });
+
+  it("applies the newer schedule once its effective date arrives", () => {
+    // 2026-07-04 is a Saturday, open under the new Mon-Sat schedule (effective 2026-07-01).
+    expect(isOpenDay("2026-07-04", multiSchedule)).toBe(true);
+  });
+
+  it("does not let a later schedule change retroactively reinterpret an earlier, fully-past period", () => {
+    // The whole June 2026 range is before the new schedule's effective date, so
+    // proratedGoal's own month denominator (22 Mon-Fri open days) must also resolve
+    // against the original schedule, not the one added afterward.
+    expect(proratedGoal(500, "2026-06-22", "2026-06-28", multiSchedule)).toBeCloseTo(
+      (500 * 5) / 22,
+    );
+  });
+});
+
 describe("retroactive-edit guard math", () => {
   const today = "2026-09-21";
 
@@ -94,5 +145,13 @@ describe("retroactive-edit guard math", () => {
     };
     const reopened: BusinessCalendar = { ...calendar, exceptions: [] };
     expect(earliestRetroactiveStatusChange(withClosure, reopened, today)).toBe("2026-09-17");
+  });
+
+  it("flags an exception dated exactly today - the <= today boundary is inclusive", () => {
+    const changed: BusinessCalendar = {
+      ...calendar,
+      exceptions: [{ business_date: today, is_open: false, reason: "Closed today" }],
+    };
+    expect(earliestRetroactiveStatusChange(calendar, changed, today)).toBe(today);
   });
 });
