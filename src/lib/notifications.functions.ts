@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { readShopPermissions } from "./permissions.server";
 
 type Supa = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,9 +46,8 @@ export const createNotification = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Supa;
     const member = await membership(context.supabase, context.userId);
-    const allowed = await readShopPermissions(context.supabase, member.shop_id, member.role);
-    if (!allowed("manage_notifications")) {
-      throw new Error("You do not have permission to send announcements.");
+    if (member.role !== "owner" && member.role !== "manager") {
+      throw new Error("Only the owner and admins can send announcements.");
     }
 
     let recipientUserIds: string[] = [];
@@ -137,9 +135,10 @@ export const listMyNotifications = createServerFn({ method: "GET" })
     const { data, error } = await sb
       .from("notification_recipients")
       .select(
-        "id, read_at, target, notification:notifications(id, title, message, priority, created_at, audience)",
+        "id, read_at, target, notification:notifications!inner(id, title, message, priority, created_at, audience, archived_at)",
       )
       .eq("user_id", context.userId)
+      .is("notification.archived_at", null)
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw new Error(error.message);
@@ -154,6 +153,7 @@ export const listMyNotifications = createServerFn({ method: "GET" })
         priority: string;
         created_at: string;
         audience: string;
+        archived_at: string | null;
       } | null;
     }[];
   });
@@ -163,14 +163,12 @@ export const markNotificationRead = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ recipientId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Supa;
-    const { data: updated, error } = await sb
+    const { error } = await sb
       .from("notification_recipients")
       .update({ read_at: new Date().toISOString() })
       .eq("id", data.recipientId)
-      .eq("user_id", context.userId)
-      .select("id");
+      .eq("user_id", context.userId);
     if (error) throw new Error(error.message);
-    if (updated?.length !== 1) throw new Error("That notification could not be marked as read.");
     return { ok: true };
   });
 
@@ -181,8 +179,11 @@ export const listDisplayNotifications = createServerFn({ method: "GET" })
     const sb = context.supabase as unknown as Supa;
     const { data, error } = await sb
       .from("notification_recipients")
-      .select("id, notification:notifications(id, title, message, priority, created_at)")
+      .select(
+        "id, notification:notifications!inner(id, title, message, priority, created_at, archived_at)",
+      )
       .eq("target", "display")
+      .is("notification.archived_at", null)
       .order("created_at", { ascending: false })
       .limit(10);
     if (error) throw new Error(error.message);
@@ -194,6 +195,7 @@ export const listDisplayNotifications = createServerFn({ method: "GET" })
         message: string;
         priority: string;
         created_at: string;
+        archived_at: string | null;
       } | null;
     }[];
   });
@@ -209,4 +211,135 @@ export const listNotificationAudience = createServerFn({ method: "GET" })
       .order("email", { ascending: true });
     if (error) throw new Error(error.message);
     return data ?? [];
+  });
+
+/** Shop announcements shown on the dashboard and in its history. */
+export const listShopAnnouncements = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const sb = context.supabase as unknown as Supa;
+    const member = await membership(context.supabase, context.userId);
+    const { data: notifications, error } = await sb
+      .from("notifications")
+      .select("id, title, message, priority, audience, created_at, archived_at")
+      .eq("shop_id", member.shop_id)
+      .in("audience", ["all", "display", "all_display"])
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    const rows = (notifications ?? []) as {
+      id: string;
+      title: string;
+      message: string;
+      priority: string;
+      audience: string;
+      created_at: string;
+      archived_at: string | null;
+    }[];
+    if (rows.length === 0) return [];
+    const { data: recipients, error: recipientError } = await sb
+      .from("notification_recipients")
+      .select("id, notification_id")
+      .eq("shop_id", member.shop_id)
+      .eq("target", "display");
+    if (recipientError) throw new Error(recipientError.message);
+    const displayIds = new Map(
+      ((recipients ?? []) as { id: string; notification_id: string }[]).map((row) => [
+        row.notification_id,
+        row.id,
+      ]),
+    );
+    return rows.map((notification) => ({
+      id: displayIds.get(notification.id) ?? notification.id,
+      on_tv: displayIds.has(notification.id),
+      notification,
+    }));
+  });
+
+/** Update a queued TV announcement without changing who received it. */
+export const updateDisplayNotification = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        notificationId: z.string().uuid(),
+        title: z.string().trim().min(2).max(140),
+        message: z.string().trim().min(2).max(2000),
+        priority: z.enum(["low", "normal", "high"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as unknown as Supa;
+    const member = await membership(context.supabase, context.userId);
+    if (member.role !== "owner" && member.role !== "manager") {
+      throw new Error("Only the owner and admins can edit TV announcements.");
+    }
+    const { data: updated, error } = await sb
+      .from("notifications")
+      .update({ title: data.title, message: data.message, priority: data.priority })
+      .eq("id", data.notificationId)
+      .eq("shop_id", member.shop_id)
+      .is("archived_at", null)
+      .select("id")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!updated?.id) throw new Error("This announcement is no longer on the TV.");
+    await sb.rpc("log_audit_event", {
+      p_action: "tv_notification_edited",
+      p_target: data.notificationId,
+    });
+    return { ok: true };
+  });
+
+/** Archive an announcement. It leaves the active card and TV, but remains in history. */
+export const archiveNotification = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ notificationId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as unknown as Supa;
+    const member = await membership(context.supabase, context.userId);
+    if (member.role !== "owner" && member.role !== "manager") {
+      throw new Error("Only the owner and admins can archive announcements.");
+    }
+    const { data: archived, error } = await sb
+      .from("notifications")
+      .update({ archived_at: new Date().toISOString() })
+      .eq("id", data.notificationId)
+      .eq("shop_id", member.shop_id)
+      .is("archived_at", null)
+      .select("id")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!archived?.id) throw new Error("This announcement is no longer active.");
+    await sb.rpc("log_audit_event", {
+      p_action: "notification_archived",
+      p_target: data.notificationId,
+    });
+    return { ok: true };
+  });
+
+/** Permanently remove a saved announcement and its recipient rows. */
+export const deleteNotificationHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ notificationId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as unknown as Supa;
+    const member = await membership(context.supabase, context.userId);
+    if (member.role !== "owner" && member.role !== "manager") {
+      throw new Error("Only the owner and admins can delete announcement history.");
+    }
+    const { data: deleted, error } = await sb
+      .from("notifications")
+      .delete()
+      .eq("id", data.notificationId)
+      .eq("shop_id", member.shop_id)
+      .select("id")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!deleted?.id) throw new Error("This announcement is no longer in history.");
+    await sb.rpc("log_audit_event", {
+      p_action: "notification_deleted",
+      p_target: data.notificationId,
+    });
+    return { ok: true };
   });

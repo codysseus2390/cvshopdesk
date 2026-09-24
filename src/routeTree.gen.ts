@@ -14,17 +14,16 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedBoardRouteImport } from './routes/_authenticated/board'
-import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
 import { Route as AuthenticatedEntryRouteImport } from './routes/_authenticated/entry'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedHubRouteImport } from './routes/_authenticated/hub'
 import { Route as AuthenticatedImportsRouteImport } from './routes/_authenticated/imports'
-import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedNumbersRouteImport } from './routes/_authenticated/numbers'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedShopAiRouteImport } from './routes/_authenticated/shop-ai'
 import { Route as AuthenticatedToolsRouteImport } from './routes/_authenticated/tools'
 import { Route as AuthenticatedTvRouteImport } from './routes/_authenticated/tv'
+import { Route as ApiWebhooksAutoflowRouteImport } from './routes/api/webhooks/autoflow'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -50,11 +49,6 @@ const AuthenticatedBoardRoute = AuthenticatedBoardRouteImport.update({
   path: '/board',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
-  id: '/customers',
-  path: '/customers',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedEntryRoute = AuthenticatedEntryRouteImport.update({
   id: '/entry',
   path: '/entry',
@@ -73,11 +67,6 @@ const AuthenticatedHubRoute = AuthenticatedHubRouteImport.update({
 const AuthenticatedImportsRoute = AuthenticatedImportsRouteImport.update({
   id: '/imports',
   path: '/imports',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
-  id: '/inventory',
-  path: '/inventory',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedNumbersRoute = AuthenticatedNumbersRouteImport.update({
@@ -105,40 +94,43 @@ const AuthenticatedTvRoute = AuthenticatedTvRouteImport.update({
   path: '/tv',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiWebhooksAutoflowRoute = ApiWebhooksAutoflowRouteImport.update({
+  id: '/api/webhooks/autoflow',
+  path: '/api/webhooks/autoflow',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/account': typeof AuthenticatedAccountRoute
   '/board': typeof AuthenticatedBoardRoute
-  '/customers': typeof AuthenticatedCustomersRoute
   '/entry': typeof AuthenticatedEntryRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/hub': typeof AuthenticatedHubRoute
   '/imports': typeof AuthenticatedImportsRoute
-  '/inventory': typeof AuthenticatedInventoryRoute
   '/numbers': typeof AuthenticatedNumbersRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/shop-ai': typeof AuthenticatedShopAiRoute
   '/tools': typeof AuthenticatedToolsRoute
   '/tv': typeof AuthenticatedTvRoute
+  '/api/webhooks/autoflow': typeof ApiWebhooksAutoflowRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/account': typeof AuthenticatedAccountRoute
   '/board': typeof AuthenticatedBoardRoute
-  '/customers': typeof AuthenticatedCustomersRoute
   '/entry': typeof AuthenticatedEntryRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/hub': typeof AuthenticatedHubRoute
   '/imports': typeof AuthenticatedImportsRoute
-  '/inventory': typeof AuthenticatedInventoryRoute
   '/numbers': typeof AuthenticatedNumbersRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/shop-ai': typeof AuthenticatedShopAiRoute
   '/tools': typeof AuthenticatedToolsRoute
   '/tv': typeof AuthenticatedTvRoute
+  '/api/webhooks/autoflow': typeof ApiWebhooksAutoflowRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -147,17 +139,16 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/board': typeof AuthenticatedBoardRoute
-  '/_authenticated/customers': typeof AuthenticatedCustomersRoute
   '/_authenticated/entry': typeof AuthenticatedEntryRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/hub': typeof AuthenticatedHubRoute
   '/_authenticated/imports': typeof AuthenticatedImportsRoute
-  '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/numbers': typeof AuthenticatedNumbersRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/shop-ai': typeof AuthenticatedShopAiRoute
   '/_authenticated/tools': typeof AuthenticatedToolsRoute
   '/_authenticated/tv': typeof AuthenticatedTvRoute
+  '/api/webhooks/autoflow': typeof ApiWebhooksAutoflowRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -166,34 +157,32 @@ export interface FileRouteTypes {
     | '/auth'
     | '/account'
     | '/board'
-    | '/customers'
     | '/entry'
     | '/history'
     | '/hub'
     | '/imports'
-    | '/inventory'
     | '/numbers'
     | '/settings'
     | '/shop-ai'
     | '/tools'
     | '/tv'
+    | '/api/webhooks/autoflow'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/account'
     | '/board'
-    | '/customers'
     | '/entry'
     | '/history'
     | '/hub'
     | '/imports'
-    | '/inventory'
     | '/numbers'
     | '/settings'
     | '/shop-ai'
     | '/tools'
     | '/tv'
+    | '/api/webhooks/autoflow'
   id:
     | '__root__'
     | '/'
@@ -201,23 +190,23 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/account'
     | '/_authenticated/board'
-    | '/_authenticated/customers'
     | '/_authenticated/entry'
     | '/_authenticated/history'
     | '/_authenticated/hub'
     | '/_authenticated/imports'
-    | '/_authenticated/inventory'
     | '/_authenticated/numbers'
     | '/_authenticated/settings'
     | '/_authenticated/shop-ai'
     | '/_authenticated/tools'
     | '/_authenticated/tv'
+    | '/api/webhooks/autoflow'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiWebhooksAutoflowRoute: typeof ApiWebhooksAutoflowRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -257,13 +246,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBoardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/customers': {
-      id: '/_authenticated/customers'
-      path: '/customers'
-      fullPath: '/customers'
-      preLoaderRoute: typeof AuthenticatedCustomersRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/entry': {
       id: '/_authenticated/entry'
       path: '/entry'
@@ -290,13 +272,6 @@ declare module '@tanstack/react-router' {
       path: '/imports'
       fullPath: '/imports'
       preLoaderRoute: typeof AuthenticatedImportsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/inventory': {
-      id: '/_authenticated/inventory'
-      path: '/inventory'
-      fullPath: '/inventory'
-      preLoaderRoute: typeof AuthenticatedInventoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/numbers': {
@@ -334,18 +309,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTvRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/webhooks/autoflow': {
+      id: '/api/webhooks/autoflow'
+      path: '/api/webhooks/autoflow'
+      fullPath: '/api/webhooks/autoflow'
+      preLoaderRoute: typeof ApiWebhooksAutoflowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedBoardRoute: typeof AuthenticatedBoardRoute
-  AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
   AuthenticatedEntryRoute: typeof AuthenticatedEntryRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedHubRoute: typeof AuthenticatedHubRoute
   AuthenticatedImportsRoute: typeof AuthenticatedImportsRoute
-  AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedNumbersRoute: typeof AuthenticatedNumbersRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedShopAiRoute: typeof AuthenticatedShopAiRoute
@@ -356,12 +336,10 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedBoardRoute: AuthenticatedBoardRoute,
-  AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
   AuthenticatedEntryRoute: AuthenticatedEntryRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedHubRoute: AuthenticatedHubRoute,
   AuthenticatedImportsRoute: AuthenticatedImportsRoute,
-  AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedNumbersRoute: AuthenticatedNumbersRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedShopAiRoute: AuthenticatedShopAiRoute,
@@ -376,6 +354,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiWebhooksAutoflowRoute: ApiWebhooksAutoflowRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -11,7 +11,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { SHOP_AI_MAX_PERSONALITY_CHARS } from "@/lib/ai/model-config";
 import { ASSISTANT_SETTINGS_DEFAULTS, type AssistantSettings } from "@/lib/ai/persona";
-import { readShopPermissions } from "@/lib/permissions.server";
 
 type Supa = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -146,38 +145,31 @@ export const saveAiSettings = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Supa;
     const member = await membership(sb, context.userId);
-    const allowed = await readShopPermissions(context.supabase, member.shop_id, member.role);
-    if (!allowed("change_settings")) {
+    if (member.role !== "owner" && member.role !== "manager") {
       throw new Error("Only the owner and admins can change Hank's settings.");
     }
 
-    const { data: saved, error } = await sb
-      .from("ai_settings")
-      .upsert(
-        {
-          shop_id: member.shop_id,
-          assistant_name: data.assistantName,
-          subtitle: data.subtitle,
-          avatar_url: data.avatarUrl,
-          personality: data.personality,
-          casual_language: data.casualLanguage,
-          humor: data.humor,
-          mild_profanity: data.mildProfanity,
-          shop_banter: data.shopBanter,
-          customer_facing_professional: data.customerFacingProfessional,
-          model_tier: data.modelTier,
-          disabled_tools: data.disabledTools,
-          vision_enabled: data.visionEnabled,
-          updated_by: context.userId,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "shop_id" },
-      )
-      .select("shop_id");
+    const { error } = await sb.from("ai_settings").upsert(
+      {
+        shop_id: member.shop_id,
+        assistant_name: data.assistantName,
+        subtitle: data.subtitle,
+        avatar_url: data.avatarUrl,
+        personality: data.personality,
+        casual_language: data.casualLanguage,
+        humor: data.humor,
+        mild_profanity: data.mildProfanity,
+        shop_banter: data.shopBanter,
+        customer_facing_professional: data.customerFacingProfessional,
+        model_tier: data.modelTier,
+        disabled_tools: data.disabledTools,
+        vision_enabled: data.visionEnabled,
+        updated_by: context.userId,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "shop_id" },
+    );
     if (error) throw new Error(error.message);
-    if (!saved || saved.length === 0) {
-      throw new Error("Hank's settings were not saved. Nothing was changed.");
-    }
 
     await sb.rpc("log_audit_event", {
       p_action: "ai_settings_saved",

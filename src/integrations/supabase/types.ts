@@ -8,6 +8,40 @@ export type Database = {
   };
   public: {
     Tables: {
+      autoflow_webhook_events: {
+        Row: {
+          id: string;
+          shop_id: string;
+          autoflow_shop_id: string;
+          event_id: string;
+          event_type: string;
+          payload: Json;
+          received_at: string;
+          processing_status: string;
+        };
+        Insert: {
+          id?: string;
+          shop_id: string;
+          autoflow_shop_id: string;
+          event_id: string;
+          event_type: string;
+          payload: Json;
+          received_at?: string;
+          processing_status?: string;
+        };
+        Update: {
+          processing_status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "autoflow_webhook_events_shop_id_fkey";
+            columns: ["shop_id"];
+            isOneToOne: false;
+            referencedRelation: "shops";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ai_actions: {
         Row: {
           after_values: Json | null;
@@ -889,7 +923,6 @@ export type Database = {
       };
       shop_settings: {
         Row: {
-          business_calendar: Json | null;
           goal_rules: Json;
           hidden_widgets: Json;
           shop_id: string;
@@ -899,7 +932,6 @@ export type Database = {
           updated_by: string | null;
         };
         Insert: {
-          business_calendar?: Json | null;
           goal_rules?: Json;
           hidden_widgets?: Json;
           shop_id: string;
@@ -909,7 +941,6 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
-          business_calendar?: Json | null;
           goal_rules?: Json;
           hidden_widgets?: Json;
           shop_id?: string;

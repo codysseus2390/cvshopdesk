@@ -9,8 +9,6 @@ import {
 } from "@/lib/numbers.functions";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate } from "@/components/access-gate";
-import { usePermissions } from "@/components/use-permissions";
-import { isOpenDay } from "@/lib/business-calendar";
 import { useDashboard } from "./hub";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,8 +61,6 @@ const blankMechanics = (): MechanicDraft =>
 
 function EntryPage() {
   const dashboard = useDashboard();
-  const perms = usePermissions();
-  const calendar = perms.settings?.business_calendar ?? null;
   const save = useServerFn(saveMetricEntry);
   const fetchMechanics = useServerFn(getMechanicProductivityEntry);
   const saveMechanics = useServerFn(saveMechanicProductivityEntry);
@@ -92,7 +88,6 @@ function EntryPage() {
   const [mechanicBusy, setMechanicBusy] = useState(false);
 
   const date = draft.business_date || today;
-  const dateIsClosed = calendar ? isOpenDay(date, calendar) === false : false;
   const num = (v: string) => (v.trim() === "" ? null : Number(v));
   const gp = num(draft.gross_profit);
   const cars = num(draft.car_count);
@@ -106,10 +101,6 @@ function EntryPage() {
   );
   const mechanicDate = dashboard.data?.previousDay ?? "";
   const mechanicPeriodAnchor = dashboard.data?.today ?? "";
-  const prevDayWord =
-    dashboard.data?.previousDayKind === "open" ? "Previous open day" : "Previous day";
-  const prevDayWordLower =
-    dashboard.data?.previousDayKind === "open" ? "previous open day" : "previous day";
   const mechanicQuery = useQuery({
     queryKey: ["mechanic-entry", mechanicDate, mechanicPeriodAnchor],
     queryFn: () =>
@@ -342,12 +333,6 @@ function EntryPage() {
                     <strong>Car count:</strong> {formatCount(cars)}
                   </li>
                 </ul>
-                {dateIsClosed && (
-                  <p className="rounded-md border border-border bg-muted p-3 text-sm">
-                    {date} is marked closed in the shop calendar. This entry will still be saved and
-                    counted — it just won't count toward missing-day coverage or goal pacing.
-                  </p>
-                )}
                 <div className="flex gap-2">
                   <Button onClick={confirmSave} disabled={busy}>
                     {busy ? "Saving…" : "Confirm and save"}
@@ -378,7 +363,7 @@ function EntryPage() {
               Enter the production percentage for the previous day, current week, and current month.
             </p>
             <p className="rounded-md bg-muted p-3 text-sm font-semibold">
-              {prevDayWord}: {mechanicDate || "Loading…"} · Weekly and monthly use the current
+              Previous day: {mechanicDate || "Loading…"} · Weekly and monthly use the current
               periods
             </p>
             {MECHANICS.map((technician) => (
@@ -386,7 +371,7 @@ function EntryPage() {
                 <p className="font-semibold">{technician}</p>
                 <div className="grid gap-3 sm:grid-cols-3">
                   <Field
-                    label={`${prevDayWord} %`}
+                    label="Previous day %"
                     value={mechanicDraft[technician].previous_day}
                     onChange={(value) =>
                       setMechanicDraft({
@@ -451,12 +436,12 @@ function EntryPage() {
             {mechanicStage === "review" && (
               <>
                 <p className="text-sm">
-                  <strong>{prevDayWord}:</strong> {mechanicDate}
+                  <strong>Previous day:</strong> {mechanicDate}
                 </p>
                 <ul className="space-y-2 text-sm">
                   {mechanicValues.map((entry) => (
                     <li key={entry.technician}>
-                      <strong>{entry.technician}:</strong> {prevDayWordLower}{" "}
+                      <strong>{entry.technician}:</strong> previous day{" "}
                       {formatProductivity(entry.previous_day)} · weekly{" "}
                       {formatProductivity(entry.weekly)} · monthly{" "}
                       {formatProductivity(entry.monthly)}
