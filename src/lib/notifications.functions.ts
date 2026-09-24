@@ -221,8 +221,12 @@ export const listShopAnnouncements = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     const rows = (notifications ?? []) as {
-      id: string; title: string; message: string; priority: string;
-      audience: string; created_at: string;
+      id: string;
+      title: string;
+      message: string;
+      priority: string;
+      audience: string;
+      created_at: string;
     }[];
     if (rows.length === 0) return [];
     const { data: recipients, error: recipientError } = await sb
@@ -232,8 +236,10 @@ export const listShopAnnouncements = createServerFn({ method: "GET" })
       .eq("target", "display");
     if (recipientError) throw new Error(recipientError.message);
     const displayIds = new Map(
-      ((recipients ?? []) as { id: string; notification_id: string }[])
-        .map((row) => [row.notification_id, row.id]),
+      ((recipients ?? []) as { id: string; notification_id: string }[]).map((row) => [
+        row.notification_id,
+        row.id,
+      ]),
     );
     return rows.map((notification) => ({
       id: displayIds.get(notification.id) ?? notification.id,
@@ -246,12 +252,14 @@ export const listShopAnnouncements = createServerFn({ method: "GET" })
 export const updateDisplayNotification = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({
-      notificationId: z.string().uuid(),
-      title: z.string().trim().min(2).max(140),
-      message: z.string().trim().min(2).max(2000),
-      priority: z.enum(["low", "normal", "high"]),
-    }).parse(input),
+    z
+      .object({
+        notificationId: z.string().uuid(),
+        title: z.string().trim().min(2).max(140),
+        message: z.string().trim().min(2).max(2000),
+        priority: z.enum(["low", "normal", "high"]),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Supa;
