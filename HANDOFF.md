@@ -2,15 +2,16 @@
 
 ## Header Hank messenger and navigation removal — 2026-09-23
 
-- Branch: `codex/hank-header-chat`; implementation checkpoint: `fdbe9e9`.
+- Branch: `codex/hank-header-chat`; latest implementation checkpoint: `dfb7d76` (initial UI commit `fdbe9e9`).
 - Isolated worktree: `C:/Users/ivinb/.codex/visualizations/2026/09/24/01a0d14d-dceb-71f2-9eb2-925a07dbfc52/shopdesk`.
 - Original `C:/Users/ivinb/cvshopdesk` reporting edits were left untouched. This branch starts at `46c4263` and retains that release-safeguard dependency.
 - Removed the shared bottom Hank bar and its reserved spacing. Added a permission-gated messenger beside notifications with a downward popover. The popover and full Hank page share chat history, message rendering, tool confirmations, attachments, and voice handling.
 - Composer has a plus menu on the left, message input, microphone for voice mode, and Send on the right. Existing PNG/JPG/WEBP/PDF limits remain. Voice mode stays inside the popover; closing stops recording and ignores late transcription/audio results. Follow-up cleanup releases the audio context when chat unmounts.
 - Deleted Customer and Inventory route components and regenerated the route tree; removed both navigation links and their search wording. Stored records/imports were not deleted.
 - Main files: `src/components/app-shell.tsx`, `hank-messenger.tsx`, `shop-ai/hank-chat.tsx`, `shop-ai/voice-mode.tsx`, `shop-ai/use-hank-speech.ts`, `src/routes/_authenticated/shop-ai.tsx`, `src/routeTree.gen.ts`.
-- Validation: production build passed after retrying the sandbox Nitro readlink EPERM with normal filesystem access. Vitest: 173 passed / 17 skipped initially, with two timeouts; both affected files passed all 34 tests on a one-worker rerun (175 unique tests passed overall). Component lint had no errors; an unused suppression was removed afterward. Full type/lint verification is still pending at this note's creation.
+- Validation: production build passed after retrying the sandbox Nitro readlink EPERM with normal filesystem access. Vitest: 173 passed / 17 skipped initially, with two timeouts; both affected files passed all 34 tests on a one-worker rerun (175 unique tests passed overall). TypeScript passed. Full repository ESLint passed with 0 errors and 17 existing warnings; the changed-component follow-up lint is clean. `git diff --check` passed.
 - Real Chrome UI checks passed: header/nav, open/close and focus return, message send, plus menu, invalid attachment rejection, PDF attachment/removal, voice entry/exit, desktop and 390/320px fit, denied-role visibility and conversation-load error. No browser page errors. These used isolated mock responses in ignored `.ui-check.local`, not live AI or shop data. Browser screenshot artifacts are in that directory.
+- Both implementation commits are pushed to origin on the feature branch. GitHub verified that the connected account owns the existing remote and has admin/push access after the initial push approval was blocked for unverified destination trust.
 - No database writes, migrations, main merge, or production deployment. Signed-in staging AI replies, file storage, real microphone transcription/TTS, and hosted Preview acceptance are still unverified.
 - Exact next step: review the branch in a staging-backed Preview and verify real Hank replies, attachments and microphone behavior before owner acceptance and any merge.
 
