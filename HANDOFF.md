@@ -16,12 +16,18 @@ Temporary local sample fixture removed and dev server stopped.
 
 Ready feature Preview: 4d4NAEjVAkDQQmEyUeXRQWwGbbb6
 https://cvshopdesk-7opfzyatb-codysseus90.vercel.app/tv
-Production remains RDpTLnnAKoXNq3ctfXy38yJv56BX / source 5606a53.
-Automatic approval review blocked updating codex/autoflow-release, requiring
-fresh production authorization. Asked owner asynchronously; do not bypass block.
-Next step after owner confirms: fast-forward codex/autoflow-release to ce32167,
-wait configured Preview Ready, rebuild with Production settings, then promote
-the resulting Production build to app.cedarvalleytire.com. Do not deploy main.
+Owner approved production rollout on 2026-09-23. Release branch is ce32167.
+Configured Preview: DQKcSRA4Sa2RCEBH5Aaa5EJG8F3e
+https://cvshopdesk-d32yra9rx-codysseus90.vercel.app/tv
+Production: 8z8nUdn2menzPqDn5AGLmkgVJk5U
+https://cvshopdesk-ghotnugxz-codysseus90.vercel.app/tv
+Rebuilt using Production settings, then promoted. Vercel confirms Ready /
+Production / Current Domains: app.cedarvalleytire.com, source ce32167.
+Release CI 35939575018 passed. Branch alias switches to production on rebuild;
+old staging browser token consequently showed Invalid token. Unique Preview
+requires sign-in. No auth/config changes made. Do not deploy main.
+Next step: optional signed-in production visual check; local component visual
+checks already passed on both screens.
 
 ---
 
