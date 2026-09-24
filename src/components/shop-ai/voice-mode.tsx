@@ -21,6 +21,8 @@ type Phase =
   "starting" | "waiting" | "ready" | "listening" | "processing" | "working" | "speaking" | "error";
 
 interface Props {
+  /** Keep voice controls inside the header messenger. */
+  embedded?: boolean;
   assistantName: string;
   /** Hank is composing an answer (may be using tools). */
   busy: boolean;
@@ -101,6 +103,10 @@ export function VoiceMode(props: Props) {
   const mutedRef = useRef(false);
   const holdRef = useRef(false);
   const micRef = useRef(0);
+  const activeRef = useRef(true);
+  const exitRef = useRef<HTMLButtonElement>(null);
+  const submitRef = useRef(props.onSubmit);
+  submitRef.current = props.onSubmit;
 
   phaseRef.current = phase;
   mutedRef.current = muted;
@@ -121,6 +127,7 @@ export function VoiceMode(props: Props) {
       setPhase("processing");
       try {
         const buffer = await blob.arrayBuffer();
+        if (!activeRef.current) return;
         let binary = "";
         const bytes = new Uint8Array(buffer);
         const chunk = 0x8000;
@@ -131,6 +138,7 @@ export function VoiceMode(props: Props) {
           data: { mimeType: mimeType || "audio/webm", audioBase64: btoa(binary) },
         })) as { ok: boolean; text?: string; message?: string };
 
+        if (!activeRef.current) return;
         if (!result.ok) {
           setError(result.message ?? "That could not be understood.");
           setPhase("ready");
@@ -143,13 +151,13 @@ export function VoiceMode(props: Props) {
         }
         setError(null);
         setHeard(text);
-        props.onSubmit(text);
+        submitRef.current(text);
       } catch (err) {
+        if (!activeRef.current) return;
         setError(err instanceof Error ? err.message : "That could not be understood.");
         setPhase("ready");
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [transcribe],
   );
 
@@ -195,6 +203,8 @@ export function VoiceMode(props: Props) {
 
   useEffect(() => {
     let cancelled = false;
+    activeRef.current = true;
+    exitRef.current?.focus();
 
     async function begin() {
       if (!navigator.mediaDevices?.getUserMedia) {
@@ -279,9 +289,13 @@ export function VoiceMode(props: Props) {
     void begin();
     return () => {
       cancelled = true;
+      activeRef.current = false;
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-      if (recorderRef.current && recorderRef.current.state !== "inactive")
-        recorderRef.current.stop();
+      if (recorderRef.current) {
+        recorderRef.current.onstop = null;
+        recorderRef.current.ondataavailable = null;
+        if (recorderRef.current.state !== "inactive") recorderRef.current.stop();
+      }
       streamRef.current?.getTracks().forEach((track) => track.stop());
       void ctxRef.current?.close().catch(() => {});
       streamRef.current = null;
@@ -408,7 +422,9 @@ export function VoiceMode(props: Props) {
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-background/98 p-6 backdrop-blur-sm">
+    <div
+      className={`${props.embedded ? "absolute z-10 p-4" : "fixed z-50 p-6"} inset-0 flex flex-col items-center justify-between overflow-y-auto bg-background/98 backdrop-blur-sm`}
+    >
       <div className="flex w-full items-start justify-between">
         <div>
           <p className="font-display text-lg font-bold">{props.assistantName}</p>
@@ -432,6 +448,7 @@ export function VoiceMode(props: Props) {
           )}
         </div>
         <Button
+          ref={exitRef}
           variant="ghost"
           size="icon"
           className="rounded-full"
@@ -484,7 +501,7 @@ export function VoiceMode(props: Props) {
         )}
       </div>
 
-      <div className="flex w-full max-w-md items-center justify-center gap-3 pb-2">
+      <div className="flex w-full max-w-md shrink-0 flex-wrap items-center justify-center gap-2 pb-2">
         <Button variant="outline" className="rounded-full" onClick={toggleMute}>
           {muted ? <MicOff className="mr-2 h-4 w-4" /> : <Mic className="mr-2 h-4 w-4" />}
           {muted ? "Unmute" : "Mute"}

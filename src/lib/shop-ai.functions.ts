@@ -4,7 +4,6 @@ import { z } from "zod";
 import { SHOP_AI_HISTORY_LIMIT, SHOP_AI_MAX_MESSAGE_CHARS } from "@/lib/ai/model-config";
 import { resolvePermissions, type AppRole, type PermissionKey } from "@/lib/permissions";
 import { shopToday } from "@/lib/metrics-math";
-import { resolveShopTimeZone } from "@/lib/timezone";
 
 type Supa = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,20 +53,18 @@ interface StoredAttachment {
 }
 
 async function requireMembership(sb: Supa, userId: string) {
-  const { data: member, error: membershipError } = await sb
+  const { data: member } = await sb
     .from("shop_members")
     .select("shop_id, role, shops(timezone)")
     .eq("user_id", userId)
     .eq("status", "approved")
     .maybeSingle();
-  if (membershipError) throw new Error("Unable to verify your shop membership. Please try again.");
   if (!member?.shop_id) throw new Error("You do not have access to a shop yet.");
-  const timezone = resolveShopTimeZone(member.shops?.timezone as string | null | undefined);
-  const { data: overrides, error: permissionError } = await sb
+  const timezone = (member.shops?.timezone as string | undefined) ?? "America/Chicago";
+  const { data: overrides } = await sb
     .from("role_permissions")
     .select("role, permission, allowed")
     .eq("shop_id", member.shop_id);
-  if (permissionError) throw new Error("Unable to verify your permissions. Please try again.");
   const permissions = resolvePermissions(member.role as AppRole, (overrides ?? []) as never);
   return {
     shopId: member.shop_id as string,
@@ -288,7 +285,6 @@ export const sendShopAiMessage = createServerFn({ method: "POST" })
           supabase: context.supabase,
           shopId: membership.shopId,
           userId,
-          role: membership.role,
           timezone: membership.timezone,
           today: membership.today,
           can: membership.can,
@@ -343,16 +339,11 @@ export const listAiActions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const sb = context.supabase as unknown as Supa;
-    const membership = await requireMembership(sb, context.userId);
-    if (!membership.can("use_assistant")) {
-      throw new Error("The AI assistant is not enabled for your role.");
-    }
     const { data, error } = await sb
       .from("ai_actions")
       .select(
         "id, tool, status, confirmation_required, confirmed, target_table, target_id, error, created_at",
       )
-      .eq("shop_id", membership.shopId)
       .order("created_at", { ascending: false })
       .limit(25);
     if (error) throw new Error(error.message);
@@ -375,23 +366,19 @@ export const clearShopAiConversation = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const sb = context.supabase as unknown as Supa;
     const membership = await requireMembership(sb, context.userId);
-    if (!membership.can("change_settings")) {
+    if (membership.role !== "owner" && membership.role !== "manager") {
       throw new Error("Only the owner and admins can start a new shared conversation.");
     }
     const rows = await loadThread(sb, membership.shopId);
     const ids = rows.map((row) => row.id);
     if (ids.length > 0) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: deleted, error } = await supabaseAdmin
+      const { error } = await supabaseAdmin
         .from("assistant_messages")
         .delete()
         .eq("shop_id", membership.shopId)
-        .in("id", ids)
-        .select("id");
+        .in("id", ids);
       if (error) throw new Error(error.message);
-      if (!deleted || deleted.length !== ids.length) {
-        throw new Error("The conversation could not be fully cleared. Nothing was changed.");
-      }
     }
     return { ok: true as const, removed: ids.length };
   });

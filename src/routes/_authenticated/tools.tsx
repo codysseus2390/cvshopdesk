@@ -14,7 +14,6 @@ import {
 import { acceptImportRecords } from "@/lib/records.functions";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate, useShopContext } from "@/components/access-gate";
-import { usePermissions } from "@/components/use-permissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,7 +67,6 @@ async function sha256(file: File) {
 
 function ToolsPage() {
   const shopContext = useShopContext();
-  const perms = usePermissions();
   const shopId = shopContext.data?.shop?.id;
   const queryClient = useQueryClient();
 
@@ -616,7 +614,12 @@ function ToolsPage() {
             ))}
           </CardContent>
         </Card>
-        <NotificationComposer canSend={perms.can("manage_notifications")} />
+        <NotificationComposer
+          canSend={
+            shopContext.data?.membership?.role === "owner" ||
+            shopContext.data?.membership?.role === "manager"
+          }
+        />
       </div>
     </AppShell>
   );

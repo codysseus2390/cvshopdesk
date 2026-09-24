@@ -7,7 +7,6 @@
  *  - No misleading percentages when the base is zero or unknown.
  */
 
-import { proratedGoal, type BusinessCalendar } from "./business-calendar";
 export type PeriodKind = "weekly" | "monthly" | "yearly";
 
 export interface PeriodRange {
@@ -304,7 +303,6 @@ export function goalFor(
   rule: GoalRule | undefined,
   range: PeriodRange,
   previousYearValue: number | null,
-  calendar?: BusinessCalendar,
 ): number | null {
   if (!rule) return null;
   if (rule.method === "growth") {
@@ -328,7 +326,6 @@ export function goalFor(
   const base = monthly ?? (yearly === null ? null : def.prorate ? yearly / 12 : yearly);
   if (base === null) return null;
   if (!def.prorate) return base;
-  if (calendar) return proratedGoal(base, range.from, range.to, calendar);
   return (base * 7) / daysInMonth(range.from.slice(0, 7));
 }
 

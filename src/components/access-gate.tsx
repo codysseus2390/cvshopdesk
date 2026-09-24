@@ -1,5 +1,4 @@
-import { useLayoutEffect, useState } from "react";
-import { advanceSessionEpoch } from "@/lib/session-epoch";
+import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { claimShop, getShopContext, requestAccess } from "@/lib/shop.functions";
@@ -11,13 +10,7 @@ import type { ReactNode } from "react";
 
 export function useShopContext() {
   const fetchContext = useServerFn(getShopContext);
-  return useQuery({
-    queryKey: ["shop-context"],
-    queryFn: () => fetchContext(),
-    refetchInterval: 60_000,
-    refetchOnWindowFocus: "always",
-    retry: false,
-  });
+  return useQuery({ queryKey: ["shop-context"], queryFn: () => fetchContext() });
 }
 
 /** Renders children only for approved members; otherwise shows setup or pending state. */
@@ -30,25 +23,8 @@ export function AccessGate({ children }: { children: ReactNode }) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [requested, setRequested] = useState(false);
-  const accessScope = isLoading
-    ? null
-    : error
-      ? "unverified"
-      : `${data?.shop?.id ?? "none"}:${data?.membership?.status ?? "none"}:${data?.membership?.role ?? "none"}`;
-  const [checkedScope, setCheckedScope] = useState<string | null>(null);
-  useLayoutEffect(() => {
-    if (accessScope === null || checkedScope === accessScope) return;
-    advanceSessionEpoch();
-    const protectedQueries = {
-      predicate: (query: { queryKey: readonly unknown[] }) => query.queryKey[0] !== "shop-context",
-    };
-    void queryClient.cancelQueries(protectedQueries);
-    void queryClient.resetQueries(protectedQueries);
-    queryClient.getMutationCache().clear();
-    setCheckedScope(accessScope);
-  }, [accessScope, checkedScope, queryClient]);
 
-  if (isLoading || checkedScope !== accessScope) {
+  if (isLoading) {
     return <Centered>Checking your staff access…</Centered>;
   }
   if (error) {

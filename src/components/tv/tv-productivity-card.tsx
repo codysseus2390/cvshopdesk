@@ -1,5 +1,6 @@
 import { Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TvFitContent } from "./tv-fit-content";
 import { formatProductivity } from "@/lib/productivity-math";
 import type { useDashboard } from "@/routes/_authenticated/hub";
 
@@ -11,41 +12,39 @@ export type TvMechanics = DashboardData["mechanics"];
  * Per-mechanic productivity, laid out like the dashboard panel of the same
  * name — one row per mechanic, one column per reporting period — but wearing
  * the TV surface instead of the light card.
- *
- * The shop-wide totals the TV used to show as a single KPI are kept as a
- * summary row at the bottom rather than dropped.
  */
 export function TvProductivityCard({
   mechanics,
-  shop,
   className,
 }: {
   mechanics: TvMechanics | undefined;
-  /** Shop-wide productivity, in the same [previousDay, week, month] order. */
-  shop: [number | null, number | null, number | null];
   className?: string;
 }) {
   const names = mechanics?.names ?? [];
 
   return (
     <div
-      className={cn("tv-accent-wash relative flex min-w-0 flex-col px-8 py-6", className)}
-      style={{ "--tv-accent": "var(--color-secondary)" } as React.CSSProperties}
+      className={cn(
+        "tv-lit-panel tv-metric-panel tv-productivity-panel relative flex min-w-0 flex-col",
+        className,
+      )}
+      data-status="done"
     >
-      <div className="relative flex items-center gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+      <div className="tv-metric-heading relative flex items-center gap-3">
+        <span className="tv-ring-icon">
           <Wrench className="h-5 w-5" />
         </span>
-        <p className="font-display text-lg font-semibold uppercase tracking-[0.1em] text-[oklch(0.84_0.02_72)]">
-          Mechanic productivity
-        </p>
-        <p className="ml-auto text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-          Production % by reporting period
-        </p>
+        <h2>Mechanic productivity</h2>
       </div>
 
-      <div className="relative mt-4 flex min-h-0 flex-1 flex-col">
-        <table className="h-full w-full table-fixed border-collapse">
+      <TvFitContent className="tv-productivity-table" fullWidth>
+        <table className="w-full table-fixed border-collapse">
+          <colgroup>
+            <col className="w-[34%]" />
+            <col className="w-[22%]" />
+            <col className="w-[22%]" />
+            <col className="w-[22%]" />
+          </colgroup>
           <thead>
             <tr className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
               <th className="pb-2 text-left font-bold">Mechanic</th>
@@ -72,16 +71,9 @@ export function TvProductivityCard({
                 month={mechanics?.month[name] ?? null}
               />
             ))}
-            <MechanicRow
-              name="Shop"
-              accent="shop"
-              previousDay={shop[0]}
-              week={shop[1]}
-              month={shop[2]}
-            />
           </tbody>
         </table>
-      </div>
+      </TvFitContent>
     </div>
   );
 }
@@ -89,7 +81,6 @@ export function TvProductivityCard({
 const AVATAR: Record<string, string> = {
   primary: "bg-primary/25 text-[oklch(0.86_0.13_45)]",
   secondary: "bg-secondary/25 text-[oklch(0.85_0.12_130)]",
-  shop: "bg-[oklch(0.32_0.012_60)] text-[oklch(0.86_0.02_72)]",
 };
 
 function MechanicRow({
@@ -100,7 +91,7 @@ function MechanicRow({
   month,
 }: {
   name: string;
-  accent: "primary" | "secondary" | "shop";
+  accent: "primary" | "secondary";
   previousDay: number | null | undefined;
   week: number | null | undefined;
   month: number | null | undefined;
@@ -110,7 +101,7 @@ function MechanicRow({
     typeof month === "number" && Number.isFinite(month) ? Math.max(0, Math.min(100, month)) : null;
 
   return (
-    <tr className={cn("border-t border-border", accent === "shop" && "border-t-2 border-t-border")}>
+    <tr className="border-t border-border">
       <th className="py-2 text-left align-middle">
         <span className="flex items-center gap-3">
           <span
@@ -121,7 +112,7 @@ function MechanicRow({
           >
             {name.slice(0, 1)}
           </span>
-          <span className="truncate font-display text-xl font-bold text-[#fffdf8]">{name}</span>
+          <span className="break-words font-display text-xl font-bold text-[#fffdf8]">{name}</span>
         </span>
       </th>
       <PeriodCell value={previousDay} />
@@ -131,7 +122,7 @@ function MechanicRow({
           {formatProductivity(month ?? null)}
         </span>
         {bar !== null && (
-          <span className="gauge-fill ml-auto mt-1.5 block h-1.5 w-24 overflow-hidden rounded-full bg-white/10">
+          <span className="gauge-fill ml-auto mt-1.5 block h-1.5 w-full max-w-24 overflow-hidden rounded-full bg-white/10">
             <span
               className={cn(
                 "block h-full rounded-full",

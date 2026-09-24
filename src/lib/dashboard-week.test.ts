@@ -20,7 +20,6 @@ function report(cars: number | null): NumbersReport {
     basis: "daily-sum",
     as_of: "2026-09-16",
     covered_days: 3,
-    calendarConfigured: true,
     rows: [
       {
         key: "gross_profit",

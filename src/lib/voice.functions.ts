@@ -33,7 +33,6 @@ async function membership(sb: Supa, userId: string) {
     shop_id: data.shop_id as string,
     role: data.role as string,
     canUseAssistant: permissions.use_assistant,
-    canChangeSettings: permissions.change_settings,
   };
 }
 
@@ -41,8 +40,8 @@ function requireAssistant(member: { canUseAssistant: boolean }) {
   if (!member.canUseAssistant) throw new Error("The AI assistant is not enabled for your role.");
 }
 
-function requireChangeSettings(member: { canChangeSettings: boolean }) {
-  if (!member.canChangeSettings) {
+function requireManager(role: string) {
+  if (role !== "owner" && role !== "manager") {
     throw new Error("Only the owner and admins can change Hank's voice.");
   }
 }
@@ -71,7 +70,7 @@ export const listHankVoices = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const member = await membership(context.supabase as unknown as Supa, context.userId);
-    requireChangeSettings(member);
+    requireManager(member.role);
     const { listElevenLabsVoices, isVoiceConfigured } = await import("@/lib/ai/elevenlabs.server");
     if (!isVoiceConfigured()) {
       return {
@@ -155,7 +154,7 @@ export const testHankVoice = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const member = await membership(context.supabase as unknown as Supa, context.userId);
-    requireChangeSettings(member);
+    requireManager(member.role);
     const { synthesizeSpeech } = await import("@/lib/ai/elevenlabs.server");
     try {
       const audio = await synthesizeSpeech({
@@ -259,39 +258,33 @@ export const saveHankVoiceSettings = createServerFn({ method: "POST" })
       ) => Promise<{ error: { message: string } | null }>;
     };
     const member = await membership(sb, context.userId);
-    requireChangeSettings(member);
+    requireManager(member.role);
 
-    const { data: saved, error } = await sb
-      .from("ai_settings")
-      .upsert(
-        {
-          shop_id: member.shop_id,
-          voice_enabled: data.enabled,
-          voice_auto_speak: data.autoSpeak,
-          voice_id: data.voiceId,
-          voice_name: data.voiceName,
-          voice_speed: data.speed,
-          voice_stability: data.stability,
-          voice_similarity: data.similarity,
-          voice_style: data.style,
-          voice_speaker_boost: data.speakerBoost,
-          voice_input_mode: data.inputMode,
-          voice_auto_listen: data.autoListen,
-          voice_wake_enabled: data.wakeEnabled,
-          voice_wake_phrase: data.wakePhrase,
-          voice_wake_sound: data.wakeSound,
-          voice_wake_response: data.wakeResponse,
-          voice_wake_timeout_seconds: data.wakeTimeoutSeconds,
-          updated_by: context.userId,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "shop_id" },
-      )
-      .select("shop_id");
+    const { error } = await sb.from("ai_settings").upsert(
+      {
+        shop_id: member.shop_id,
+        voice_enabled: data.enabled,
+        voice_auto_speak: data.autoSpeak,
+        voice_id: data.voiceId,
+        voice_name: data.voiceName,
+        voice_speed: data.speed,
+        voice_stability: data.stability,
+        voice_similarity: data.similarity,
+        voice_style: data.style,
+        voice_speaker_boost: data.speakerBoost,
+        voice_input_mode: data.inputMode,
+        voice_auto_listen: data.autoListen,
+        voice_wake_enabled: data.wakeEnabled,
+        voice_wake_phrase: data.wakePhrase,
+        voice_wake_sound: data.wakeSound,
+        voice_wake_response: data.wakeResponse,
+        voice_wake_timeout_seconds: data.wakeTimeoutSeconds,
+        updated_by: context.userId,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "shop_id" },
+    );
     if (error) throw new Error(error.message);
-    if (!saved || saved.length === 0) {
-      throw new Error("Hank's voice settings were not saved. Nothing was changed.");
-    }
 
     await sb.rpc("log_audit_event", {
       p_action: "hank_voice_settings_saved",

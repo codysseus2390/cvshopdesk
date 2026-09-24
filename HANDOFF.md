@@ -1,115 +1,237 @@
 # HANDOFF.md — Living Handoff Document
 
-## Latest checkpoint — Phases 1–2 complete for owner review, 2026-09-22
 
-Branch `feat/shopdesk-astra-implementation`, head `08ee417` (the lead will merge this handoff as one more merge commit on top — handoff merged on top of 08ee417). Worktree `C:\Users\ivinb\Documents\Codex\2026-09-22\final-round-5-of-5-is\work\shopdesk`. Team process: Wrench tickets P12-01..P12-15 (no P12-05), one owner/branch/worktree per ticket under `...\work\agents\<slug>`, lead merged `--no-ff` one at a time; Grok paused (Wrench coordinated, verdicts route to Cody).
+## 2026-09-24 — Hank header UI release candidate
 
-### Completed, per ticket
-- P12-01: closed Phase 1 SQL/RLS policy gaps in draft migration 0023.
-- P12-02: routed app permission checks through effective permissions; rejected zero-row writes; stripped productivity fields from `getAdminConfig`; preserved the `canReadAuditEvents` owner/manager invariant.
-- P12-03: landed the calendar a/b/c contract (0024-missing → explicit error naming the migration, null → legacy behavior, configured → rules), a retroactive-edit guard + `save_business_calendar` RPC, a validated shop-timezone helper (no more guessed `America/Chicago`), and Hank's previous-open-day agreement with the dashboard.
-- P12-06: Cedar's numbered UI diff list (`docs/astra-p1-2-ui-diff-list.md`).
-- P12-07: calendar/timezone regression tests against P12-03's contract.
-- P12-13 (lead follow-up): fixed Hank's report tools, which had been passing role `""` and denying every user since 5aecab6; wired calendar-aware MTD/YTD so Hank agrees with the dashboard.
-- P12-08: UI — Previous open day labels, closed-day entry warning + history tag, calendar settings sort/current-marker/scheduled/replace notice/retroactive confirm, TV clock/appointment neutral timezone state + wake refresh, permission-gated Notifications/Hank controls.
-- P12-04: permission matrix tests (PGlite integration, 7/7, plus 8 server-function unit files).
-- P12-14 (lead follow-up): fixed the calendar audit writing two rows per change (moved to a BEFORE guard trigger / AFTER audit trigger split).
-- P12-15 (lead follow-up): fixed Beacon's two P12-09 blockers — TV "Time unavailable" overflow fit and an accessible Hank denied-state.
+Branch: codex/hank-ui-production-base, based on live source ce32167. This branch
+contains only the Hank header messenger, removal of the bottom Hank bar, and
+removal of Customers and Inventory routes and navigation. No database change.
+The original UI implementation remains on codex/hank-header-chat.
 
-### Reviews
-Deadbolt re-audit (`deadbolt-p12-10-reaudit.md`, scope 1e89846..71410d3): **PASS**, baseline was FAIL closed; all 16 original items closed or re-confirmed as documented invariants. Two new non-blocking notes: retroactive flag on `save_business_calendar` is self-reported by the caller, not independently recomputed (WARNING, routed to Iron as a follow-up, not blocking); Hank's `list_ai_action_log` tool declares a looser permission (`view_dashboard`) than the underlying RLS (`use_assistant`) — RLS is the hard floor, no leak (INFO). Hank's tools were confirmed to run on the user's RLS-scoped client, not service role. 0023/0024 judged safe to apply to STAGING for testing but were **not applied** — that requires separate owner authorization. Beacon: PASS after the P12-15 re-check (both TV-fit and Hank a11y blockers closed). Gauge (`gauge-p12-11.md`, re-review at 08ee417): overall verdict **MERGE**. Bay's copy reviews are done.
+Validation: typecheck, build, lint (0 errors, 17 existing warnings), and
+unit tests (111 passed, 17 skipped) passed. Preview
+https://cvshopdesk-an2dxpf7k-codysseus90.vercel.app is Ready and uses the
+staging Supabase project. Production and Preview backend hostnames were checked
+separately. Vercel autoAssignCustomDomains is false.
 
-### Validation at 08ee417 (per Deadbolt/Gauge's own runs)
-typecheck 0 errors; lint 0 errors / 17 pre-existing warnings; `test:unit` 175 passed / 17 skipped (DB-URL-gated); `test:integration` 7/7 (PGlite, 25 migrations replayed); `git diff --check` clean. `bun run build` was reported by the lead as SUCCEEDED at 71410d3 (Nitro step completed, previous sandbox `EPERM` not reproduced) — Gauge did not re-run it for P12-15 (UI-only diff, not rebuilt), so treat that specific claim as lead-reported rather than independently re-verified at 08ee417. **Update (lead): `bun run build` was re-run at 08ee417 and succeeded (client, SSR and Nitro node-server output generated).**
+An unassigned production build from 2093625 was blocked before building because
+its inherited author email was malformed, so this release-note commit uses the
+authenticated repository owner's established Git identity. The live domain
+remains on the previous Ready production deployment until the new production
+build is verified and promoted.
 
-### Explicit boundaries
-Migrations 0023/0024 remain **DRAFT and applied nowhere** (staging is still at ≤0022; production untouched). The dashboard preview's shop-calendar error is expected: it is caused by unapplied 0024, and shows "Shop calendar unavailable: the database update 0024_business_calendar has not been applied to this environment" rather than a guessed value. No deploy, no PR, no merge to `main`. The integration branch was pushed to origin as feature-branch checkpoints only.
+---
+## 2026-09-23 — TV metric fit and clock cleanup
 
-### Still outstanding / known issues
-No browser, Figma, or real-TV verification (no verified test backend; 0024 unapplied). No real Supabase token/browser session-boundary tests (A→B slow response, second tab, revocation). TV items still needing a real render: the "UNAVAILABLE" line at the 88px track (truncate now bounds the failure mode but hasn't been confirmed on-device), and "Previous open day · [date]" wrap risk on the numbers screen at 1280×720. Yearly monthly-snapshot rollup calendar coverage (`numbers-math.ts` `aggregatePeriod` yearly branch, `monthly-numbers.server.ts`) is deferred to Phase 3. Open WARNINGs: a shared exported constant for "Time unavailable" instead of the duplicated literal; the retroactive-flag trust boundary noted above; the Hank action-log tool's looser declared permission; Hank's "New conversation" is still native-`disabled` and out of tab order (pre-existing, app-wide pattern, not new). `shopToday()`'s no-arg `America/Chicago` default remains only for UI date-picker defaults in `history.tsx`/`tools.tsx`. The 17 DB-gated unit checks still need `SUPABASE_DB_URL` against a verified non-production DB.
+Branch: codex/tv-fit-and-clock. Source commit: 5606a5344f338bb89f3e829fa08858b58c69119f.
+Published source also on codex/autoflow-release; no main changes.
+Updated Figma numbers frame 4:34 in P7whBvxGPIv9NXz4aj3UDC: removed both
+header taglines and productivity subtitle, expanded clock with transparent background.
+Implemented adaptive TvFitContent for metric values and the full mechanics table.
+Mechanics only, no Shop total, no scrollbars; missing values remain missing.
+Clock is larger, orange-accented, with no opaque backing. Taglines retained on shop screen.
 
-### Exact next step
-Wait for the owner's explicit "continue." Then begin Phase 3 (Reporting and chart data, `plan.md` §5) — start by diagnosing the blank YoY graph from the real payload, and fold in the deferred yearly-rollup calendar coverage above. Applying 0023/0024 to staging requires separate, explicit owner authorization.
+Validation: typecheck, TV ESLint, build passed; 111 tests passed, 17 skipped.
+GitHub Actions 35937218661 and 35937209619 passed. Browser verified at 1280x720,
+1280x600, 1920x1080, including large metric values and six long mechanic names in
+an isolated local fixture (removed after testing). Live preview verified with actual
+metrics and Dale/Josh/Teagen, no subtitle/taglines, no clock box, no clipped content.
 
-### Where things are
-Ticket file and reviews: `C:\Users\ivinb\Documents\Codex\2026-09-22\final-round-5-of-5-is\outputs\` (see `phase1-2-tickets.md` and `outputs\reviews\`). Per-ticket agent worktrees: `...\work\agents\` (all merged; safe to remove later with `git worktree remove`).
+Ready configured Preview: Cw8Ry1dnpvHqH1N5oeiUVy7Qv2bz
+https://cvshopdesk-a9fks6cjg-codysseus90.vercel.app/tv
+Production: RDpTLnnAKoXNq3ctfXy38yJv56BX, rebuilt with Production settings.
+https://cvshopdesk-f1fgelhs5-codysseus90.vercel.app/tv
+Source 5606a53. Owner renewed production authorization after automatic review
+failed to recognize prior permission. Production build was promoted to app.cedarvalleytire.com.
+Vercel verified Ready / Production / Current Domains with the live domain.
+Next step: optional signed-in production visual check; preview visual checks passed.
+Relevant files: src/components/tv/tv-{fit-content,metric-card,productivity-card,header,clock}.tsx,
+src/styles.css. Local workspace is aligned to the published source commit.
+
+---
+## 2026-09-23 — Animated TV redesign from the owner's two references
+
+Branch: codex/tv-animated-redesign. Released source commit:
+e2489aee0877be767a482eb56a27a9775bfb52ec (also codex/autoflow-release).
+Do not deploy main: this still builds on the existing safe release line.
+
+Figma: https://www.figma.com/design/P7whBvxGPIv9NXz4aj3UDC
+Shop frame 2:2; numbers frame 4:34. Figma uses reference samples only;
+production uses existing live queries. Existing repository brand asset retained.
+
+TV now has a carbon-style background with drifting orange light trails,
+status-colored breathing borders/rails, separate In Shop / Upcoming / Done
+scrolling columns, and a right-hand 12-hour schedule. Numbers uses separate
+illuminated KPI cards and large MTD values. User explicitly requested mechanics
+only: the Shop total row and its prop are removed from TV productivity.
+
+Both screens remain mounted for an 850ms slide/crossfade and light sweep.
+Inactive screen is inert and hidden from assistive technology. Pause freezes
+ambient effects, rails, auto rotation and scrolling; live timers still tick.
+Reduced motion disables CSS motion and list auto scrolling. No new dependencies,
+backend/schema changes, workflow writes, or changes to missing metric handling.
+
+Validation: 111 unit tests passed, 17 DB tests skipped. Typecheck and build pass;
+ESLint has no errors (one existing route export warning locally). Final Actions
+35934684594 passed tests, lint, typecheck, build and secret scan.
+Browser checked live workflow/descriptions, status columns, scrolling, timer
+progress while paused, decorative animation, manual/automatic screen rotation,
+720p and full-HD layouts. Final 720p table has only Dale/Josh/Teagen and fits
+without overflow. Viewport override reset after checks.
+
+Final Preview: 6rYjTJ3AS5QMBG2Rc4J1GYsJxCYF
+https://cvshopdesk-5wn1h9gol-codysseus90.vercel.app/tv
+Production build: CLzVzfAgqyfh3d2HmiMu3QJpzUfM (rebuilt with Production settings).
+Source e2489ae; Vercel confirms Ready / Production / Current with domain app.cedarvalleytire.com.
+The production browser still needs an owner sign-in for a live-data visual check.
+The release branch alias can point to the production rebuild; use the unique
+Preview URL above for staging. No PR/main merge.
+
+Relevant files: src/components/tv/*.tsx, src/routes/_authenticated/tv.tsx,
+src/styles.css. Next step: optional signed-in production visual check once the owner signs in.
 
 ---
 
-## Latest checkpoint — second owner-requested pause, 2026-09-22
+## 2026-09-23 — TV job-description correction
 
-The owner resumed the build, explicitly authorized pushing to `codysseus2390/cvshopdesk` on `feat/shopdesk-astra-implementation`, then asked for another stopping point. **Stop here until asked to resume.** The implementation remains incomplete and is not release-ready. The earlier section below records the baseline, worktree, plan hash, project IDs, tooling, and original outstanding scope.
+Branch `codex/tv-job-descriptions` continues the production release, not main.
+Root cause: workflow seeds and status webhooks did not populate requested_service.
+Autoflow's work_orders API returns 404 for these visits, but documented GET
+dvi/{RoNumber} returns content.reason_vehicle_is_here[].details. The new server
+loader reads only those descriptions, validates invoice and remote ticket IDs,
+decodes escaped text for React text rendering, coalesces reads for 60 seconds,
+and limits concurrent calls to four. A failed details read preserves known text
+and leaves the workflow visible. Status events now retain invoice/remote IDs.
 
-### Changes since `e2c25c9`
+Existing active visits' RO mappings were verified in Autoflow. Both databases
+have 13 corrected snapshots with autoflow_ro: flags and 10 known descriptions;
+all 13 prior snapshots are retained and linked via superseded_by. One active
+visit has RO 0 and no reason text in Autoflow; missing text remains missing.
+No workflow statuses, customer messages, or source data were changed.
 
-- Extended draft migration 0023 to align permissive settings, notification/recipient, staff-invite, membership, and upload policies with effective permissions; notification recipients must belong to the notification's shop and approved audience. The `add_staff_member` definer function now checks `manage_staff` rather than a role name.
-- Added `requireShopPermission` and corresponding server/UI checks for staff management, settings, and announcements. Membership-role/approval and notification-read writes check that a row actually changed. Staff credential updates now validate effective staff-management permission and same-shop scope before using the privileged auth client.
-- Added draft migration 0024 and its Drizzle journal entry. It adds an owner-controlled `business_calendar` to shop settings and an audit trigger. The initial Monday-Friday schedule is scoped to the two verified Cedar shop UUIDs; other shops receive no guessed schedule. Initial coverage begins at the earlier of the oldest stored report's calendar year and the previous calendar year. No holidays are inferred.
-- Added validated calendar loading/saving and a Settings editor for effective weekday schedules and dated open/closed exceptions. Dashboard settings, Numbers goals, announcements, and staff-management UI now use the corresponding effective permission.
-- Wired previous-open-day selection, weekly goal allocation, and month/year daily coverage/freshness to the calendar. Daily totals still retain real weekend entries; expected coverage uses actual date sets. Calendar windows with unknown schedules fail visibly. Removed the dead Monthly scorecards setting.
-- Updated Supabase TypeScript shape for the new JSON field. The permission-loading test mock now supports `.validator()` for the new endpoint.
-
-### Remaining work and exact next action
-
-**First review this calendar integration before broadening scope.** Add focused regression tests for the wired `monthToDate`/`yearToDate` functions, calendar owner-only writes/audit, effective-date boundaries, and schedule changes. Existing pure calendar tests are present, but the new integration is not fully covered. Verify the initial schedule effective-date choice against the actual historical report windows.
-
-Known unfinished calendar/data details: yearly monthly-snapshot rollup still uses legacy coverage accounting; per-field historical month completeness, provenance, partial historical chart treatment, and current-day versus completed-day labels need implementation. The UI still has old Previous day wording in some places. Closed-day entry warning, common validated clock, and timezone cleanup are not built. Calendar save invalidates known dashboard/numbers/admin query prefixes; audit the actual Numbers query key and all dependent hooks before claiming cache consistency.
-
-Phase 1 also still needs a full operation matrix and expanded deny/grant tests, including new staff/notification policies, all direct/Hank write paths, productivity-related config exposure, zero-row writes not yet covered, and browser tests for the session/membership boundary. No browser auth/token test or independent Claude implementation inspection has run.
-
-All later plan phases remain: chart/UI/craft changes, three TV YoY cards/layout, enrolled-device remembered-account picker, Figma/browser/real-TV verification, full build, and independent inspection. Preserve the unchanged plan rather than treating this checkpoint as completion.
-
-No migrations were applied remotely. No deployment, merge, or PR was made. The previous build failed at Nitro filesystem tracing due to sandbox `EPERM`; it has not been reclassified as a successful build. Final checkpoint hashes and latest check results are in the task's `outputs/BUILD-HANDOFF.md`.
+Released commit: `8df9df0b67f3b77233eaafe303dc38dc897fd101` on feature and
+configured release branches. All 111 unit tests pass (17 DB tests skipped),
+typecheck/lint/build/secret scan pass in Actions run 35931903986.
+Preview Ec1UaisUrAPjDLuRKPrhYW6nPDPH:
+https://cvshopdesk-dfz63iuya-codysseus90.vercel.app
+Browser verification showed real descriptions below the corresponding vehicles,
+including tire install, check engine light, and oil change / air filter.
+Production DxYyn9xazVbFCYPdfA1nhqxtBR1F was rebuilt with Production settings
+and promoted to app.cedarvalleytire.com. No main merge or schema change.
+Next: optional signed-in production visual check; the live-domain tab still
+requires the owner's login. Description changes refresh within about a minute
+plus the 15-second board polling interval.
 
 ---
 
-## 2026-09-22 — Astra implementation paused at owner's request
+## 2026-09-23 — Live workflow and TV layout release
 
-**Status: IN PROGRESS. Not release-ready.** The owner asked to stop because the five-hour usage window is nearly exhausted. Do not restart planning or the old five-round review loop. Resume this implementation only when requested.
+Feature branch: `codex/tv-workflow-live`, based on release `95ad16a`.
+TV now places Next up & in shop at left and the rolling 12-hour appointment
+schedule at lower right, uses explicit shop-time AM/PM, scrolls both lists,
+and has small pause/next controls. Check-in timers remain live while paused.
+Inspecting through Servicing map to in shop; Ready maps to done. Board refresh
+is 15 seconds. Workflow is projected from the private authenticated webhook
+inbox, preserving earliest check-in and applying events in provider-time order.
+No snapshot histories are overwritten and no customer actions are sent.
 
-- Branch: `feat/shopdesk-astra-implementation`.
-- Worktree: `C:\Users\ivinb\Documents\Codex\2026-09-22\final-round-5-of-5-is\work\shopdesk`.
-- Original checkout: `C:\Users\ivinb\cvshopdesk`, preserved on `feat/tv-mode-redesign` with its existing `.gitignore`, `.claude/`, plan, and review-log changes.
-- Implementation baseline: `59b5e69bfa4c42101546ba8548fc080a16ea26fb`.
-- First tested/pushed checkpoint: `fa13638` (failed permission reads now fail closed). Latest implementation checkpoint: `5aecab6fd9d7921de2bfe8945157365120251ac1`. This handoff is a following documentation-only commit.
-- Contract: this branch's `plan.md`, an unchanged copy of the active original plan. SHA256 `dc554beae33fa724ac85fe345f977fcb297026f0a1b7f764dd81dec9bf1b55b7`. The owner authorized implementation after replacing the older plan. Its old APPROVED verdict does not apply to this replacement or to code.
-- User decisions: Monday uses Friday as **Previous open day**; exclude closed dates from expected coverage and goal pacing while retaining real weekend entries. TV YoY graphs belong in the **three number cards only**, not mechanic productivity.
+Autoflow's documented visits endpoint only returns closed history. An initial
+18-visit baseline was read from the signed-in active workflow and original
+status histories; staging is seeded in shop_jobs with autoflow: visit identities.
+Future visits/status changes come from the existing Status Update subscription.
+Production receives the webhook; staging has an independent database.
+Migration 0025 is now present in BOTH environments. Earlier notes saying
+production/appointments are unconfigured are stale: production 95ad16a has
+working appointments and a verified webhook inbox. Do not deploy main because
+0023/0024 remain outside this release.
 
-### Completed code and draft work
+Released code: `4b084a12c65ddb7044d4b5b25187722d4db0d81c` on feature and
+release branches. Git credential manager had no usable local sign-in; the
+connected GitHub API published the exact tested tree (87f3f5e), then local Git
+was aligned with that identical commit. Main was not touched.
 
-1. Server permission/config reads in numbers, admin, and Hank now throw on query failures; the permission hook denies access following a failed refresh. Regression tests cover failed reads and a protected fetch not occurring.
-2. Added `permissions.server.ts` for checked effective permission reads. Dashboard writes and reads enforce their relevant permission. Dashboard/report productivity queries are conditional on `view_productivity`, and Numbers filters productivity rows, goals, technician names, and correction payloads when denied.
-3. Added `read-all-rows.ts` with 500-row pagination and whole-report failure on an incomplete/error page. Dashboard queries have explicit shop/date bounds and stable ordering. Numbers requests the current and comparison windows with an OR filter rather than all dates between them.
-4. **Draft, unapplied** migration `0023_effective_permissions.sql`: shared effective-permission SQL; manager-denial fix; restrictive record/productivity/settings/notification/import policies; explicit definer RPC save/import guards; private import metric helper revoked from authenticated callers. Existing migration 0022 is newly registered in the Drizzle journal (its file was already present, and its function exists on staging despite only 22 journal entries). No existing SQL migration was edited.
-5. Added `test:integration` using dev-only PGlite (disposable PostgreSQL, no connection-string option). Replays all 24 migrations against minimal Supabase auth/storage schema shims and checks seven identities, explicit denial/grant, real affected-row counts, RPC denial, identity spoofing, and preservation of metric history. **This is not a real Supabase token/browser test.** Existing 17 live-DB unit checks remain skipped.
-6. Added root `SessionBoundary`, global RPC epoch middleware, and membership polling/reset logic in `AccessGate`. User changes clear/cancel cache and remount children; token refresh does not. Late RPC responses from earlier identities are rejected. Membership scope changes reset protected queries and mutations. **Browser verification is still outstanding**, especially initial loading, cross-tab auth, A-B-A switching, errors, revoked membership, active queries, and late mutations.
-7. Added **unwired** pure business-calendar functions and tests (previous open date, explicit exceptions, effective schedules, date-set coverage, split-month goal allocation). No calendar schema, UI, reporting integration, or production behavior has been changed yet.
+Validation: 106 unit tests pass, 17 database tests skipped; typecheck and build
+pass; full ESLint passes with 17 pre-existing warnings. GitHub Actions run
+35924546940 passed all five jobs, including the secret scan.
+Preview 8Q4idpcDq2XQgCRZ4GRQozga8vuK is ready at
+https://cvshopdesk-5rvzg5q5t-codysseus90.vercel.app . Browser verified the
+15-row unfinished queue, 5 in shop / 10 upcoming / 3 done, timers, scrolling,
+pause and next-screen controls. No appointment falls within the current
+12-hour window; the full Schedule page correctly shows later appointments.
 
-### Verification and release boundaries
+Production H4fv3QK9zdoqcsEKTfvBkMEQ7tf9 was built afresh with Production
+environment values, then assigned to app.cedarvalleytire.com. Vercel confirms
+Production / Current / Ready. Both databases now contain the 18 verified
+baseline visits. New production webhooks arrived for Servicing and Close
+during release. Staging has its own independent inbox; it is not a mirror of
+production. The branch alias may point at the production rebuild; use the
+unique preview URL above when testing staging.
 
-- Dependency install used the frozen lockfile; PGlite was subsequently added intentionally as a dev dependency.
-- Final pause checks: typecheck passed; 92 unit tests passed / 17 existing DB checks skipped; all 6 development-environment tests passed. Integration passed with all 24 migrations (migration and integration runner unchanged since that run).
-- Final lint: 0 errors and 17 existing warnings. `git diff --check` passed.
-- Build transformed the client and server, then failed in Nitro's file tracing with sandbox `EPERM: readlink C:\Users\ivinb`. Retry the build with justified filesystem permission; do not call this a passed build. The latest session-boundary edits were not part of that completed build attempt.
-- No migrations applied to staging or production. Supabase tool calls were read-only. No merge, PR, or deployment performed. No Figma/browser/real-TV verification yet. No independent Claude implementation inspection yet.
-- The initial push was rejected because destination ownership was unverified. GitHub subsequently confirmed connected-account admin/push access to `codysseus2390/cvshopdesk`; the same ordinary feature-branch push succeeded. Do not work around approval blocks.
+Next: complete the signed-in live-domain browser check once the owner signs
+in to the production tab. The deployed app currently presents its login page.
 
-### Exact next step
+---
 
-**Review and finish Phase 1's permission matrix before starting more calendar/UI work.** Compare every operation across server handlers, UI, direct RLS, definer RPCs, imports, and Hank; extend real affected-row tests. Current restrictive policies preserve older hard-coded manager policies, so explicit grants can still fail for settings/notifications. Staff-management policies/RPCs, notification recipients, storage, all writes' zero-row handling, query identity/shop key factories, and end-to-end productivity leakage checks remain unfinished. Recheck `getAdminConfig` and direct settings reads for productivity-related fields. Do not apply the draft migration until those paths and grants are consistent.
+## 2026-09-23 — Appointment feed implementation (not yet deployed)
 
-Then follow the unchanged plan: integrate the owner-confirmed calendar/timezone rules; finish trustworthy chart completeness and shared data hooks; implement the small UI and craft changes; TV graphs/layout; secure enrolled-device account picker; complete browser/token/integration checks and fresh Claude inspection (codex-build workflow, at most 2 fix and 2 inspection rounds). Do not claim any of those later phases have been completed.
+On codex/autoflow-release, added a read-only appointment feed to listBoard for
+the authenticated approved member's configured shop. Reads active appointments
+from today through 30 days ahead. Replaces the displayed imported appointments
+only when enabled; imported jobs and stored local notes remain unchanged.
+Board refreshes every minute; TV shows today's appointments in the shop timezone.
+Invalid/missing times stay missing; provider errors show an explicit warning.
+Only display fields are returned (no phone, VIN, questionnaire, or API credentials).
 
-### Environment/reference details for continuation
+Five appointment tests passed locally. Local typecheck repeatedly exhausted
+memory. Remote build, unit tests, lint, and secret scan passed on 8f61fad; CI found
+strict index-signature access errors, corrected in remote 7bd815e and local a3f618d.
+CI run 35914834015 is validating the correction. Vercel built the feature preview,
+but appointment credentials/enable setting are still absent: do not claim live data.
+New server settings: AUTOFLOW_APPOINTMENTS_ENABLED=true plus AUTOFLOW_API_KEY and
+AUTOFLOW_API_PASSWORD, scoped to release Preview first. Existing subdomain and
+ShopDesk shop mapping are reused. These new settings are NOT yet saved to Vercel.
 
-- Node 24.19.0 / Bun 1.4.2. Commands: `bun run typecheck`, `bun run lint`, `bun run test:unit`, `bun run test:integration`, `bun run build`, `bun run check:env`.
-- Worktree tracked `.env` is legacy public configuration, **not verified staging config**. Do not run browser/API mutations from it. Original `.env.local` only listed `VERCEL_OIDC_TOKEN`; do not copy secrets or print values.
-- Verified staging project: `fsmyugwrfuvqrrhufryf`; production: `cblabtksphjsnkkyfnmo`. Staging has 22 recorded Drizzle migrations and one shop. There is no Supabase migrations history; preserve the existing Drizzle deployment path.
-- Read-only verified Cedar shop IDs: staging `7abf0d1f-1faf-488a-b356-ce635e278bc2`, production `8d1b6141-6f8a-441e-9725-f2d8358e62c5`; both named Cedar Valley Tire & Auto Service, America/Chicago. Do not apply their weekday calendar or display productivity grant globally to other shops.
-- Skills read: `C:\Users\ivinb\.agents\skills\codex-build\SKILL.md`, sibling claudex-loop build/runtime references, Supabase skill. Host builds; a fresh safe/read-only Claude inspector is required later. Recommended inspector from the reviewed handoff was Fable 5.1 High; never silently substitute a model.
-- Runner: `C:\Users\ivinb\.agents\skills\claudex-loop\scripts\runner.py`; Python: `C:\Users\ivinb\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe`; Claude: `C:\Users\ivinb\.local\bin\claude.exe`. Keep inspection artifacts outside this checkout.
-- Approved Figma reference: `https://www.figma.com/design/1GarIodYxJ1rBaTeuFYSVp`; craft exploration: `https://www.figma.com/design/tnwstlDvU6Pfkd43SLvCOc`. Read the applicable Figma skill before tool use.
-- Prior review and final-plan delivery copies are in the task's `outputs/`; superseded original-plan backup and the one-time migration-generation script are in the task's `work/`. **Do not rerun `append-permission-rpcs.mjs`**: it appends definitions and intentionally refuses duplicate journal entries.
+Owner approved a preview share link and explicitly said NOT to revoke it. The
+Vercel UI stalled during creation, so verify whether sharing was saved. Browser
+crashed/timed out; browser control still times out after resets. Asked owner to
+restart Codex and reopen this task. No production rollout.
+Next: publish checkpoint, verify CI, save the three appointment settings in
+release Preview, and verify real appointments on /board and /tv before production.
+
+---
+
+## 2026-09-23 — Autoflow-only production release preparation
+
+Branch codex/autoflow-release starts from deployed production commit 54a5d33.
+Only Autoflow receiver/transport changes were carried over. Do not deploy main:
+production is intentionally rolled back because migrations 0023/0024 are absent.
+The separate codex/autoflow-integration branch and draft PR #30 remain on main.
+
+Staging migration 0025 is applied and verified, including private permissions and
+transactional duplicate tests. Its Drizzle history was recorded. Production is
+unchanged. Owner saved separate production and staging server keys in Vercel;
+server URLs were verified against the matching projects. Autoflow shop ID 2966
+was verified through a read-only API request and the signed-in shop URL. Five
+Autoflow variables (including the existing webhook secret and enabled=true) are
+saved only for Preview branch codex/autoflow-release, using the staging shop UUID.
+Do not deploy main or
+promote a preview build with staging environment values to production.
+Production remains unconfigured. The existing Autoflow subscription points at
+production and is enabled with Status Update only. No customer actions were sent.
+Preview HTTP tests were intercepted by Vercel Deployment Protection (401), not
+the receiver; neither signature validation nor HTTP storage is verified yet.
+The Vercel connector also denied access to this project. Temporary preview share
+access was requested from the owner; do not create it without their response.
+Preview rebuild DvP4WhgXMAubMkDjtJycSP43hbh2 uses remote commit 9e24d81.
+Local release commit 9853b34 and remote 9e24d81 have the same source tree.
+Credentials belong only in ignored local files and Vercel secrets. Never print them.
+
+Release validation: typecheck and production build passed. 92 unit tests passed,
+17 existing database-dependent tests skipped. The disposable PGlite inbox test
+could not allocate WebAssembly memory on this machine (including single-worker
+retry); its equivalent staging permission/deduplication transaction passed earlier.
+Next: verify the preview rebuild, obtain authorized temporary testing access, and
+verify signed HTTP delivery plus duplicate handling before applying production migration.
 
 ---
 

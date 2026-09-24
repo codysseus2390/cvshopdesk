@@ -1,10 +1,20 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { requireShopPermission } from "./permissions.server";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Supa = { from: (t: string) => any; rpc: (f: string, a?: unknown) => any; storage: any };
+
+async function resolveShopId(supabase: Supa, userId: string) {
+  const { data } = await supabase
+    .from("shop_members")
+    .select("shop_id")
+    .eq("user_id", userId)
+    .eq("status", "approved")
+    .maybeSingle();
+  if (!data?.shop_id) throw new Error("You do not have access to a shop yet.");
+  return data.shop_id as string;
+}
 
 export const registerImport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -32,8 +42,7 @@ export const registerImport = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const member = await requireShopPermission(supabase, userId, "upload_imports");
-    const shopId = member.shop_id;
+    const shopId = await resolveShopId(supabase as unknown as Supa, userId);
 
     const { data: row, error } = await supabase
       .from("imports")
@@ -304,8 +313,7 @@ export const acceptImport = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    await requireShopPermission(supabase, userId, "approve_imports");
+    const { supabase } = context;
     const sb = supabase as unknown as Supa;
     const { data: saved, error } = await sb.rpc("accept_import_metrics", {
       p_import_id: data.importId,
@@ -322,7 +330,6 @@ export const rejectImport = createServerFn({ method: "POST" })
     z.object({ importId: z.string().uuid(), reason: z.string().max(500).optional() }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await requireShopPermission(context.supabase, context.userId, "approve_imports");
     const { data: imp, error: readError } = await context.supabase
       .from("imports")
       .select("status")
@@ -333,7 +340,7 @@ export const rejectImport = createServerFn({ method: "POST" })
       throw new Error("This import was already accepted and cannot be rejected.");
     }
 
-    const { data: updated, error } = await context.supabase
+    const { error } = await context.supabase
       .from("imports")
       .update({
         status: "rejected",
@@ -341,11 +348,7 @@ export const rejectImport = createServerFn({ method: "POST" })
         reviewed_at: new Date().toISOString(),
         error_message: data.reason ?? null,
       })
-      .eq("id", data.importId)
-      .select("id");
+      .eq("id", data.importId);
     if (error) throw new Error(error.message);
-    if (!updated || updated.length === 0) {
-      throw new Error("That import could not be rejected.");
-    }
     return { ok: true };
   });

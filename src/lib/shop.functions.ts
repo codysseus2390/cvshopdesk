@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { requireShopPermission } from "./permissions.server";
 
 export const OWNER_EMAIL = "codysseus2390@gmail.com";
 
@@ -154,7 +153,6 @@ export const addStaffMember = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    await requireShopPermission(context.supabase, context.userId, "manage_staff");
     const { data: result, error } = await (
       context.supabase as unknown as {
         rpc: (
@@ -179,11 +177,10 @@ export const decideMember = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const caller = await requireShopPermission(context.supabase, context.userId, "manage_staff");
     // RLS restricts this update to the shop owner. The role is always written
     // explicitly so approving a request can never carry over an escalated role
     // that was submitted with it; the owner row itself is never touched here.
-    const { data: updated, error } = await context.supabase
+    const { error } = await context.supabase
       .from("shop_members")
       .update({
         status: data.status,
@@ -192,12 +189,9 @@ export const decideMember = createServerFn({ method: "POST" })
         decided_by: context.userId,
       })
       .eq("id", data.memberId)
-      .eq("shop_id", caller.shop_id)
-      .neq("role", "owner")
-      .select("id");
+      .neq("role", "owner");
 
     if (error) throw new Error(error.message);
-    if (updated?.length !== 1) throw new Error("That employee could not be updated.");
     return { ok: true };
   });
 
@@ -210,16 +204,12 @@ export const setMemberRole = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const caller = await requireShopPermission(context.supabase, context.userId, "manage_staff");
-    const { data: updated, error } = await context.supabase
+    const { error } = await context.supabase
       .from("shop_members")
       .update({ role: data.role, decided_at: new Date().toISOString(), decided_by: context.userId })
       .eq("id", data.memberId)
-      .eq("shop_id", caller.shop_id)
-      .neq("role", "owner")
-      .select("id");
+      .neq("role", "owner");
     if (error) throw new Error(error.message);
-    if (updated?.length !== 1) throw new Error("That employee could not be updated.");
     return { ok: true };
   });
 
@@ -254,9 +244,17 @@ export const setMemberCredentials = createServerFn({ method: "POST" })
     if (readError) throw new Error(readError.message);
     if (!member) throw new Error("That employee is not part of this shop.");
 
-    const caller = await requireShopPermission(context.supabase, context.userId, "manage_staff");
-    if (caller.shop_id !== member.shop_id)
-      throw new Error("That employee is not part of this shop.");
+    const { data: isManager, error: roleError } = await (
+      context.supabase as unknown as {
+        rpc: (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => Promise<{ data: unknown; error: { message: string } | null }>;
+      }
+    ).rpc("is_shop_manager", { _shop_id: member.shop_id, _user_id: context.userId });
+    if (roleError) throw new Error(roleError.message);
+    if (isManager !== true)
+      throw new Error("Only the owner and admins can change sign-in details.");
 
     if (member.role === "owner" && member.user_id !== context.userId) {
       throw new Error("The owner's sign-in details can only be changed by the owner.");
@@ -277,17 +275,11 @@ export const setMemberCredentials = createServerFn({ method: "POST" })
     if (authError) throw new Error(authError.message);
 
     if (data.email) {
-      const { data: synced, error: syncError } = await context.supabase
+      const { error: syncError } = await context.supabase
         .from("shop_members")
         .update({ email: data.email })
-        .eq("id", member.id)
-        .select("id");
+        .eq("id", member.id);
       if (syncError) throw new Error(syncError.message);
-      if (!synced || synced.length === 0) {
-        throw new Error(
-          "The sign-in email was changed, but the shop record could not be updated to match. Please try again.",
-        );
-      }
     }
 
     await (

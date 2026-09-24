@@ -1,100 +1,215 @@
-import { TvAppointmentRow } from "./tv-appointment-row";
-import { TvStatusBadge } from "./tv-status-badge";
-import type { TvStatus } from "./tv-status";
+import { useEffect, useRef, type ReactNode } from "react";
+import { CalendarDays, CircleCheck, Clock, Wrench } from "lucide-react";
+import { TV_STATUS_LABEL, type TvStatus } from "./tv-status";
+import { checkinElapsed, tvTime, workflowStatus, type TvBoardJob } from "@/lib/tv-board";
 
-export interface TvScheduleRow {
-  id: string;
-  time: string;
-  vehicleCustomer: string;
-  job: string;
-  status: TvStatus;
-}
-
-export interface TvNextUpItem {
-  id: string;
-  time: string;
-  vehicleCustomer: string;
-}
-
-/**
- * Two slabs: the schedule fills the left, the counts and Next Up stack flush
- * down the right rail. Rows and tiles butt against each other with hairline
- * rules rather than sitting in separate cards.
- */
-export function TvShopScreen({
-  rows,
-  counts,
-  nextUp,
+/** Preserve the position across rotations and pause at either end before reversing. */
+function ScrollingList({
+  children,
+  paused,
+  label,
 }: {
-  rows: TvScheduleRow[];
-  counts: { inShop: number; upcoming: number; done: number };
-  nextUp: TvNextUpItem[];
+  children: ReactNode;
+  paused: boolean;
+  label: string;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const direction = useRef(1);
+  useEffect(() => {
+    if (paused) return;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let frame = 0;
+    let previous = 0;
+    let holdUntil = 0;
+    let position = ref.current?.scrollTop ?? 0;
+    const step = (time: number) => {
+      const node = ref.current;
+      const delta = previous ? Math.min(time - previous, 100) : 0;
+      previous = time;
+      if (node && !reducedMotion.matches && time >= holdUntil) {
+        const max = node.scrollHeight - node.clientHeight;
+        if (max > 0) {
+          position = Math.max(0, Math.min(max, position + direction.current * delta * 0.018));
+          node.scrollTop = position;
+          if (position >= max || position <= 0) {
+            direction.current *= -1;
+            holdUntil = time + 2000;
+          }
+        }
+      }
+      frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [paused]);
   return (
-    <div className="grid min-h-0 flex-1 grid-cols-[1fr_22rem] gap-4">
-      <section className="tv-slab flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border">
-        {rows.length === 0 ? (
-          <p className="flex flex-1 items-center justify-center p-8 text-center text-lg text-muted-foreground">
-            No jobs or appointments on today's board yet.
-          </p>
-        ) : (
-          rows.map((row) => (
-            <TvAppointmentRow
-              key={row.id}
-              time={row.time}
-              vehicleCustomer={row.vehicleCustomer}
-              job={row.job}
-              status={row.status}
-            />
-          ))
-        )}
-      </section>
-
-      <section className="tv-slab flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border">
-        <SummaryTile label="In shop" value={counts.inShop} status="in_shop" />
-        <SummaryTile label="Upcoming" value={counts.upcoming} status="upcoming" />
-        <SummaryTile label="Done today" value={counts.done} status="done" />
-
-        <div className="flex min-h-0 flex-1 flex-col px-5 py-4">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            Next up
-          </p>
-          <div className="mt-2">
-            {nextUp.length === 0 && (
-              <p className="pt-2 text-sm text-muted-foreground">Nothing else scheduled today.</p>
-            )}
-            {nextUp.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-baseline justify-between gap-3 border-b border-border py-2.5 last:border-0"
-              >
-                <span className="truncate font-display text-lg font-bold text-[#fffdf8]">
-                  {item.vehicleCustomer}
-                </span>
-                <span className="shrink-0 font-display text-lg font-bold tabular-nums text-primary">
-                  {item.time}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+    <div
+      ref={ref}
+      aria-label={label}
+      tabIndex={0}
+      className="tv-scrolling-list min-h-0 flex-1 overflow-y-auto [scrollbar-width:none]"
+    >
+      {children}
     </div>
   );
 }
 
-function SummaryTile({ label, value, status }: { label: string; value: number; status: TvStatus }) {
+const STATUS_ICONS = { in_shop: Wrench, upcoming: Clock, done: CircleCheck };
+const STATUS_CAPTIONS = {
+  in_shop: "Vehicles being serviced",
+  upcoming: "Next in line",
+  done: "Completed today",
+};
+
+function CustomerCard({
+  job,
+  status,
+  now,
+  timezone,
+}: {
+  job: TvBoardJob;
+  status: TvStatus;
+  now: number;
+  timezone: string;
+}) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4">
-      <div>
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-          {label}
-        </p>
-        <p className="mt-0.5 font-display text-[2.4rem] font-bold leading-none tabular-nums text-[#fffdf8]">
-          {value}
-        </p>
+    <article className="tv-customer-card" data-status={status}>
+      <span className="tv-customer-rail" aria-hidden="true" />
+      <div className="tv-customer-heading">
+        <h3>{job.customer_name ?? "Customer not recorded"}</h3>
+        <span className="tv-customer-badge">{TV_STATUS_LABEL[status]}</span>
       </div>
-      <TvStatusBadge status={status} />
+      <p className="tv-customer-vehicle">{job.vehicle_label ?? "Vehicle not recorded"}</p>
+      <p className="tv-customer-service">{job.requested_service ?? "Service not recorded"}</p>
+      {status !== "done" && (
+        <p className="tv-customer-timer">
+          <Clock aria-hidden="true" />
+          <span>
+            {!job.arrival_at && !job.appointment_at
+              ? "Check-in time unavailable"
+              : checkinElapsed(job.arrival_at, now)}
+          </span>
+          {job.arrival_at && <span className="tv-timer-caption">since check-in</span>}
+          {!job.arrival_at && job.appointment_at && (
+            <span>{tvTime(job.appointment_at, timezone)}</span>
+          )}
+        </p>
+      )}
+    </article>
+  );
+}
+
+export function TvShopScreen({
+  rows,
+  nextUp,
+  done,
+  timezone,
+  now,
+  paused,
+}: {
+  rows: TvBoardJob[];
+  nextUp: TvBoardJob[];
+  done: TvBoardJob[];
+  timezone: string;
+  now: number;
+  paused: boolean;
+}) {
+  const columns: { status: TvStatus; jobs: TvBoardJob[] }[] = [
+    { status: "in_shop", jobs: nextUp.filter((job) => workflowStatus(job) === "in_shop") },
+    { status: "upcoming", jobs: nextUp.filter((job) => workflowStatus(job) === "upcoming") },
+    { status: "done", jobs: done },
+  ];
+  return (
+    <div className="tv-workflow-grid">
+      {columns.map(({ status, jobs }) => {
+        const Icon = STATUS_ICONS[status];
+        return (
+          <section
+            key={status}
+            className="tv-lit-panel tv-workflow-column"
+            data-status={status}
+            aria-label={TV_STATUS_LABEL[status]}
+          >
+            <div className="tv-column-header">
+              <span className="tv-ring-icon">
+                <Icon aria-hidden="true" />
+              </span>
+              <div>
+                <h2>{TV_STATUS_LABEL[status]}</h2>
+                <p>{STATUS_CAPTIONS[status]}</p>
+              </div>
+            </div>
+            <ScrollingList paused={paused} label={`${TV_STATUS_LABEL[status]} customers`}>
+              {jobs.map((job) => (
+                <CustomerCard
+                  key={job.id}
+                  job={job}
+                  status={status}
+                  now={now}
+                  timezone={timezone}
+                />
+              ))}
+              {jobs.length === 0 && (
+                <div className="tv-column-empty">
+                  <Icon aria-hidden="true" />
+                  <p>
+                    {status === "done"
+                      ? "Completed visits will appear here."
+                      : status === "in_shop"
+                        ? "No vehicles in shop right now."
+                        : "No upcoming visits in the next 12 hours."}
+                  </p>
+                </div>
+              )}
+              {status === "done" && jobs.length > 0 && (
+                <div className="tv-column-empty tv-done-message">
+                  <CircleCheck aria-hidden="true" />
+                  <p>Great work today!</p>
+                  <span>More customers on the road with confidence.</span>
+                </div>
+              )}
+            </ScrollingList>
+          </section>
+        );
+      })}
+      <section
+        className="tv-lit-panel tv-schedule-panel"
+        data-status="in_shop"
+        aria-label="Today's schedule"
+      >
+        <div className="tv-column-header">
+          <CalendarDays className="tv-schedule-icon" aria-hidden="true" />
+          <div>
+            <h2>Today's schedule</h2>
+            <p>Next 12 hours · Shop time</p>
+          </div>
+        </div>
+        <ScrollingList paused={paused} label="Appointment schedule">
+          {rows.length === 0 && (
+            <div className="tv-column-empty tv-schedule-empty">
+              <CalendarDays aria-hidden="true" />
+              <p>
+                No appointments
+                <br />
+                in the next 12 hours.
+              </p>
+            </div>
+          )}
+          {rows.map((job) => (
+            <div key={job.id} className="tv-appointment">
+              <p className="tv-appointment-time">{tvTime(job.appointment_at, timezone)}</p>
+              <h3>{job.customer_name ?? "Customer not recorded"}</h3>
+              <p>{job.vehicle_label ?? "Vehicle not recorded"}</p>
+              <p>{job.requested_service ?? "Service not recorded"}</p>
+            </div>
+          ))}
+        </ScrollingList>
+        <p className="tv-schedule-signature">
+          Quality service today.
+          <br />
+          More miles tomorrow.
+        </p>
+      </section>
     </div>
   );
 }

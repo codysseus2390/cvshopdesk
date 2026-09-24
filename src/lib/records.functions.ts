@@ -3,8 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { normalizeRows, splitBoard } from "./import-records";
 import { shopToday } from "./metrics-math";
-import { resolveShopTimeZone } from "./timezone";
-import { requireShopPermission } from "./permissions.server";
+import { workflowStatus } from "./tv-board";
 
 export const listInventory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -60,21 +59,104 @@ export const listBoard = createServerFn({ method: "GET" })
       .eq("status", "approved")
       .maybeSingle();
     if (!member?.shop_id) throw new Error("You do not have access to a shop yet.");
-    const timezone = resolveShopTimeZone(member.shops?.timezone as string | null | undefined);
+    const timezone = (member.shops?.timezone as string | undefined) ?? "America/Chicago";
 
     const { data, error } = await context.supabase
       .from("shop_jobs")
       .select(
         "id, record_kind, external_id, identity_key, customer_name, vehicle_label, requested_service, technician, arrival_at, appointment_at, disposition, job_status, snapshot_at, local_status, local_note, local_updated_at, needs_review, flags",
       )
+      .eq("shop_id", member.shop_id)
       .eq("is_current", true)
       .limit(500);
     if (error) throw new Error(error.message);
     const rows = data ?? [];
     const today = shopToday(timezone);
     const split = splitBoard(rows, Date.now(), { date: today, timezone });
+    const { loadAutoflowWorkflow } = await import("./autoflow-workflow.server");
+    let workflowError: string | null = null;
+    let workflowSource = "imports";
+    let workflowIds = new Set<string>();
+    try {
+      const seeds = rows
+        .filter((row) => row.identity_key?.startsWith("autoflow:"))
+        .map((row) => ({
+          ...row,
+          id: row.identity_key!,
+          identity_key: row.identity_key!,
+          external_id: row.external_id ?? "",
+          flags: Array.isArray(row.flags)
+            ? row.flags.filter((flag): flag is string => typeof flag === "string")
+            : [],
+          completed_at: null,
+        }));
+      const workflow = await loadAutoflowWorkflow(member.shop_id, timezone, seeds);
+      if (workflow !== null) {
+        workflowSource = "Autoflow";
+        workflowIds = new Set(workflow.map((row) => row.id));
+        const unfinished = workflow.filter((row) => workflowStatus(row) !== "done");
+        split.jobs = [
+          ...split.jobs.filter((row) => !row.identity_key?.startsWith("autoflow:")),
+          ...unfinished.filter((row) => row.arrival_at !== null),
+        ].sort((a, b) => (a.arrival_at ?? "").localeCompare(b.arrival_at ?? ""));
+        split.jobsWithoutArrival = [
+          ...split.jobsWithoutArrival.filter((row) => !row.identity_key?.startsWith("autoflow:")),
+          ...unfinished.filter((row) => row.arrival_at === null),
+        ];
+        split.done = [
+          ...split.done.filter((row) => !row.identity_key?.startsWith("autoflow:")),
+          ...workflow.filter((row) => {
+            if (workflowStatus(row) !== "done") return false;
+            // Ready vehicles remain done while awaiting pickup; closed visits count on their completion day.
+            if (/^ready$/i.test(row.job_status ?? "")) return true;
+            return (
+              row.completed_at !== null && shopToday(timezone, new Date(row.completed_at)) === today
+            );
+          }),
+        ];
+      }
+    } catch {
+      workflowSource = "Autoflow";
+      workflowError = "Autoflow workflow could not be refreshed. Retrying automatically.";
+    }
+    const { loadAutoflowAppointments } = await import("./autoflow-appointments.server");
+    let appointmentSource = "imports";
+    let appointmentError: string | null = null;
+    try {
+      const appointments = await loadAutoflowAppointments(member.shop_id, timezone, today);
+      if (appointments !== null) {
+        const live = splitBoard(
+          appointments.filter((row) => !workflowIds.has(row.id)),
+          Date.now(),
+          { date: today, timezone },
+        );
+        split.appointments = live.appointments;
+        split.appointmentsWithoutTime = live.appointmentsWithoutTime;
+        appointmentSource = "Autoflow";
+      }
+    } catch {
+      // Keep the imported job queue available, but never label imports as live appointments.
+      split.appointments = [];
+      split.appointmentsWithoutTime = [];
+      appointmentSource = "Autoflow";
+      appointmentError = "Autoflow appointments could not be refreshed. Retrying automatically.";
+    }
     return {
       ...split,
+      appointmentSource,
+      appointmentError,
+      workflowSource,
+      workflowError,
+      appointmentsToday: split.appointments.filter(
+        (row) =>
+          row.appointment_at &&
+          new Intl.DateTimeFormat("en-CA", {
+            timeZone: timezone,
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }).format(new Date(row.appointment_at)) === today,
+      ),
       timezone,
       shopToday: today,
       fetchedAt: new Date().toISOString(),
@@ -98,8 +180,7 @@ export const updateJobLocalState = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    await requireShopPermission(context.supabase, context.userId, "edit_records");
-    const { data: updated, error } = await context.supabase
+    const { error } = await context.supabase
       .from("shop_jobs")
       .update({
         local_status: data.local_status,
@@ -107,12 +188,8 @@ export const updateJobLocalState = createServerFn({ method: "POST" })
         local_updated_by: context.userId,
         local_updated_at: new Date().toISOString(),
       })
-      .eq("id", data.jobId)
-      .select("id");
+      .eq("id", data.jobId);
     if (error) throw new Error(error.message);
-    if (!updated || updated.length === 0) {
-      throw new Error("That job could not be updated.");
-    }
     return { ok: true };
   });
 

@@ -9,7 +9,6 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/react";
-import { SessionBoundary } from "@/components/session-boundary";
 
 import appCss from "../styles.css?url";
 
@@ -126,9 +125,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <SessionBoundary>
-        <Outlet />
-      </SessionBoundary>
+      <Outlet />
     </QueryClientProvider>
   );
 }

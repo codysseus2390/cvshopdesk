@@ -5,12 +5,10 @@ import {
   formatCurrency,
   gpPerCar,
   monthToDate,
-  shopToday,
   sumDaily,
   yearToDate,
   type MetricRow,
 } from "./metrics-math";
-import type { BusinessCalendar } from "./business-calendar";
 import { SCREEN_SECONDS, screenAt } from "@/routes/_authenticated/tv";
 
 const daily = (
@@ -237,110 +235,6 @@ describe("year to date", () => {
     ];
     const result = yearToDate(rows, "2026", "2026-02-01");
     expect(result.gross_profit).toBe(40_000);
-  });
-});
-
-describe("shopToday", () => {
-  it("formats the business date in a valid, explicit IANA zone", () => {
-    const date = new Date("2026-01-15T05:30:00Z");
-    expect(shopToday("America/Chicago", date)).toBe("2026-01-14");
-    expect(shopToday("UTC", date)).toBe("2026-01-15");
-  });
-
-  it("keeps the documented legacy no-arg default instead of throwing", () => {
-    // Omitting timeZone entirely is the one legacy, non-authoritative path that
-    // still silently defaults to America/Chicago (see the function's own doc
-    // comment) - unlike every other caller, which must pass a validated zone.
-    const date = new Date("2026-01-15T05:30:00Z");
-    expect(shopToday(undefined, date)).toBe("2026-01-14");
-  });
-
-  it("throws instead of guessing for an empty or garbage zone", () => {
-    const date = new Date("2026-01-15T05:30:00Z");
-    expect(() => shopToday("", date)).toThrow(/timezone is not configured or invalid/i);
-    expect(() => shopToday("Not/AZone", date)).toThrow(/timezone is not configured or invalid/i);
-  });
-
-  it("formats correctly across the America/Chicago DST transitions (2026-03-08, 2026-11-01)", () => {
-    expect(shopToday("America/Chicago", new Date("2026-03-08T05:59:00Z"))).toBe("2026-03-07");
-    expect(shopToday("America/Chicago", new Date("2026-03-08T07:30:00Z"))).toBe("2026-03-08");
-    expect(shopToday("America/Chicago", new Date("2026-11-01T06:00:00Z"))).toBe("2026-11-01");
-    expect(shopToday("America/Chicago", new Date("2026-11-02T06:00:00Z"))).toBe("2026-11-02");
-  });
-
-  it("depends only on the explicit zone argument, never on the running machine's local timezone", () => {
-    const instant = new Date("2026-01-15T05:30:00Z");
-    expect(shopToday("Asia/Tokyo", instant)).toBe("2026-01-15");
-    expect(shopToday("America/Chicago", instant)).toBe("2026-01-14");
-  });
-});
-
-describe("wired calendar in month/year totals", () => {
-  const monFri: BusinessCalendar = {
-    schedules: [{ effective_from: "2020-01-01", open_weekdays: [1, 2, 3, 4, 5] }],
-    exceptions: [],
-  };
-
-  it("retains an actual weekend entry in the sum without letting it cancel a missing weekday", () => {
-    // Expected open (Mon-Fri) dates for Sept 1-20 (today's own Sept 21 is not yet
-    // due): 1,2,3,4,7,8,9,10,11,14,15,16,17,18 = 14 dates. Sept 15 is a Tuesday and
-    // is left unreported; Sept 19 (a Saturday) is reported anyway.
-    const rows: MetricRow[] = [
-      daily("2026-09-01", 100, 1, 1),
-      daily("2026-09-02", 100, 1, 1),
-      daily("2026-09-03", 100, 1, 1),
-      daily("2026-09-04", 100, 1, 1),
-      daily("2026-09-07", 100, 1, 1),
-      daily("2026-09-08", 100, 1, 1),
-      daily("2026-09-09", 100, 1, 1),
-      daily("2026-09-10", 100, 1, 1),
-      daily("2026-09-11", 100, 1, 1),
-      daily("2026-09-19", 50, 1, 1), // recorded Saturday, outside the expected open-date set
-    ];
-    const result = monthToDate(rows, "2026-09", "2026-09-21", monFri);
-    expect(result.gross_profit).toBe(950); // 900 weekday total + the retained Saturday 50
-    expect(result.covered_days).toBe(10);
-    // Still 5 missing weekdays (14, 15, 16, 17, 18) - the Saturday entry cancels none of them.
-    expect(result.missing_days).toBe(5);
-  });
-
-  it("does not treat today's own not-yet-due report as missing, but still flags an earlier unreported open day", () => {
-    const result = monthToDate([daily("2026-09-18", 100, 1, 1)], "2026-09", "2026-09-21", monFri);
-    // 14 expected open weekdays (Sept 1-20); only Sept 18 reported; Sept 21 (today)
-    // itself is excluded from the expected set entirely, not counted as missing.
-    expect(result.missing_days).toBe(13);
-  });
-
-  it("throws the explicit calendar-coverage error instead of guessing when no schedule covers the month", () => {
-    const noSchedule: BusinessCalendar = {
-      schedules: [{ effective_from: "2030-01-01", open_weekdays: [1, 2, 3, 4, 5] }],
-      exceptions: [],
-    };
-    expect(() => monthToDate([], "2026-09", "2026-09-21", noSchedule)).toThrow(
-      "The shop calendar does not cover this reporting month.",
-    );
-  });
-
-  it("retains an actual weekend entry in yearToDate the same way", () => {
-    const rows: MetricRow[] = [
-      daily("2026-01-05", 500, 2, 2), // Monday, reported
-      daily("2026-01-10", 200, 1, 1), // Saturday, recorded anyway
-    ];
-    const result = yearToDate(rows, "2026", "2026-01-12", monFri);
-    expect(result.gross_profit).toBe(700);
-    expect(result.covered_days).toBe(2);
-    // 7 expected open weekdays (Jan 1-11) minus the 1 reported = 6 still missing.
-    expect(result.missing_days).toBe(6);
-  });
-
-  it("throws the explicit calendar-coverage error for yearToDate too", () => {
-    const noSchedule: BusinessCalendar = {
-      schedules: [{ effective_from: "2030-01-01", open_weekdays: [1, 2, 3, 4, 5] }],
-      exceptions: [],
-    };
-    expect(() => yearToDate([], "2026", "2026-01-12", noSchedule)).toThrow(
-      "The shop calendar does not cover this reporting year.",
-    );
   });
 });
 

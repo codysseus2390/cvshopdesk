@@ -16,7 +16,11 @@ import { getDashboard } from "@/lib/metrics.functions";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate, useShopContext } from "@/components/access-gate";
 import { MetricCard } from "@/components/metric-card";
-import { DashboardMiddleRow, SystemSettingsPanel } from "@/components/dashboard-panels";
+import {
+  DashboardMiddleRow,
+  MechanicProductivityPanel,
+  SystemSettingsPanel,
+} from "@/components/dashboard-panels";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCount, formatCurrency } from "@/lib/metrics-math";
@@ -100,10 +104,7 @@ function Dashboard() {
     const missing = data.mtd.coverage[key].days_missing_value;
     const field =
       key === "gross_profit" ? "gross profit" : key === "tires_sold" ? "tire count" : "car count";
-    if (missing <= 0) return goalNote(key, data.mtd[key]);
-    return data.calendarConfigured
-      ? `${field} missing for ${missing} open day(s) this month`
-      : `${missing} saved day(s) have no ${field}`;
+    return missing > 0 ? `${missing} saved day(s) have no ${field}` : goalNote(key, data.mtd[key]);
   };
   const kpiProps = (key: KpiKey, currency: boolean) => {
     const format = currency ? formatCurrency : formatCount;
@@ -115,10 +116,7 @@ function Dashboard() {
         ...(shows("today")
           ? [
               {
-                label:
-                  data?.previousDayKind === "open"
-                    ? `Previous open day · ${prevDayLabel}`
-                    : "Previous day",
+                label: "Previous day",
                 value: format(previousDayValues[key]),
               },
             ]
@@ -141,11 +139,7 @@ function Dashboard() {
       ? `From the accepted month-to-date report as of ${data.mtd.as_of}${data.mtd.stale ? ` · ${data.mtd.days_behind} day(s) behind the shop day, coverage incomplete` : ""}`
       : data.mtd.basis === "none"
         ? "No confirmed records for this month yet. Nothing is assumed to be zero."
-        : `Sum of ${data.mtd.covered_days} confirmed day(s) through ${data.mtd.as_of}${
-            data.mtd.missing_days > 0
-              ? ` · ${data.mtd.missing_days} ${data.calendarConfigured ? "open day(s)" : "day(s)"} still missing`
-              : ""
-          }`;
+        : `Sum of ${data.mtd.covered_days} confirmed day(s) through ${data.mtd.as_of}${data.mtd.missing_days > 0 ? ` · ${data.mtd.missing_days} day(s) still missing` : ""}`;
 
   const CHART_METRICS = [
     { key: "gross_profit", label: "Gross profit", currency: true },
@@ -207,13 +201,7 @@ function Dashboard() {
                 {shows("today") && (
                   <span className="flex items-center gap-1.5">
                     <CalendarDays className="h-4 w-4 text-primary" />
-                    <span>
-                      {data.previousDayKind === "open"
-                        ? `Previous open day · ${prevDayLabel}`
-                        : prevDayLabel
-                          ? `Previous day ${prevDayLabel}`
-                          : "Previous day"}
-                    </span>
+                    <span>{prevDayLabel ? `Previous day ${prevDayLabel}` : "Previous day"}</span>
                   </span>
                 )}
                 {shows("today") && <span className="text-muted-foreground/60">·</span>}
@@ -236,28 +224,30 @@ function Dashboard() {
                 ))}
             </div>
             <div className="dashboard-kpi-area">
-              <div className="stagger-in grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
-                <div className="lg:col-span-6">
+              <div className="stagger-in grid items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="min-w-0">
                   <MetricCard
                     appearance="dashboard"
-                    hero
                     label="Gross profit"
                     {...kpiProps("gross_profit", true)}
                   />
                 </div>
-                <div className="lg:col-span-3">
+                <div className="min-w-0">
                   <MetricCard
                     appearance="dashboard"
                     label="Tires sold"
                     {...kpiProps("tires_sold", false)}
                   />
                 </div>
-                <div className="lg:col-span-3">
+                <div className="min-w-0">
                   <MetricCard
                     appearance="dashboard"
                     label="Car count"
                     {...kpiProps("car_count", false)}
                   />
+                </div>
+                <div className="min-w-0">
+                  <MechanicProductivityPanel mechanics={data.mechanics} />
                 </div>
               </div>
               <div className="mt-2 space-y-1 text-xs leading-relaxed text-muted-foreground">
@@ -269,10 +259,7 @@ function Dashboard() {
             </div>
           </section>
 
-          <DashboardMiddleRow
-            mechanics={data.mechanics}
-            calendarConfigured={data.calendarConfigured}
-          />
+          <DashboardMiddleRow />
 
           {(shows("monthly_chart") || shows("ytd")) && (
             <section className="stagger-in grid items-start gap-3 lg:grid-cols-[minmax(0,2.2fr)_minmax(15rem,.9fr)_minmax(15rem,.9fr)]">

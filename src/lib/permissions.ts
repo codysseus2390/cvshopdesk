@@ -106,16 +106,3 @@ export function can(
 export function roleLabel(role: string | null | undefined): string {
   return role && role in ROLE_LABELS ? ROLE_LABELS[role as AppRole] : "Unknown";
 }
-
-/**
- * Deliberate, non-overridable invariant: only the owner and managers may read the
- * shop's audit log. This intentionally does not go through `resolvePermissions`/
- * `can()` — audit access is not a grantable `PermissionKey`, so it can never be
- * widened by a `role_permissions` override, and never narrowed either. It mirrors
- * the `audit_events` SELECT policy (`is_shop_manager`) added in migration 0023
- * (see the inline SQL comment there) and must be kept in lockstep with it: if the
- * SQL invariant ever changes, update this helper to match.
- */
-export function canReadAuditEvents(role: string | null | undefined): boolean {
-  return role === "owner" || role === "manager";
-}
