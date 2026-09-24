@@ -1,22 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
-import {
-  BarChart3,
-  ChevronRight,
-  CircleUserRound,
-  FileText,
-  Link2,
-  Monitor,
-  Settings,
-  Upload,
-  Wrench,
-} from "lucide-react";
+import { CalendarDays, CircleUserRound, Link2, Monitor, Settings, Wrench } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { listImports } from "@/lib/imports.functions";
 import { TvNotificationPanel } from "@/components/tv-notification-panel";
+import { useBoard } from "@/routes/_authenticated/board";
+import { buildTvBoard, tvTime } from "@/lib/tv-board";
 import { formatProductivity } from "@/lib/productivity-math";
 
 type MechanicValue = number | null | undefined;
@@ -27,157 +14,140 @@ export type DashboardMechanics = {
   month: Record<string, MechanicValue>;
 };
 
-export function DashboardMiddleRow({ mechanics }: { mechanics: DashboardMechanics }) {
+export function DashboardMiddleRow() {
   return (
     <section
-      className="stagger-in grid gap-3 xl:grid-cols-[1fr_1.19fr_1.08fr]"
+      className="stagger-in grid items-stretch gap-3 xl:grid-cols-2"
       aria-label="Shop activity"
     >
-      <RecentImportsPanel />
+      <SchedulePanel />
       <TvNotificationPanel />
-      <MechanicProductivityPanel mechanics={mechanics} />
     </section>
   );
 }
 
-function RecentImportsPanel() {
-  const fetchImports = useServerFn(listImports);
-  const imports = useQuery({
-    queryKey: ["dashboard-imports"],
-    queryFn: () => fetchImports(),
-    staleTime: 60_000,
-  });
-  const rows = (imports.data ?? []).slice(0, 3);
+function SchedulePanel() {
+  const board = useBoard();
+  const schedule = board.data ? buildTvBoard(board.data, Date.now()).schedule : [];
+  const timezone = board.data?.timezone ?? "America/Chicago";
 
   return (
-    <Card className="card-lift min-w-0 rounded-2xl border-border/90 bg-card shadow-card panel-glow-steel">
+    <Card className="card-lift h-full min-w-0 rounded-2xl border-border/90 bg-card shadow-card panel-glow-steel">
       <CardHeader className="flex-row items-center justify-between gap-3 border-b border-border/70 px-4 py-3">
-        <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted text-foreground">
-            <FileText className="h-4 w-4" />
+        <CardTitle className="flex min-w-0 items-center gap-2 font-body text-base font-semibold">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
+            <CalendarDays className="h-4 w-4" />
           </span>
-          Recent imports & tools
+          Schedule
         </CardTitle>
-        <Link to="/imports" className="text-xs font-semibold text-primary hover:underline">
-          See all
+        <Link to="/tv" className="shrink-0 text-xs font-semibold text-primary hover:underline">
+          TV mode
         </Link>
       </CardHeader>
-      <CardContent className="space-y-0 px-4 py-1">
-        {rows.length === 0 && (
-          <div className="flex items-center gap-3 py-5 text-sm text-muted-foreground">
-            <FileText className="h-5 w-5 shrink-0" />
-            <p>No import history has been recorded yet.</p>
+      <CardContent className="min-h-[252px] px-4 py-3">
+        <p className="mb-2 text-xs text-muted-foreground">Next 12 hours · shop time</p>
+        {board.isLoading && <p className="py-4 text-sm text-muted-foreground">Loading schedule…</p>}
+        {board.isError && (
+          <p role="alert" className="py-4 text-sm text-destructive">
+            Schedule could not be loaded.
+          </p>
+        )}
+        {!board.isLoading && !board.isError && board.data?.appointmentError && (
+          <p role="alert" className="py-4 text-sm text-destructive">
+            {board.data.appointmentError}
+          </p>
+        )}
+        {!board.isLoading &&
+          !board.isError &&
+          !board.data?.appointmentError &&
+          schedule.length === 0 && (
+            <p className="py-4 text-sm text-muted-foreground">
+              No appointments in the next 12 hours.
+            </p>
+          )}
+        {schedule.length > 0 && (
+          <div className="max-h-56 overflow-y-auto" aria-label="Today's TV schedule">
+            {schedule.map((job) => (
+              <div
+                key={job.id}
+                className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-3 border-b border-border/70 py-2.5 last:border-0"
+              >
+                <p className="text-xs font-bold tabular-nums text-foreground">
+                  {tvTime(job.appointment_at, timezone)}
+                </p>
+                <div className="min-w-0">
+                  <p
+                    className="truncate text-sm font-semibold"
+                    title={job.customer_name ?? undefined}
+                  >
+                    {job.customer_name ?? "Customer not recorded"}
+                  </p>
+                  <p
+                    className="truncate text-xs text-muted-foreground"
+                    title={job.vehicle_label ?? undefined}
+                  >
+                    {job.vehicle_label ?? "Vehicle not recorded"}
+                  </p>
+                  <p
+                    className="truncate text-xs text-muted-foreground"
+                    title={job.requested_service ?? undefined}
+                  >
+                    {job.requested_service ?? "Service not recorded"}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         )}
-        {rows.map((item) => (
-          <Link
-            key={item.id}
-            to="/imports"
-            className="group flex items-center gap-3 border-b border-border/70 py-3 last:border-0"
-          >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground">
-              <FileText className="h-4 w-4" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-semibold">{item.file_name}</span>
-              <span className="block text-xs text-muted-foreground">
-                {item.uploaded_at
-                  ? new Date(item.uploaded_at).toLocaleString()
-                  : "Date not recorded"}
-              </span>
-            </span>
-            <Badge
-              variant="secondary"
-              className="shrink-0 bg-secondary/15 text-secondary-foreground"
-            >
-              {item.status ?? "Recorded"}
-            </Badge>
-            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-          </Link>
-        ))}
-        <div className="grid gap-2 py-3 sm:grid-cols-2">
-          <Button asChild variant="outline" className="h-10 rounded-xl">
-            <Link to="/imports">
-              <Upload className="mr-2 h-4 w-4" />
-              Import report
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-10 rounded-xl">
-            <Link to="/numbers">
-              <BarChart3 className="mr-2 h-4 w-4" />
-              View numbers
-            </Link>
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );
 }
 
-function MechanicProductivityPanel({ mechanics }: { mechanics: DashboardMechanics }) {
+export function MechanicProductivityPanel({ mechanics }: { mechanics: DashboardMechanics }) {
   return (
-    <Card className="card-lift min-w-0 rounded-2xl border-border/90 bg-card shadow-card panel-glow-profit">
-      <CardHeader className="flex-row items-center justify-between gap-2 px-4 py-3">
-        <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted text-foreground">
+    <Card className="card-lift h-full min-w-0 rounded-xl border-border/70 bg-card shadow-card panel-glow-profit">
+      <CardContent className="flex h-full min-h-[11.5rem] flex-col p-3.5">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
             <Wrench className="h-4 w-4" />
           </span>
-          Mechanic productivity
-        </CardTitle>
-        <span className="text-[11px] text-muted-foreground">Production % by reporting period</span>
-      </CardHeader>
-      <CardContent className="px-4 pb-4 pt-0">
-        <div className="overflow-hidden rounded-xl border border-border/70">
-          <table className="w-full table-fixed text-sm">
-            <thead className="bg-muted/55 text-muted-foreground">
-              <tr className="h-11">
-                <th className="px-3 py-2 text-left text-xs font-medium">Mechanic</th>
-                <th className="px-2 py-2 text-right text-xs font-medium">Prev day</th>
-                <th className="px-2 py-2 text-right text-xs font-medium">This wk</th>
-                <th className="px-3 py-2 text-right text-xs font-medium">Month</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mechanics.names.map((name, index) => {
-                const value = mechanics.month[name];
-                const numeric =
-                  typeof value === "number" && Number.isFinite(value)
-                    ? Math.max(0, Math.min(100, value))
-                    : null;
-                return (
-                  <tr key={name} className="border-t border-border/70">
-                    <th className="px-3 py-3.5 text-left font-semibold">
-                      <span className="flex items-center gap-2.5">
-                        <span
-                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${index % 2 ? "bg-primary/15 text-primary" : "bg-secondary/15 text-secondary"}`}
-                        >
-                          {name.slice(0, 1)}
-                        </span>
-                        <span className="truncate text-sm">{name}</span>
-                      </span>
-                    </th>
-                    <td className="px-2 py-3.5 text-right text-xs font-semibold tabular-nums text-muted-foreground">
-                      {formatProductivity(mechanics.previous_day[name] ?? null)}
-                    </td>
-                    <td className="px-2 py-3.5 text-right text-xs font-semibold tabular-nums text-muted-foreground">
-                      {formatProductivity(mechanics.week[name] ?? null)}
-                    </td>
-                    <td className="px-3 py-3.5 text-right font-semibold tabular-nums">
-                      <span className="block text-sm">{formatProductivity(value ?? null)}</span>
-                      {numeric !== null && (
-                        <span className="gauge-fill mt-1.5 ml-auto block h-2 w-20 overflow-hidden rounded-full bg-muted">
-                          <span
-                            className={`block h-full rounded-full ${index % 2 ? "bg-primary" : "bg-secondary"}`}
-                            style={{ width: `${numeric}%` }}
-                          />
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold leading-tight">Mechanic productivity</p>
+            <p className="text-xs text-muted-foreground">Production %</p>
+          </div>
+        </div>
+        <div className="mt-3 grid grid-cols-[minmax(0,1fr)_repeat(3,3rem)] gap-1 border-b border-border/60 pb-1 text-[10px] text-muted-foreground">
+          <span>Mechanic</span>
+          <span className="text-right">Prev</span>
+          <span className="text-right">Week</span>
+          <span className="text-right">Month</span>
+        </div>
+        <div className="max-h-28 min-h-0 flex-1 overflow-y-auto">
+          {mechanics.names.length === 0 && (
+            <p className="py-3 text-xs text-muted-foreground">
+              No mechanic production recorded yet.
+            </p>
+          )}
+          {mechanics.names.map((name) => (
+            <div
+              key={name}
+              className="grid grid-cols-[minmax(0,1fr)_repeat(3,3rem)] items-center gap-1 border-b border-border/40 py-1.5 text-xs last:border-0"
+            >
+              <span className="truncate font-medium" title={name}>
+                {name}
+              </span>
+              <span className="text-right tabular-nums">
+                {formatProductivity(mechanics.previous_day[name] ?? null)}
+              </span>
+              <span className="text-right tabular-nums">
+                {formatProductivity(mechanics.week[name] ?? null)}
+              </span>
+              <span className="text-right font-semibold tabular-nums">
+                {formatProductivity(mechanics.month[name] ?? null)}
+              </span>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>
