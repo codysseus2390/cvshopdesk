@@ -18,8 +18,7 @@ export function TvHeader({
   return (
     <header className="tv-header" data-screen={title === "Shop numbers" ? "numbers" : "shop"}>
       <div className="tv-brand">
-        <CedarLogo className="tv-brand-logo" />
-        {title !== "Shop numbers" && <p>Trusted care keeps you rolling</p>}
+        <CedarLogo cutout className="tv-brand-logo" />
       </div>
       <div className="tv-heading">
         <h1>

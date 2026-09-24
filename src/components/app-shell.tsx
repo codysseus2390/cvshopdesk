@@ -132,7 +132,7 @@ export function AppShell({
           <div className="relative z-[2] flex h-full flex-col">
             <div className="px-3 pb-4 pt-5">
               <Link to="/hub" className="block" aria-label="Cedar Valley Hub dashboard">
-                <CedarLogo className="h-10 w-auto object-contain" />
+                <CedarLogo cutout className="h-auto w-full object-contain" />
               </Link>
               <div className="mt-4 flex items-center justify-between gap-2 px-1">
                 <p className="font-mono text-xs tracking-[0.16em] text-sidebar-foreground/40">
@@ -240,7 +240,10 @@ export function AppShell({
                 className="flex min-w-0 items-center md:hidden"
                 aria-label="Cedar Valley Hub dashboard"
               >
-                <CedarLogo className="h-12 w-full max-w-[13rem] object-contain object-left" />
+                <CedarLogo
+                  cutout
+                  className="h-12 w-full max-w-[13rem] object-contain object-left"
+                />
               </Link>
               <NotificationBell />
               <ThemeToggle className="rounded-full" />

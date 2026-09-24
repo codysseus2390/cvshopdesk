@@ -550,8 +550,13 @@
 }
 .tv-brand-logo {
   width: 100%;
-  max-height: 78px;
+  max-height: 100px;
   object-fit: contain;
+}
+.cedar-logo-cutout {
+  background: transparent;
+  filter: drop-shadow(0 1px 1px #07100ed9) drop-shadow(0 3px 5px #0006)
+    drop-shadow(0 0 8px #8be84518);
 }
 .tv-brand p {
   margin-top: 10px;

@@ -2,6 +2,18 @@
 // do not depend on Lovable's managed asset path.
 export const cedarLogoUrl = "/cedar-valley-logo.jpg";
 
-export function CedarLogo({ className = "h-10" }: { className?: string }) {
-  return <img src={cedarLogoUrl} alt="Cedar Valley Tire & Auto Service" className={className} />;
+export function CedarLogo({
+  className = "h-10",
+  cutout = false,
+}: {
+  className?: string;
+  cutout?: boolean;
+}) {
+  return (
+    <img
+      src={cutout ? "/cedar-valley-logo-cutout.png" : cedarLogoUrl}
+      alt="Cedar Valley Tire & Auto Service"
+      className={`${cutout ? "cedar-logo-cutout " : ""}${className}`}
+    />
+  );
 }
