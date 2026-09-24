@@ -29,8 +29,10 @@ export function useHankSpeech() {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const requestRef = useRef(0);
 
   const stop = useCallback(() => {
+    requestRef.current += 1;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.src = "";
@@ -47,10 +49,12 @@ export function useHankSpeech() {
     async (id: string, text: string) => {
       if (!text.trim()) return;
       stop();
+      const request = requestRef.current;
       setError(null);
       setLoadingId(id);
       try {
         const result = (await speak({ data: { text: text.slice(0, 5000) } })) as Result;
+        if (request !== requestRef.current) return;
         if (!result.ok || !result.audioBase64) {
           setError(result.message ?? "Hank could not speak that just now.");
           setLoadingId(null);
@@ -96,6 +100,7 @@ export function useHankSpeech() {
         setPlayingId(id);
         await audio.play();
       } catch (err) {
+        if (request !== requestRef.current) return;
         setError(err instanceof Error ? err.message : "Hank could not speak that just now.");
         setLoadingId(null);
         setPlayingId(null);
