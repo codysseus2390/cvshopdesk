@@ -16,7 +16,7 @@ export function TvHeader({
   alert?: string | null;
 }) {
   return (
-    <header className="tv-bar flex shrink-0 items-stretch border-b border-border">
+    <header className="tv-bar tv-bar-light flex shrink-0 items-stretch border-b border-border">
       <div className="flex items-center px-7">
         <CedarLogo className="h-12 w-auto shrink-0" />
       </div>

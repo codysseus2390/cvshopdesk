@@ -2,7 +2,6 @@ import { CarFront, CircleDashed, CircleDollarSign } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { TvMetricCard, type TvPeriodValue } from "./tv-metric-card";
 import { TvProductivityCard } from "./tv-productivity-card";
-import { cn } from "@/lib/utils";
 import { formatCount, formatCurrency } from "@/lib/metrics-math";
 import type { useDashboard } from "@/routes/_authenticated/hub";
 
@@ -68,8 +67,8 @@ export function TvNumbersScreen({ dashboard }: { dashboard: DashboardData | unde
   ];
 
   return (
-    <div className="tv-slab grid min-h-0 flex-1 grid-cols-2 grid-rows-2 overflow-hidden rounded-2xl border border-border">
-      {metrics.map((metric, index) => (
+    <div className="tv-stage grid min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-4">
+      {metrics.map((metric) => (
         <TvMetricCard
           key={metric.label}
           label={metric.label}
@@ -78,13 +77,13 @@ export function TvNumbersScreen({ dashboard }: { dashboard: DashboardData | unde
           month={period("This month", metric.values[0], metric.format)}
           week={period("This week", metric.values[1], metric.format)}
           previousDay={period(prevDayCellLabel, metric.values[2], metric.format)}
-          // Hairline rules between cells instead of gaps, so the panel reads as
-          // one instrument cluster.
-          className={cn(index % 2 === 0 && "border-r border-border", index < 2 && "border-b")}
+          // Each KPI is its own lit glass panel, angled into the tv-stage.
+          className="tv-glow-card"
         />
       ))}
       {/* Fourth cell: per-mechanic breakdown, matching the dashboard panel. */}
       <TvProductivityCard
+        className="tv-glow-card"
         mechanics={dashboard?.mechanics}
         shop={[
           dashboard?.previousDayProductivity ?? null,

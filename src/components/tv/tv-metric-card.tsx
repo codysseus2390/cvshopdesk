@@ -8,8 +8,8 @@ export type TvPeriodValue = { label: string; value: string; empty: boolean };
  * Week and Previous Day sit underneath as smaller supporting values. A
  * period with no saved data renders as a quiet dash, never a fabricated 0.
  *
- * This is a flush cell inside the numbers slab, not a floating card: the
- * dividing hairlines come from the grid that owns it.
+ * The panel chrome (glass, lit edge, 3D tilt) comes from the className the
+ * numbers screen passes; this component supplies the accent and the layers.
  */
 export function TvMetricCard({
   label,
@@ -37,10 +37,15 @@ export function TvMetricCard({
         } as React.CSSProperties
       }
     >
+      <Icon
+        aria-hidden="true"
+        className="tv-ghost-icon pointer-events-none absolute right-8 top-1/2 h-40 w-40 -translate-y-1/2"
+        strokeWidth={1.25}
+      />
       <div className="relative flex items-center gap-3">
         <span
           className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+            "tv-icon-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
             accent === "primary"
               ? "bg-primary text-primary-foreground"
               : "bg-secondary text-secondary-foreground",
@@ -62,7 +67,7 @@ export function TvMetricCard({
             — <span className="text-base font-semibold normal-case">Awaiting shop numbers</span>
           </p>
         ) : (
-          <p className="mt-1 font-display text-[clamp(3rem,6.2vw,5.4rem)] font-bold leading-[0.9] tracking-tight tabular-nums text-[#fffdf8]">
+          <p className="tv-hero-number mt-1 self-start font-display text-[clamp(3rem,6.2vw,5.4rem)] font-bold leading-[0.9] tracking-tight tabular-nums">
             {month.value}
           </p>
         )}

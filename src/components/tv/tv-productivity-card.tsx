@@ -33,7 +33,7 @@ export function TvProductivityCard({
       style={{ "--tv-accent": "var(--color-secondary)" } as React.CSSProperties}
     >
       <div className="relative flex items-center gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+        <span className="tv-icon-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
           <Wrench className="h-5 w-5" />
         </span>
         <p className="font-display text-lg font-semibold uppercase tracking-[0.1em] text-[oklch(0.84_0.02_72)]">
@@ -135,7 +135,9 @@ function MechanicRow({
             <span
               className={cn(
                 "block h-full rounded-full",
-                accent === "primary" ? "bg-primary" : "bg-secondary",
+                accent === "primary"
+                  ? "bg-primary shadow-[0_0_12px_var(--color-primary)]"
+                  : "bg-secondary shadow-[0_0_12px_var(--color-secondary)]",
               )}
               style={{ width: `${bar}%` }}
             />

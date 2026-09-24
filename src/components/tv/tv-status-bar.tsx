@@ -26,7 +26,7 @@ export function TvStatusBar({
   nextAppointment: string | null;
 }) {
   return (
-    <div className="tv-bar flex shrink-0 items-stretch border-t border-border font-display text-lg font-semibold tracking-[0.1em] text-[oklch(0.9_0.015_78)]">
+    <div className="tv-bar tv-bar-light tv-bar-light-top flex shrink-0 items-stretch border-t border-border font-display text-lg font-semibold tracking-[0.1em] text-[oklch(0.9_0.015_78)]">
       <Stat dotClassName="bg-primary">{inShop} IN SHOP</Stat>
       <Stat dotClassName="bg-muted-foreground/60">{upcoming} UPCOMING</Stat>
       <Stat dotClassName="bg-secondary">{done} DONE</Stat>

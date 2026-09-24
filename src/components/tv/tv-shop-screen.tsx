@@ -17,7 +17,7 @@ export interface TvNextUpItem {
 }
 
 /**
- * Two slabs: the schedule fills the left, the counts and Next Up stack flush
+ * Two lit glass panels on the 3D stage: the schedule fills the left, the counts and Next Up stack flush
  * down the right rail. Rows and tiles butt against each other with hairline
  * rules rather than sitting in separate cards.
  */
@@ -31,8 +31,11 @@ export function TvShopScreen({
   nextUp: TvNextUpItem[];
 }) {
   return (
-    <div className="grid min-h-0 flex-1 grid-cols-[1fr_22rem] gap-4">
-      <section className="tv-slab flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border">
+    <div className="tv-stage grid min-h-0 flex-1 grid-cols-[1fr_22rem] gap-4">
+      <section
+        className="tv-glow-card flex min-h-0 flex-col overflow-hidden"
+        style={{ "--tv-accent": "var(--color-primary)" } as React.CSSProperties}
+      >
         {rows.length === 0 ? (
           <p className="flex flex-1 items-center justify-center p-8 text-center text-lg text-muted-foreground">
             No jobs or appointments on today's board yet.
@@ -50,7 +53,10 @@ export function TvShopScreen({
         )}
       </section>
 
-      <section className="tv-slab flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border">
+      <section
+        className="tv-glow-card flex min-h-0 flex-col overflow-hidden"
+        style={{ "--tv-accent": "var(--color-secondary)" } as React.CSSProperties}
+      >
         <SummaryTile label="In shop" value={counts.inShop} status="in_shop" />
         <SummaryTile label="Upcoming" value={counts.upcoming} status="upcoming" />
         <SummaryTile label="Done today" value={counts.done} status="done" />

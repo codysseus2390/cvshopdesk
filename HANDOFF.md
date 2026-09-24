@@ -1,5 +1,16 @@
 # HANDOFF.md — Living Handoff Document
 
+## TV mode 3D pass — branch `claude/modest-lovelace-gnbhv6`, 2026-09-24
+
+Owner asked for a three.js pass on the TV display: more depth, movement, and lighting.
+
+- **New:** `src/components/tv/tv-scene.ts` — three.js scene (turning tires with glowing rims, diagonal neon streaks, a rolling floor grid, rising embers, orbiting orange/green lights, a slowly swaying camera). `tv-background.tsx` lazy-imports it on the client and fades the canvas in over the existing CSS metal, which is still the fallback if WebGL or the chunk fails. With reduced motion it draws one still frame. The loop pauses while the tab is hidden.
+- **Panels:** the numbers screen is now four separate lit glass cards (`.tv-glow-card`), not flush cells. Each card has an accent edge glow, a point of light running round the border, and a slight wraparound tilt with a slow float on a `.tv-stage` perspective. Hero numbers get a gradient and a glow, icon badges get breathing rings, and each metric has a faint ghost icon behind it. The shop screen's two slabs use the same card style. The header and status bar each get a flowing light line.
+- **Not verified:** the sandbox couldn't install packages (the lockfile's private registry is blocked). `three` / `@types/three` ^0.180.0 were added to `package.json` by hand, and **`bun.lock` was NOT updated**. Typecheck, lint, tests, build and browser checks were **not run**.
+- **Next step:** run `bun install` (updates `bun.lock`), then `bun run typecheck && bun run lint && bun run build`. Then check `/tv` on the real TV for frame rate and text sharpness, since the tilted panels and backdrop blur over the canvas are the GPU cost to watch. Fit at 1280×720 with the new 16px card gaps also needs a look.
+
+---
+
 ## Latest checkpoint — Phases 1–2 complete for owner review, 2026-09-22
 
 Branch `feat/shopdesk-astra-implementation`, head `08ee417` (the lead will merge this handoff as one more merge commit on top — handoff merged on top of 08ee417). Worktree `C:\Users\ivinb\Documents\Codex\2026-09-22\final-round-5-of-5-is\work\shopdesk`. Team process: Wrench tickets P12-01..P12-15 (no P12-05), one owner/branch/worktree per ticket under `...\work\agents\<slug>`, lead merged `--no-ff` one at a time; Grok paused (Wrench coordinated, verdicts route to Cody).

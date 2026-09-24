@@ -679,6 +679,237 @@
     color-mix(in oklch, var(--tv-accent) 12%, transparent),
     transparent 60%
   );
+  border-radius: inherit;
+}
+
+/* ---------------------------------------------------------------------------
+   TV mode — 3D layer
+   The three.js scene (src/components/tv/tv-scene.ts) draws on this canvas.
+   It fades in over the CSS metal once WebGL is running; the CSS discs and
+   sheen then stand down so two sets of motion never compete.
+   --------------------------------------------------------------------------- */
+.tv-scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1.6s ease;
+}
+
+.tv-metal-3d .tv-scene {
+  opacity: 1;
+}
+
+.tv-metal-3d .tv-metal-disc,
+.tv-metal-3d .tv-metal-sheen {
+  display: none;
+}
+
+/* Panels stand in a shallow wraparound: left column angled in from the left,
+   right column from the right, like a cockpit cluster. */
+.tv-stage {
+  perspective: 1800px;
+  perspective-origin: 50% 35%;
+}
+
+.tv-stage > :nth-child(odd) {
+  --tv-tilt: 1.6deg;
+}
+
+.tv-stage > :nth-child(even) {
+  --tv-tilt: -1.6deg;
+}
+
+.tv-stage > :nth-child(2) {
+  --tv-delay: 90ms;
+}
+
+.tv-stage > :nth-child(3) {
+  --tv-delay: 180ms;
+}
+
+.tv-stage > :nth-child(4) {
+  --tv-delay: 270ms;
+}
+
+@property --tv-sweep {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* A lit glass panel: dark tinted glass over the 3D scene, an accent-coloured
+   edge with bloom around it, and a bright point of light running round the
+   border. Accent comes from --tv-accent on the element. */
+.tv-glow-card {
+  position: relative;
+  border-radius: 1rem;
+  background:
+    linear-gradient(
+      155deg,
+      color-mix(in oklch, var(--tv-accent) 11%, oklch(0.21 0.012 60 / 66%)) 0%,
+      oklch(0.16 0.01 60 / 74%) 55%,
+      oklch(0.13 0.009 60 / 80%) 100%
+    );
+  backdrop-filter: blur(6px) saturate(125%);
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--tv-accent) 60%, transparent),
+    0 0 16px color-mix(in oklch, var(--tv-accent) 38%, transparent),
+    0 0 64px color-mix(in oklch, var(--tv-accent) 16%, transparent),
+    0 28px 60px rgb(0 0 0 / 55%),
+    inset 0 1px 0 rgb(255 255 255 / 12%),
+    inset 0 0 48px color-mix(in oklch, var(--tv-accent) 9%, transparent);
+  transform: rotateY(var(--tv-tilt, 0deg));
+  animation:
+    tv-card-in 1000ms cubic-bezier(0.22, 1, 0.36, 1) var(--tv-delay, 0ms) both,
+    tv-card-float 16s ease-in-out calc(1000ms + var(--tv-delay, 0ms)) infinite alternate;
+}
+
+.tv-glow-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  padding: 2px;
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--tv-sweep),
+    transparent 0deg,
+    transparent 262deg,
+    color-mix(in oklch, var(--tv-accent) 85%, transparent) 318deg,
+    rgb(255 244 232) 350deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  filter: drop-shadow(0 0 6px var(--tv-accent));
+  animation: tv-sweep 11s linear var(--tv-delay, 0ms) infinite;
+}
+
+@keyframes tv-sweep {
+  to {
+    --tv-sweep: 360deg;
+  }
+}
+
+@keyframes tv-card-in {
+  from {
+    opacity: 0;
+    transform: rotateY(var(--tv-tilt, 0deg)) translateZ(-260px) rotateX(9deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotateY(var(--tv-tilt, 0deg));
+  }
+}
+
+@keyframes tv-card-float {
+  0% {
+    transform: rotateY(var(--tv-tilt, 0deg));
+  }
+  50% {
+    transform: rotateY(calc(var(--tv-tilt, 0deg) * 0.4)) rotateX(0.8deg) translateZ(8px);
+  }
+  100% {
+    transform: rotateY(calc(var(--tv-tilt, 0deg) * 1.3)) rotateX(-0.6deg) translateZ(3px);
+  }
+}
+
+/* Icon badge with a lit ring that breathes. */
+.tv-icon-ring {
+  box-shadow:
+    0 0 0 2px color-mix(in oklch, var(--tv-accent) 70%, white),
+    0 0 18px color-mix(in oklch, var(--tv-accent) 70%, transparent);
+  animation: tv-ring-breathe 4.5s ease-in-out infinite;
+}
+
+@keyframes tv-ring-breathe {
+  50% {
+    box-shadow:
+      0 0 0 2px color-mix(in oklch, var(--tv-accent) 85%, white),
+      0 0 30px color-mix(in oklch, var(--tv-accent) 90%, transparent);
+  }
+}
+
+/* Hero figure: white fading into the panel's accent, with a soft glow. */
+.tv-hero-number {
+  background: linear-gradient(
+    180deg,
+    #fffdf8 35%,
+    color-mix(in oklch, var(--tv-accent) 35%, #fffdf8) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 22px color-mix(in oklch, var(--tv-accent) 45%, transparent))
+    drop-shadow(0 3px 0 rgb(0 0 0 / 45%));
+}
+
+/* Oversized faint icon behind a metric, drifting a little deeper than the
+   panel so the card has layers. */
+.tv-ghost-icon {
+  color: var(--tv-accent);
+  opacity: 0.09;
+  filter: drop-shadow(0 0 24px var(--tv-accent));
+  animation: tv-ghost-drift 12s ease-in-out infinite alternate;
+}
+
+@keyframes tv-ghost-drift {
+  to {
+    transform: translate3d(-10px, 6px, 0) rotate(-4deg) scale(1.04);
+  }
+}
+
+/* Light line running along the edge of the top and bottom bars. */
+.tv-bar-light {
+  position: relative;
+}
+
+.tv-bar-light::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-primary) 18%,
+    rgb(255 226 206) 30%,
+    var(--color-primary) 40%,
+    transparent 50%,
+    color-mix(in oklch, var(--color-secondary) 80%, white) 70%,
+    transparent 85%
+  );
+  background-size: 200% 100%;
+  filter: drop-shadow(0 0 6px var(--color-primary));
+  opacity: 0.85;
+  animation: tv-bar-flow 14s linear infinite;
+}
+
+.tv-bar-light-top::after {
+  top: -1px;
+  bottom: auto;
+  animation-direction: reverse;
+}
+
+@keyframes tv-bar-flow {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: 0% 0;
+  }
 }
 
 /* TV mode — screen crossfade. Understated: opacity + a few px of horizontal
