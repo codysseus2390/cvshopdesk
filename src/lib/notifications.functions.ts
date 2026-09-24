@@ -135,9 +135,10 @@ export const listMyNotifications = createServerFn({ method: "GET" })
     const { data, error } = await sb
       .from("notification_recipients")
       .select(
-        "id, read_at, target, notification:notifications(id, title, message, priority, created_at, audience)",
+        "id, read_at, target, notification:notifications!inner(id, title, message, priority, created_at, audience, archived_at)",
       )
       .eq("user_id", context.userId)
+      .is("notification.archived_at", null)
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw new Error(error.message);
@@ -152,6 +153,7 @@ export const listMyNotifications = createServerFn({ method: "GET" })
         priority: string;
         created_at: string;
         audience: string;
+        archived_at: string | null;
       } | null;
     }[];
   });
@@ -177,8 +179,11 @@ export const listDisplayNotifications = createServerFn({ method: "GET" })
     const sb = context.supabase as unknown as Supa;
     const { data, error } = await sb
       .from("notification_recipients")
-      .select("id, notification:notifications(id, title, message, priority, created_at)")
+      .select(
+        "id, notification:notifications!inner(id, title, message, priority, created_at, archived_at)",
+      )
       .eq("target", "display")
+      .is("notification.archived_at", null)
       .order("created_at", { ascending: false })
       .limit(10);
     if (error) throw new Error(error.message);
@@ -190,6 +195,7 @@ export const listDisplayNotifications = createServerFn({ method: "GET" })
         message: string;
         priority: string;
         created_at: string;
+        archived_at: string | null;
       } | null;
     }[];
   });
@@ -215,7 +221,7 @@ export const listShopAnnouncements = createServerFn({ method: "GET" })
     const member = await membership(context.supabase, context.userId);
     const { data: notifications, error } = await sb
       .from("notifications")
-      .select("id, title, message, priority, audience, created_at")
+      .select("id, title, message, priority, audience, created_at, archived_at")
       .eq("shop_id", member.shop_id)
       .in("audience", ["all", "display", "all_display"])
       .order("created_at", { ascending: false });
@@ -227,6 +233,7 @@ export const listShopAnnouncements = createServerFn({ method: "GET" })
       priority: string;
       audience: string;
       created_at: string;
+      archived_at: string | null;
     }[];
     if (rows.length === 0) return [];
     const { data: recipients, error: recipientError } = await sb
@@ -272,6 +279,7 @@ export const updateDisplayNotification = createServerFn({ method: "POST" })
       .update({ title: data.title, message: data.message, priority: data.priority })
       .eq("id", data.notificationId)
       .eq("shop_id", member.shop_id)
+      .is("archived_at", null)
       .select("id")
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -283,29 +291,55 @@ export const updateDisplayNotification = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Remove only the TV recipient, keeping the saved announcement and staff copies. */
-export const removeDisplayNotification = createServerFn({ method: "POST" })
+/** Archive an announcement. It leaves the active card and TV, but remains in history. */
+export const archiveNotification = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ recipientId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) => z.object({ notificationId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const sb = context.supabase as unknown as Supa;
     const member = await membership(context.supabase, context.userId);
     if (member.role !== "owner" && member.role !== "manager") {
-      throw new Error("Only the owner and admins can remove TV announcements.");
+      throw new Error("Only the owner and admins can archive announcements.");
     }
-    const { data: removed, error } = await sb
-      .from("notification_recipients")
-      .delete()
-      .eq("id", data.recipientId)
+    const { data: archived, error } = await sb
+      .from("notifications")
+      .update({ archived_at: new Date().toISOString() })
+      .eq("id", data.notificationId)
       .eq("shop_id", member.shop_id)
-      .eq("target", "display")
-      .select("id, notification_id")
+      .is("archived_at", null)
+      .select("id")
       .maybeSingle();
     if (error) throw new Error(error.message);
-    if (!removed?.id) throw new Error("This announcement is no longer on the TV.");
+    if (!archived?.id) throw new Error("This announcement is no longer active.");
     await sb.rpc("log_audit_event", {
-      p_action: "tv_notification_removed",
-      p_target: removed.notification_id,
+      p_action: "notification_archived",
+      p_target: data.notificationId,
+    });
+    return { ok: true };
+  });
+
+/** Permanently remove a saved announcement and its recipient rows. */
+export const deleteNotificationHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ notificationId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as unknown as Supa;
+    const member = await membership(context.supabase, context.userId);
+    if (member.role !== "owner" && member.role !== "manager") {
+      throw new Error("Only the owner and admins can delete announcement history.");
+    }
+    const { data: deleted, error } = await sb
+      .from("notifications")
+      .delete()
+      .eq("id", data.notificationId)
+      .eq("shop_id", member.shop_id)
+      .select("id")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!deleted?.id) throw new Error("This announcement is no longer in history.");
+    await sb.rpc("log_audit_event", {
+      p_action: "notification_deleted",
+      p_target: data.notificationId,
     });
     return { ok: true };
   });

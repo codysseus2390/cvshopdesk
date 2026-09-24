@@ -16,7 +16,11 @@ import { getDashboard } from "@/lib/metrics.functions";
 import { AppShell } from "@/components/app-shell";
 import { AccessGate, useShopContext } from "@/components/access-gate";
 import { MetricCard } from "@/components/metric-card";
-import { DashboardMiddleRow, SystemSettingsPanel } from "@/components/dashboard-panels";
+import {
+  DashboardMiddleRow,
+  MechanicProductivityPanel,
+  SystemSettingsPanel,
+} from "@/components/dashboard-panels";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCount, formatCurrency } from "@/lib/metrics-math";
@@ -220,28 +224,30 @@ function Dashboard() {
                 ))}
             </div>
             <div className="dashboard-kpi-area">
-              <div className="stagger-in grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
-                <div className="lg:col-span-6">
+              <div className="stagger-in grid items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="min-w-0">
                   <MetricCard
                     appearance="dashboard"
-                    hero
                     label="Gross profit"
                     {...kpiProps("gross_profit", true)}
                   />
                 </div>
-                <div className="lg:col-span-3">
+                <div className="min-w-0">
                   <MetricCard
                     appearance="dashboard"
                     label="Tires sold"
                     {...kpiProps("tires_sold", false)}
                   />
                 </div>
-                <div className="lg:col-span-3">
+                <div className="min-w-0">
                   <MetricCard
                     appearance="dashboard"
                     label="Car count"
                     {...kpiProps("car_count", false)}
                   />
+                </div>
+                <div className="min-w-0">
+                  <MechanicProductivityPanel mechanics={data.mechanics} />
                 </div>
               </div>
               <div className="mt-2 space-y-1 text-xs leading-relaxed text-muted-foreground">
@@ -253,7 +259,7 @@ function Dashboard() {
             </div>
           </section>
 
-          <DashboardMiddleRow mechanics={data.mechanics} />
+          <DashboardMiddleRow />
 
           {(shows("monthly_chart") || shows("ytd")) && (
             <section className="stagger-in grid items-start gap-3 lg:grid-cols-[minmax(0,2.2fr)_minmax(15rem,.9fr)_minmax(15rem,.9fr)]">

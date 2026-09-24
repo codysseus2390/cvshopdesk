@@ -38,7 +38,7 @@ export function MetricCard({
   if (appearance === "dashboard") {
     return (
       <Card
-        className={`min-w-0 rounded-xl border bg-card shadow-card transition-[box-shadow,transform] duration-200 hover:shadow-elevated hover:-translate-y-px ${hero ? "noise-overlay border-border panel-glow-profit" : "border-border/70"}`}
+        className={`h-full min-w-0 rounded-xl border bg-card shadow-card transition-[box-shadow,transform] duration-200 hover:shadow-elevated hover:-translate-y-px ${hero ? "noise-overlay border-border panel-glow-profit" : "border-border/70"}`}
       >
         <CardContent
           className={`flex h-full flex-col ${hero ? "min-h-[14rem] p-5 sm:p-6" : "min-h-[11.5rem] p-3.5 sm:p-3.5"}`}
@@ -59,7 +59,7 @@ export function MetricCard({
             </div>
           </div>
           <p
-            className={`mt-3 break-words font-display font-bold tracking-tight tabular-nums ${notUpdated ? "text-lg text-muted-foreground" : hero ? "text-5xl leading-none text-foreground xl:text-6xl" : "text-3xl leading-none text-foreground xl:text-4xl"}`}
+            className={`mt-3 break-words font-display font-bold tracking-tight tabular-nums ${notUpdated ? "text-lg text-muted-foreground" : hero ? "text-5xl leading-none text-foreground xl:text-6xl" : "text-[clamp(1.5rem,2.4vw,2.25rem)] leading-tight text-foreground"}`}
           >
             {value}
           </p>

@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Monitor, Pencil, Plus, Trash2 } from "lucide-react";
+import { Bell, Monitor, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +24,8 @@ import { usePermissions } from "@/components/use-permissions";
 import {
   createNotification,
   listShopAnnouncements,
-  removeDisplayNotification,
+  archiveNotification,
+  deleteNotificationHistory,
   updateDisplayNotification,
 } from "@/lib/notifications.functions";
 
@@ -37,7 +38,8 @@ export function TvNotificationPanel() {
   const fetchAnnouncements = useServerFn(listShopAnnouncements);
   const create = useServerFn(createNotification);
   const update = useServerFn(updateDisplayNotification);
-  const remove = useServerFn(removeDisplayNotification);
+  const archive = useServerFn(archiveNotification);
+  const deleteHistory = useServerFn(deleteNotificationHistory);
   const queryClient = useQueryClient();
   const queue = useQuery({
     queryKey: ["shop-announcements"],
@@ -46,7 +48,7 @@ export function TvNotificationPanel() {
     refetchOnWindowFocus: "always",
   });
   const allItems = queue.data ?? [];
-  const items = allItems.slice(0, 3);
+  const items = allItems.filter((item) => !item.notification.archived_at).slice(0, 3);
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -56,6 +58,7 @@ export function TvNotificationPanel() {
   const [priority, setPriority] = useState<Priority>("normal");
   const [destination, setDestination] = useState<Destination>("display");
   const [removeTarget, setRemoveTarget] = useState<TvNotification | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<TvNotification | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,7 +73,7 @@ export function TvNotificationPanel() {
   }
 
   function editMessage(item: TvNotification) {
-    if (!item.on_tv) return;
+    if (item.notification.archived_at) return;
     setEditing(item);
     setTitle(item.notification.title);
     setMessage(item.notification.message);
@@ -114,19 +117,65 @@ export function TvNotificationPanel() {
     }
   }
 
-  async function removeMessage() {
+  async function archiveMessage() {
     if (!canManage || !removeTarget || busy) return;
     setBusy(true);
     setError(null);
     try {
-      await remove({ data: { recipientId: removeTarget.id } });
+      await archive({ data: { notificationId: removeTarget.notification.id } });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["shop-announcements"] }),
         queryClient.invalidateQueries({ queryKey: ["display-notifications"] }),
+        queryClient.invalidateQueries({ queryKey: ["my-notifications"] }),
       ]);
       setRemoveTarget(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "The TV announcement could not be removed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resendMessage(item: TvNotification) {
+    if (!canManage || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await create({
+        data: {
+          title: item.notification.title,
+          message: item.notification.message,
+          priority: item.notification.priority as Priority,
+          audience: item.notification.audience as Destination,
+          userIds: [],
+        },
+      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["shop-announcements"] }),
+        queryClient.invalidateQueries({ queryKey: ["display-notifications"] }),
+        queryClient.invalidateQueries({ queryKey: ["my-notifications"] }),
+      ]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "The announcement could not be resent.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function permanentlyDeleteMessage() {
+    if (!canManage || !deleteTarget || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteHistory({ data: { notificationId: deleteTarget.notification.id } });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["shop-announcements"] }),
+        queryClient.invalidateQueries({ queryKey: ["display-notifications"] }),
+        queryClient.invalidateQueries({ queryKey: ["my-notifications"] }),
+      ]);
+      setDeleteTarget(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "The announcement could not be deleted.");
     } finally {
       setBusy(false);
     }
@@ -168,7 +217,7 @@ export function TvNotificationPanel() {
         )}
         {!queue.isLoading && !queue.isError && items.length === 0 && (
           <p className="flex-1 py-5 text-sm text-muted-foreground">
-            No announcements yet. {canManage ? "Add a message to show one." : ""}
+            No active announcements. {canManage ? "Add a message to show one." : ""}
           </p>
         )}
         {items.length > 0 && (
@@ -209,13 +258,13 @@ export function TvNotificationPanel() {
                       : ""}
                   </p>
                 </div>
-                {canManage && item.on_tv && (
+                {canManage && (
                   <div className="flex shrink-0 gap-1">
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      aria-label={`Edit ${item.notification?.title ?? "TV message"}`}
+                      aria-label={`Edit ${item.notification?.title ?? "announcement"}`}
                       onClick={() => editMessage(item)}
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -224,7 +273,7 @@ export function TvNotificationPanel() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-destructive hover:text-destructive"
-                      aria-label={`Remove ${item.notification?.title ?? "TV message"} from TV`}
+                      aria-label={`Archive ${item.notification?.title ?? "announcement"}`}
                       onClick={() => {
                         setError(null);
                         setRemoveTarget(item);
@@ -244,7 +293,9 @@ export function TvNotificationPanel() {
           </p>
         )}
         <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-3">
-          <span className="text-xs text-muted-foreground">TV shows its two newest messages.</span>
+          <span className="text-xs text-muted-foreground">
+            TV shows its two newest active messages.
+          </span>
           <Button asChild variant="outline" size="sm" className="rounded-xl">
             <Link to="/tv">
               <Monitor className="mr-1.5 h-3.5 w-3.5" /> Open TV mode
@@ -371,13 +422,13 @@ export function TvNotificationPanel() {
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold">{item.notification.title}</p>
                   <Badge variant="secondary">
-                    {item.on_tv
-                      ? item.notification.audience === "all_display"
+                    {item.notification.archived_at
+                      ? "Archived"
+                      : item.notification.audience === "all_display"
                         ? "TV + dashboard"
-                        : "TV"
-                      : item.notification.audience === "display"
-                        ? "Removed from TV"
-                        : "Dashboard"}
+                        : item.notification.audience === "display"
+                          ? "TV"
+                          : "Dashboard"}
                   </Badge>
                 </div>
                 <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
@@ -386,9 +437,38 @@ export function TvNotificationPanel() {
                 <p className="mt-1 text-xs text-muted-foreground">
                   {new Date(item.notification.created_at).toLocaleString()}
                 </p>
+                {canManage && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => void resendMessage(item)}
+                    >
+                      <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Resend
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-destructive hover:text-destructive"
+                      disabled={busy}
+                      onClick={() => {
+                        setError(null);
+                        setDeleteTarget(item);
+                      }}
+                    >
+                      <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete
+                    </Button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -400,10 +480,10 @@ export function TvNotificationPanel() {
       >
         <AlertDialogContent className="w-[calc(100%-1.5rem)] rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove from TV?</AlertDialogTitle>
+            <AlertDialogTitle>Archive announcement?</AlertDialogTitle>
             <AlertDialogDescription>
-              “{removeTarget?.notification?.title}” will leave the TV queue. Any copies already sent
-              to staff will remain.
+              “{removeTarget?.notification?.title}” will leave active announcements and the TV or
+              dashboard. It will remain in History.
             </AlertDialogDescription>
           </AlertDialogHeader>
           {error && (
@@ -416,11 +496,44 @@ export function TvNotificationPanel() {
             <AlertDialogAction
               onClick={(event) => {
                 event.preventDefault();
-                void removeMessage();
+                void archiveMessage();
               }}
               disabled={busy}
             >
-              {busy ? "Removing…" : "Remove from TV"}
+              {busy ? "Archiving…" : "Archive"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open && !busy) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent className="w-[calc(100%-1.5rem)] rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Permanently delete announcement?</AlertDialogTitle>
+            <AlertDialogDescription>
+              “{deleteTarget?.notification.title}” will be removed from History and all recipients.
+              This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                void permanentlyDeleteMessage();
+              }}
+              disabled={busy}
+            >
+              {busy ? "Deleting…" : "Delete permanently"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
