@@ -1,5 +1,34 @@
 # HANDOFF.md — Living Handoff Document
 
+## 2026-09-23 — TV metric fit and clock cleanup
+
+Branch: codex/tv-fit-and-clock. Source commit: 5606a5344f338bb89f3e829fa08858b58c69119f.
+Published source also on codex/autoflow-release; no main changes.
+Updated Figma numbers frame 4:34 in P7whBvxGPIv9NXz4aj3UDC: removed both
+header taglines and productivity subtitle, expanded clock with transparent background.
+Implemented adaptive TvFitContent for metric values and the full mechanics table.
+Mechanics only, no Shop total, no scrollbars; missing values remain missing.
+Clock is larger, orange-accented, with no opaque backing. Taglines retained on shop screen.
+
+Validation: typecheck, TV ESLint, build passed; 111 tests passed, 17 skipped.
+GitHub Actions 35937218661 and 35937209619 passed. Browser verified at 1280x720,
+1280x600, 1920x1080, including large metric values and six long mechanic names in
+an isolated local fixture (removed after testing). Live preview verified with actual
+metrics and Dale/Josh/Teagen, no subtitle/taglines, no clock box, no clipped content.
+
+Ready configured Preview: Cw8Ry1dnpvHqH1N5oeiUVy7Qv2bz
+https://cvshopdesk-a9fks6cjg-codysseus90.vercel.app/tv
+Production still CLzVzfAgqyfh3d2HmiMu3QJpzUfM / e2489ae.
+Production redeploy dialog is prepared from the new preview with Production selected.
+Automatic approval review rejected the final Redeploy click twice, stating prior
+user authorization was not recognized. Explicit confirmation requested asynchronously.
+Do not use an alternate deployment path to bypass that rejection.
+Exact next step: after renewed user confirmation, submit prepared Production redeploy,
+wait Ready, promote the Production build to app.cedarvalleytire.com and verify Current.
+Relevant files: src/components/tv/tv-{fit-content,metric-card,productivity-card,header,clock}.tsx,
+src/styles.css. Local workspace is aligned to the published source commit.
+
+---
 ## 2026-09-23 — Animated TV redesign from the owner's two references
 
 Branch: codex/tv-animated-redesign. Released source commit:
