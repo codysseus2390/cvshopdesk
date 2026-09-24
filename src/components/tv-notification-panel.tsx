@@ -142,7 +142,12 @@ export function TvNotificationPanel() {
           Announcements
         </CardTitle>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-8 rounded-lg" onClick={() => setHistoryOpen(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 rounded-lg"
+            onClick={() => setHistoryOpen(true)}
+          >
             History
           </Button>
           {canManage && (
@@ -167,7 +172,10 @@ export function TvNotificationPanel() {
           </p>
         )}
         {items.length > 0 && (
-          <div className="max-h-56 min-h-0 flex-1 overflow-y-auto" aria-label="Recent announcements">
+          <div
+            className="max-h-56 min-h-0 flex-1 overflow-y-auto"
+            aria-label="Recent announcements"
+          >
             {items.map((item) => (
               <div
                 key={item.id}
@@ -183,7 +191,13 @@ export function TvNotificationPanel() {
                       <Badge variant="destructive">Urgent</Badge>
                     )}
                     <Badge variant="secondary">
-                      {item.on_tv ? (item.notification.audience === "all_display" ? "TV + dashboard" : "TV") : item.notification.audience === "display" ? "Removed from TV" : "Dashboard"}
+                      {item.on_tv
+                        ? item.notification.audience === "all_display"
+                          ? "TV + dashboard"
+                          : "TV"
+                        : item.notification.audience === "display"
+                          ? "Removed from TV"
+                          : "Dashboard"}
                     </Badge>
                   </div>
                   <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
@@ -290,7 +304,12 @@ export function TvNotificationPanel() {
             {!editing && (
               <div className="space-y-1.5">
                 <Label htmlFor="announcement-destination">Send to</Label>
-                <select id="announcement-destination" className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm" value={destination} onChange={(event) => setDestination(event.target.value as Destination)}>
+                <select
+                  id="announcement-destination"
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  value={destination}
+                  onChange={(event) => setDestination(event.target.value as Destination)}
+                >
                   <option value="display">TV only</option>
                   <option value="all_display">TV and dashboard</option>
                   <option value="all">Dashboard only</option>
@@ -333,21 +352,40 @@ export function TvNotificationPanel() {
             <DialogTitle>Announcement history</DialogTitle>
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto">
-            {queue.isLoading && <p className="py-4 text-sm text-muted-foreground">Loading announcements…</p>}
-            {queue.isError && <p role="alert" className="py-4 text-sm text-destructive">Announcements could not be loaded.</p>}
+            {queue.isLoading && (
+              <p className="py-4 text-sm text-muted-foreground">Loading announcements…</p>
+            )}
+            {queue.isError && (
+              <p role="alert" className="py-4 text-sm text-destructive">
+                Announcements could not be loaded.
+              </p>
+            )}
             {!queue.isLoading && !queue.isError && allItems.length === 0 && (
               <p className="py-4 text-sm text-muted-foreground">No announcements yet.</p>
             )}
             {allItems.map((item) => (
-              <div key={item.notification.id} className="border-b border-border/70 py-3 last:border-0">
+              <div
+                key={item.notification.id}
+                className="border-b border-border/70 py-3 last:border-0"
+              >
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold">{item.notification.title}</p>
                   <Badge variant="secondary">
-                    {item.on_tv ? (item.notification.audience === "all_display" ? "TV + dashboard" : "TV") : item.notification.audience === "display" ? "Removed from TV" : "Dashboard"}
+                    {item.on_tv
+                      ? item.notification.audience === "all_display"
+                        ? "TV + dashboard"
+                        : "TV"
+                      : item.notification.audience === "display"
+                        ? "Removed from TV"
+                        : "Dashboard"}
                   </Badge>
                 </div>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{item.notification.message}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{new Date(item.notification.created_at).toLocaleString()}</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+                  {item.notification.message}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {new Date(item.notification.created_at).toLocaleString()}
+                </p>
               </div>
             ))}
           </div>
