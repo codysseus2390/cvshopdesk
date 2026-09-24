@@ -48,7 +48,7 @@ function TvMode() {
   const announcements = useQuery({
     queryKey: ["display-notifications"],
     queryFn: () => fetchAnnouncements(),
-    refetchInterval: 60_000,
+    refetchInterval: 15_000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: "always",
   });
