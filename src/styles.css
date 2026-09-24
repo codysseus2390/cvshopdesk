@@ -538,7 +538,7 @@
 }
 .tv-header {
   display: grid;
-  grid-template-columns: minmax(210px, 28%) 1fr minmax(180px, 19%);
+  grid-template-columns: minmax(210px, 28%) 1fr minmax(210px, 22%);
   align-items: center;
   flex-shrink: 0;
   min-height: clamp(100px, 16vh, 172px);
@@ -586,20 +586,44 @@
   font-size: clamp(8px, 0.8vw, 15px);
   color: #c1c9cf;
 }
-.tv-display .tv-clock-plate {
+.tv-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
   min-width: 0;
-  border-left: 1px solid #ffffff28;
-  padding: 4px 0 8px 20px;
-  background: #070b0de6;
+  background: transparent;
+  padding: 6px 0;
 }
-.tv-display .tv-clock-plate > p:first-child {
-  font-size: clamp(42px, 5vw, 86px);
+.tv-clock-time {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(44px, 5.4vw, 96px);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: #fffdf8;
+  white-space: nowrap;
+  text-shadow:
+    0 2px 10px #0009,
+    0 0 24px #ffffff12;
 }
-.tv-display .tv-clock-plate > p:last-child {
-  font-size: clamp(11px, 1.15vw, 20px);
-  padding-top: 8px;
-  margin-top: 8px;
-  border-top: 1px solid #ff790caa;
+.tv-clock-meridiem {
+  font-size: 0.3em;
+  color: var(--tv-orange);
+  letter-spacing: 0.08em;
+}
+.tv-clock-date {
+  font-family: var(--font-display);
+  font-size: clamp(15px, 1.4vw, 26px);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  line-height: 1.2;
+  margin-top: 10px;
+  color: #ffb264;
+  text-shadow: 0 2px 8px #000b;
 }
 .tv-main {
   padding: 0 var(--tv-gutter) var(--tv-gap);
@@ -984,25 +1008,68 @@
 }
 .tv-metric-panel {
   min-height: 0;
-  padding: clamp(14px, 1.6vw, 30px) clamp(18px, 2.2vw, 42px);
+  padding: clamp(10px, 1.5vh, 22px) clamp(14px, 1.6vw, 32px);
   overflow: hidden;
 }
 .tv-metric-heading {
   flex-shrink: 0;
+  min-width: 0;
 }
 .tv-metric-heading h2 {
   font-family: var(--font-display);
-  font-size: clamp(22px, 2vw, 38px);
+  font-size: clamp(18px, min(2vw, 3.5vh), 36px);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.025em;
 }
 .tv-metric-heading .tv-ring-icon {
-  width: clamp(42px, 4vw, 72px);
-  height: clamp(42px, 4vw, 72px);
+  width: clamp(32px, 5.5vh, 64px);
+  height: clamp(32px, 5.5vh, 64px);
+}
+.tv-fit-content {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+.tv-fit-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: max-content;
+  transform-origin: top left;
+}
+.tv-fit-full-width {
+  width: 100%;
+}
+.tv-metric-primary {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+  padding-block: clamp(4px, 0.8vh, 10px);
+  gap: 4px;
+}
+.tv-metric-periods {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  border-top: 1px solid #ffffff26;
+  padding-top: 7px;
+  height: clamp(42px, 8vh, 78px);
+  flex-shrink: 0;
+}
+.tv-metric-period {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  gap: 4px;
 }
 .tv-metric-value {
-  font-size: clamp(54px, min(6.7vw, 10.5vh), 124px);
+  font-size: 128px;
+  white-space: nowrap;
   text-shadow: 0 0 22px color-mix(in srgb, var(--tv-accent) 20%, transparent);
 }
 .tv-metric-watermark {
@@ -1016,15 +1083,15 @@
   stroke-width: 1.5;
   pointer-events: none;
 }
-.tv-productivity-caption {
-  font-size: clamp(8px, 0.75vw, 14px);
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: #b6bec4;
-  margin-top: 4px;
-}
 .tv-productivity-table {
-  scrollbar-width: thin;
+  margin-top: clamp(8px, 1.2vh, 16px);
+}
+.tv-productivity-table th,
+.tv-productivity-table td {
+  white-space: nowrap;
+}
+.tv-productivity-table tbody th {
+  white-space: normal;
 }
 .tv-slab {
   background: #101416ed;
@@ -1069,9 +1136,6 @@
   }
 }
 @media (max-height: 800px) {
-  .tv-metric-panel {
-    padding-block: 14px;
-  }
   .tv-productivity-table {
     margin-top: 10px;
   }
@@ -1108,11 +1172,12 @@
   .tv-brand p {
     display: none;
   }
-  .tv-display .tv-clock-plate {
-    padding-left: 8px;
-  }
-  .tv-display .tv-clock-plate > p:first-child {
+  .tv-clock-time {
     font-size: 34px;
+  }
+  .tv-clock-date {
+    font-size: 13px;
+    letter-spacing: 0.08em;
   }
   .tv-workflow-grid {
     grid-template-columns: 1fr 1fr;
@@ -1139,9 +1204,6 @@
   }
   .tv-metric-heading h2 {
     font-size: 18px;
-  }
-  .tv-productivity-caption {
-    display: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {

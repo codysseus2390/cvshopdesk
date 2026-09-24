@@ -1,5 +1,6 @@
 import { Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { TvFitContent } from "./tv-fit-content";
 import { formatProductivity } from "@/lib/productivity-math";
 import type { useDashboard } from "@/routes/_authenticated/hub";
 
@@ -33,14 +34,17 @@ export function TvProductivityCard({
         <span className="tv-ring-icon">
           <Wrench className="h-5 w-5" />
         </span>
-        <div>
-          <h2>Mechanic productivity</h2>
-          <p className="tv-productivity-caption">Production % by reporting period</p>
-        </div>
+        <h2>Mechanic productivity</h2>
       </div>
 
-      <div className="tv-productivity-table relative mt-4 flex min-h-0 flex-1 flex-col overflow-auto">
-        <table className="h-full w-full table-fixed border-collapse">
+      <TvFitContent className="tv-productivity-table" fullWidth>
+        <table className="w-full table-fixed border-collapse">
+          <colgroup>
+            <col className="w-[34%]" />
+            <col className="w-[22%]" />
+            <col className="w-[22%]" />
+            <col className="w-[22%]" />
+          </colgroup>
           <thead>
             <tr className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
               <th className="pb-2 text-left font-bold">Mechanic</th>
@@ -69,7 +73,7 @@ export function TvProductivityCard({
             ))}
           </tbody>
         </table>
-      </div>
+      </TvFitContent>
     </div>
   );
 }
@@ -108,7 +112,7 @@ function MechanicRow({
           >
             {name.slice(0, 1)}
           </span>
-          <span className="truncate font-display text-xl font-bold text-[#fffdf8]">{name}</span>
+          <span className="break-words font-display text-xl font-bold text-[#fffdf8]">{name}</span>
         </span>
       </th>
       <PeriodCell value={previousDay} />
@@ -118,7 +122,7 @@ function MechanicRow({
           {formatProductivity(month ?? null)}
         </span>
         {bar !== null && (
-          <span className="gauge-fill ml-auto mt-1.5 block h-1.5 w-24 overflow-hidden rounded-full bg-white/10">
+          <span className="gauge-fill ml-auto mt-1.5 block h-1.5 w-full max-w-24 overflow-hidden rounded-full bg-white/10">
             <span
               className={cn(
                 "block h-full rounded-full",

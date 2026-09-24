@@ -16,10 +16,10 @@ export function TvHeader({
   alert?: string | null;
 }) {
   return (
-    <header className="tv-header">
+    <header className="tv-header" data-screen={title === "Shop numbers" ? "numbers" : "shop"}>
       <div className="tv-brand">
         <CedarLogo className="tv-brand-logo" />
-        <p>Trusted care keeps you rolling</p>
+        {title !== "Shop numbers" && <p>Trusted care keeps you rolling</p>}
       </div>
       <div className="tv-heading">
         <h1>
@@ -33,7 +33,9 @@ export function TvHeader({
             </>
           )}
         </h1>
-        <p className="tv-tagline">Vehicles · People · Further together</p>
+        {title !== "Shop numbers" && (
+          <p className="tv-tagline">Vehicles · People · Further together</p>
+        )}
         {alert && <p className="mt-1.5 text-sm font-bold text-destructive">{alert}</p>}
       </div>
       <TvClock timezone={timezone} />
