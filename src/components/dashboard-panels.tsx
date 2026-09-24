@@ -7,6 +7,7 @@ import {
   CircleUserRound,
   FileText,
   Link2,
+  Monitor,
   Settings,
   Upload,
   Wrench,
