@@ -1097,6 +1097,95 @@
   background: #101416ed;
   box-shadow: 0 10px 24px #0005;
 }
+/* Raised metal faces: fine brushed grain over a bright, beveled reflection.
+   Keep the finish static so live values and names stay easy to read on a TV. */
+.tv-display {
+  --tv-metal-face: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #e9f0f2 35%,
+    #b7c5cb 49%,
+    #ffffff 53%,
+    #e4ecee 78%,
+    #b8c6cc 100%
+  );
+  --tv-metal-grain: repeating-linear-gradient(
+    0deg,
+    #14232b00 0px,
+    #14232b00 1px,
+    #14232b26 1px,
+    #14232b26 2px,
+    #ffffff18 2px,
+    #ffffff18 3px
+  );
+}
+.tv-heading h1,
+.tv-clock-time,
+.tv-metric-value,
+.tv-footer-stat strong {
+  text-shadow:
+    0 1px 0 #8a9ca6,
+    0 2px 0 #53636d,
+    0 3px 0 #28363e,
+    0 5px 9px #000c;
+}
+.tv-column-header h2,
+.tv-metric-heading h2,
+.tv-customer-heading h3,
+.tv-appointment h3,
+.tv-clock-date,
+.tv-customer-timer,
+.tv-appointment-time,
+.tv-footer-stat p,
+.tv-metric-period .tv-fit-inner,
+.tv-productivity-table tbody {
+  text-shadow:
+    0 1px 0 #49565c,
+    0 2px 0 #111a20,
+    0 3px 5px #000b;
+}
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .tv-heading h1,
+  .tv-heading h1 span,
+  .tv-clock-time,
+  .tv-clock-meridiem,
+  .tv-metric-value,
+  .tv-footer-stat strong,
+  .tv-column-header h2,
+  .tv-metric-heading h2 {
+    background-image: var(--tv-metal-grain), var(--tv-metal-face);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 1px 0 #81939c) drop-shadow(0 2px 0 #25343c) drop-shadow(0 4px 4px #000b);
+  }
+  .tv-heading h1 span,
+  .tv-clock-meridiem {
+    --tv-metal-face: linear-gradient(
+      180deg,
+      #ffe0a5 0%,
+      #ffad44 30%,
+      #e96508 49%,
+      #ffbc56 53%,
+      #ff8416 78%,
+      #df5705 100%
+    );
+    filter: none;
+  }
+  .tv-column-header h2,
+  .tv-metric-heading h2 {
+    filter: drop-shadow(0 1px 0 #687b85) drop-shadow(0 2px 2px #000b);
+  }
+}
+@media (forced-colors: active) {
+  .tv-display :is(h1, h1 span, h2, .tv-clock-time, .tv-clock-meridiem, .tv-metric-value, strong) {
+    background: none;
+    color: CanvasText;
+    filter: none;
+    text-shadow: none;
+  }
+}
 .tv-display[data-paused="true"] *,
 .tv-display[data-paused="true"] *::before,
 .tv-display[data-paused="true"] *::after {
