@@ -179,9 +179,11 @@ export const listDisplayNotifications = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const sb = context.supabase as unknown as Supa;
+    const member = await membership(context.supabase, context.userId);
     const { data, error } = await sb
       .from("notification_recipients")
-      .select("id, notification:notifications(id, title, message, priority, created_at)")
+      .select("id, notification:notifications(id, title, message, priority, audience, created_at)")
+      .eq("shop_id", member.shop_id)
       .eq("target", "display")
       .order("created_at", { ascending: false })
       .limit(10);
@@ -193,9 +195,74 @@ export const listDisplayNotifications = createServerFn({ method: "GET" })
         title: string;
         message: string;
         priority: string;
+        audience: string;
         created_at: string;
       } | null;
     }[];
+  });
+
+/** Update only the words shown on a queued TV announcement. */
+export const updateDisplayNotification = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        notificationId: z.string().uuid(),
+        title: z.string().trim().min(2).max(140),
+        message: z.string().trim().min(2).max(2000),
+        priority: z.enum(["low", "normal", "high"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as unknown as Supa;
+    const member = await membership(context.supabase, context.userId);
+    const allowed = await readShopPermissions(context.supabase, member.shop_id, member.role);
+    if (!allowed("manage_notifications")) {
+      throw new Error("You do not have permission to edit TV announcements.");
+    }
+    const { data: updated, error } = await sb
+      .from("notifications")
+      .update({ title: data.title, message: data.message, priority: data.priority })
+      .eq("id", data.notificationId)
+      .eq("shop_id", member.shop_id)
+      .select("id")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!updated?.id) throw new Error("This announcement is no longer on the TV.");
+    await sb.rpc("log_audit_event", {
+      p_action: "tv_notification_edited",
+      p_target: data.notificationId,
+    });
+    return { ok: true };
+  });
+
+/** Remove one display recipient without changing employee deliveries or the saved announcement. */
+export const removeDisplayNotification = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ recipientId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as unknown as Supa;
+    const member = await membership(context.supabase, context.userId);
+    const allowed = await readShopPermissions(context.supabase, member.shop_id, member.role);
+    if (!allowed("manage_notifications")) {
+      throw new Error("You do not have permission to remove TV announcements.");
+    }
+    const { data: removed, error } = await sb
+      .from("notification_recipients")
+      .delete()
+      .eq("id", data.recipientId)
+      .eq("shop_id", member.shop_id)
+      .eq("target", "display")
+      .select("id, notification_id")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!removed?.id) throw new Error("This announcement is no longer on the TV.");
+    await sb.rpc("log_audit_event", {
+      p_action: "tv_notification_removed",
+      p_target: removed.notification_id,
+    });
+    return { ok: true };
   });
 
 /** Approved staff, for choosing specific recipients. */

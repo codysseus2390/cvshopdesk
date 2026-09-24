@@ -163,6 +163,93 @@ test("forward migrations enforce permission overrides on PostgreSQL", async () =
   }
 });
 
+test("TV announcement edits and removal respect shop permissions and keep staff copies", async () => {
+  const { db } = await createDb();
+  try {
+    const shop = "00000000-0000-4000-8000-000000004001";
+    const otherShop = "00000000-0000-4000-8000-000000004002";
+    const owner = "00000000-0000-4000-8000-000000004101";
+    const staff = "00000000-0000-4000-8000-000000004102";
+    const otherOwner = "00000000-0000-4000-8000-000000004103";
+    await db.exec("set role service_role");
+    await db.query(
+      "insert into public.shops(id,name,created_by) values ($1,'TV Shop',$2),($3,'Other Shop',$4)",
+      [shop, owner, otherShop, otherOwner],
+    );
+    await db.query(
+      "insert into public.shop_members(shop_id,user_id,role,status) values ($1,$2,'owner','approved'),($1,$3,'staff','approved'),($4,$5,'owner','approved')",
+      [shop, owner, staff, otherShop, otherOwner],
+    );
+    const created = await db.query(
+      "insert into public.notifications(shop_id,title,message,priority,audience,created_by) values ($1,'Original','For TV and staff','normal','all_display',$2) returning id",
+      [shop, owner],
+    );
+    const notificationId = created.rows[0].id;
+    const display = await db.query(
+      "insert into public.notification_recipients(notification_id,shop_id,target) values ($1,$2,'display') returning id",
+      [notificationId, shop],
+    );
+    const employee = await db.query(
+      "insert into public.notification_recipients(notification_id,shop_id,target,user_id) values ($1,$2,'user',$3) returning id",
+      [notificationId, shop, staff],
+    );
+    await db.exec("reset role");
+    await db.exec("set role authenticated");
+    const asUser = asUserFn(db);
+
+    await asUser(staff);
+    const deniedEdit = await db.query(
+      "update public.notifications set title='Staff edit' where id=$1 returning id",
+      [notificationId],
+    );
+    assert.equal(deniedEdit.rows.length, 0);
+    const deniedRemoval = await db.query(
+      "delete from public.notification_recipients where id=$1 returning id",
+      [display.rows[0].id],
+    );
+    assert.equal(deniedRemoval.rows.length, 0);
+
+    await setOverride(db, shop, "staff", "manage_notifications", true);
+    await asUser(staff);
+    const grantedEdit = await db.query(
+      "update public.notifications set title='Granted staff edit' where id=$1 returning id",
+      [notificationId],
+    );
+    assert.equal(grantedEdit.rows.length, 1);
+    const employeeRemoval = await db.query(
+      "delete from public.notification_recipients where id=$1 returning id",
+      [employee.rows[0].id],
+    );
+    assert.equal(employeeRemoval.rows.length, 0, "TV controls cannot remove employee copies");
+
+    await asUser(otherOwner);
+    const crossShopEdit = await db.query(
+      "update public.notifications set title='Other shop edit' where id=$1 returning id",
+      [notificationId],
+    );
+    assert.equal(crossShopEdit.rows.length, 0);
+
+    await asUser(owner);
+    const edited = await db.query(
+      "update public.notifications set title='Updated' where id=$1 returning id",
+      [notificationId],
+    );
+    assert.equal(edited.rows.length, 1);
+    const removed = await db.query(
+      "delete from public.notification_recipients where id=$1 returning id",
+      [display.rows[0].id],
+    );
+    assert.equal(removed.rows.length, 1);
+    const saved = await db.query(
+      "select n.title, count(r.id)::int as recipients from public.notifications n join public.notification_recipients r on r.notification_id=n.id where n.id=$1 group by n.title",
+      [notificationId],
+    );
+    assert.deepEqual(saved.rows, [{ title: "Updated", recipients: 1 }]);
+  } finally {
+    await db.close();
+  }
+});
+
 test("grant/revoke matrix across newly-restricted tables (0023)", async () => {
   const { db } = await createDb();
   try {

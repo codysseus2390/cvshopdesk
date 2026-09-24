@@ -3,7 +3,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3,
-  Bell,
   ChevronRight,
   CircleUserRound,
   FileText,
@@ -17,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { listImports } from "@/lib/imports.functions";
-import { useMyNotifications } from "@/components/notification-bell";
+import { TvNotificationPanel } from "@/components/tv-notification-panel";
 import { formatProductivity } from "@/lib/productivity-math";
 
 type MechanicValue = number | null | undefined;
@@ -41,7 +40,7 @@ export function DashboardMiddleRow({
       aria-label="Shop activity"
     >
       <RecentImportsPanel />
-      <NotificationsTvPanel />
+      <TvNotificationPanel />
       <MechanicProductivityPanel mechanics={mechanics} calendarConfigured={calendarConfigured} />
     </section>
   );
@@ -113,88 +112,6 @@ function RecentImportsPanel() {
             <Link to="/numbers">
               <BarChart3 className="mr-2 h-4 w-4" />
               View numbers
-            </Link>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function NotificationsTvPanel() {
-  const { data } = useMyNotifications();
-  const items = (data ?? []).slice(0, 3);
-  const unread = (data ?? []).filter((item) => !item.read_at).length;
-
-  return (
-    <Card className="card-lift min-w-0 rounded-2xl border-border/90 bg-card shadow-card panel-glow-ember">
-      <CardHeader className="flex-row items-center justify-between gap-3 border-b border-border/70 px-4 py-3">
-        <CardTitle className="flex items-center gap-2 font-body text-base font-semibold">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted text-foreground">
-            <Bell className="h-4 w-4" />
-          </span>
-          Notifications & TV display
-          {unread > 0 && (
-            <Badge className="rounded-full bg-primary px-2 text-primary-foreground">
-              {unread} new
-            </Badge>
-          )}
-        </CardTitle>
-        <Link to="/settings" className="text-xs font-semibold text-primary hover:underline">
-          View all
-        </Link>
-      </CardHeader>
-      <CardContent className="grid min-h-[252px] grid-cols-[minmax(0,1fr)_132px] gap-3 px-4 py-3">
-        <div className="min-w-0">
-          {items.length === 0 && (
-            <p className="py-5 text-sm text-muted-foreground">
-              No notifications have been sent to this shop yet.
-            </p>
-          )}
-          {items.map((item, index) => (
-            <div
-              key={item.id}
-              className="flex items-start gap-2.5 border-b border-border/70 py-3 last:border-0"
-            >
-              <span
-                className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${index % 2 ? "bg-primary/15 text-primary" : "bg-secondary/15 text-secondary"}`}
-              >
-                <Bell className="h-3 w-3" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold">
-                  {item.notification?.title ?? "Announcement"}
-                </span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {item.notification?.message ?? "No message"}
-                </span>
-                <span className="block text-[11px] text-muted-foreground">
-                  {item.notification?.created_at
-                    ? new Date(item.notification.created_at).toLocaleString()
-                    : ""}
-                </span>
-              </span>
-              {!item.read_at && (
-                <span
-                  className="live-dot mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-primary"
-                  aria-label="Unread"
-                />
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="flex min-w-0 flex-col">
-          <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl bg-muted">
-            <img
-              src="/tv-promo.jpg"
-              alt="Good tires, brighter tomorrows"
-              className="h-full w-full object-cover"
-            />
-          </div>
-          <Button asChild variant="outline" className="mt-2 h-9 rounded-xl text-xs">
-            <Link to="/tv">
-              <Monitor className="mr-1.5 h-3.5 w-3.5" />
-              Open TV mode
             </Link>
           </Button>
         </div>
