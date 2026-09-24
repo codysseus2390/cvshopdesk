@@ -1,5 +1,5 @@
 /**
- * The "+" menu shared by Hank's main composer and the bottom Hank bar, so both
+ * The "+" menu shared by Hank's page and header messenger, so both
  * always offer the same things.
  */
 import { useEffect, useState } from "react";
@@ -20,7 +20,7 @@ interface Props {
   onTakePhoto?: () => void;
   /** Starts a picture request in the composer. */
   onCreateImage: () => void;
-  /** Bigger control on the bottom bar. */
+  /** Optional larger control. */
   size?: "sm" | "lg";
 }
 

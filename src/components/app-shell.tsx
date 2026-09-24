@@ -11,17 +11,15 @@ import {
   History,
   LayoutDashboard,
   Monitor,
-  PackageSearch,
   Search,
   Settings,
   Sparkles,
   UserRound,
-  UsersRound,
   Wrench,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CedarLogo } from "@/components/cedar-logo";
-import { AssistantBar } from "@/components/assistant-bar";
+import { HankMessenger } from "@/components/hank-messenger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useShopContext } from "@/components/access-gate";
@@ -38,7 +36,7 @@ const NAV = [
     needs: "view_dashboard",
     group: "primary",
   },
-  { to: "/shop-ai", label: "Hank", icon: Bot, needs: undefined, group: "primary" },
+  { to: "/shop-ai", label: "Hank", icon: Bot, needs: "use_assistant", group: "primary" },
   { to: "/numbers", label: "Numbers", icon: BarChart3, needs: "view_dashboard", group: "primary" },
   {
     to: "/entry",
@@ -48,8 +46,6 @@ const NAV = [
     group: "primary",
   },
   { to: "/history", label: "History", icon: History, needs: undefined, group: "shop" },
-  { to: "/inventory", label: "Inventory", icon: PackageSearch, needs: undefined, group: "shop" },
-  { to: "/customers", label: "Customers", icon: UsersRound, needs: undefined, group: "shop" },
   {
     to: "/board",
     label: "Jobs & appointments",
@@ -126,7 +122,7 @@ export function AppShell({
   }
 
   return (
-    <div className="page-vignette min-h-screen pb-28">
+    <div className="page-vignette min-h-screen overflow-x-clip">
       <div className="flex">
         <aside className="sidebar-surface relative hidden h-screen w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
           <div className="relative z-[2] flex h-full flex-col">
@@ -211,7 +207,7 @@ export function AppShell({
                 )
               )}
             </div>
-            <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 rounded-2xl border border-border/80 bg-card p-3 shadow-card md:mt-0 md:flex md:border-0 md:bg-transparent md:p-0 md:shadow-none">
+            <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto_auto_auto] items-center gap-2 rounded-2xl border border-border/80 bg-card p-3 shadow-card md:mt-0 md:flex md:border-0 md:bg-transparent md:p-0 md:shadow-none">
               {appearance === "dashboard" && (
                 <form
                   onSubmit={(e) => e.preventDefault()}
@@ -221,8 +217,8 @@ export function AppShell({
                   <Input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search customers, inventory, or jobs..."
-                    aria-label="Search customers, inventory, or jobs"
+                    placeholder="Search jobs..."
+                    aria-label="Search jobs"
                     className="h-10 rounded-full border-border/80 bg-card pl-10 pr-4 shadow-none"
                   />
                 </form>
@@ -242,13 +238,14 @@ export function AppShell({
               >
                 <CedarLogo className="h-12 w-full max-w-[13rem] object-contain object-left" />
               </Link>
+              {can("use_assistant") && <HankMessenger />}
               <NotificationBell />
               <ThemeToggle className="rounded-full" />
               <Button
                 variant="outline"
                 size="sm"
                 onClick={signOut}
-                className="col-span-3 mt-1 justify-self-start rounded-xl md:col-auto md:mt-0"
+                className="col-span-full mt-1 justify-self-start rounded-xl md:col-auto md:mt-0"
               >
                 Sign out
               </Button>
@@ -282,7 +279,6 @@ export function AppShell({
           </main>
         </div>
       </div>
-      <AssistantBar />
     </div>
   );
 }
