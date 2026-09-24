@@ -1,5 +1,26 @@
 # HANDOFF.md — Living Handoff Document
 
+
+## 2026-09-24 — Hank header UI release candidate
+
+Branch: codex/hank-ui-production-base, based on live source ce32167. This branch
+contains only the Hank header messenger, removal of the bottom Hank bar, and
+removal of Customers and Inventory routes and navigation. No database change.
+The original UI implementation remains on codex/hank-header-chat.
+
+Validation: typecheck, build, lint (0 errors, 17 existing warnings), and
+unit tests (111 passed, 17 skipped) passed. Preview
+https://cvshopdesk-an2dxpf7k-codysseus90.vercel.app is Ready and uses the
+staging Supabase project. Production and Preview backend hostnames were checked
+separately. Vercel autoAssignCustomDomains is false.
+
+An unassigned production build from 2093625 was blocked before building because
+its inherited author email was malformed, so this release-note commit uses the
+authenticated repository owner's established Git identity. The live domain
+remains on the previous Ready production deployment until the new production
+build is verified and promoted.
+
+---
 ## 2026-09-23 — TV metric fit and clock cleanup
 
 Branch: codex/tv-fit-and-clock. Source commit: 5606a5344f338bb89f3e829fa08858b58c69119f.
