@@ -4,6 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { AccessGate } from "@/components/access-gate";
 import { TvBackground } from "@/components/tv/tv-background";
+import "@/components/tv/tv-numbers.css";
+import { TvNumbersHeader } from "@/components/tv/tv-numbers-header";
+import { TvNumbersFooter } from "@/components/tv/tv-numbers-footer";
 import { TvHeader } from "@/components/tv/tv-header";
 import { TvNumbersScreen } from "@/components/tv/tv-numbers-screen";
 import { TvShopScreen } from "@/components/tv/tv-shop-screen";
@@ -65,6 +68,8 @@ function TvMode() {
   }, [paused]);
 
   const screen = screenAt(elapsed);
+  const Header = screen === "numbers" ? TvNumbersHeader : TvHeader;
+  const Footer = screen === "numbers" ? TvNumbersFooter : TvStatusBar;
 
   const tvBoard = board.data ? buildTvBoard(board.data, now) : null;
   const counts = tvBoard?.counts ?? { inShop: 0, upcoming: 0, done: 0 };
@@ -86,13 +91,16 @@ function TvMode() {
 
   return (
     <div
-      className="tv-display dark relative flex h-screen flex-col overflow-hidden bg-background text-foreground"
+      className={cn(
+        "dark relative flex h-screen flex-col overflow-hidden bg-background text-foreground",
+        screen === "numbers" ? "tv-numbers-mode" : "tv-display",
+      )}
       data-paused={paused}
     >
-      <TvBackground />
+      {screen === "shop" && <TvBackground />}
 
       <div className="relative z-10 flex h-full min-h-0 flex-col">
-        <TvHeader
+        <Header
           title={screen === "numbers" ? "Shop numbers" : "Today's shop"}
           timezone={board.data?.timezone}
           alert={alert}
@@ -100,12 +108,12 @@ function TvMode() {
 
         <main className="tv-main flex min-h-0 flex-1 flex-col gap-4">
           {(announcements.data?.length ?? 0) > 0 && (
-            <div className="flex shrink-0 gap-4">
+            <div className="tv-announcements flex shrink-0 gap-4">
               {(announcements.data ?? []).slice(0, 2).map((item) => (
                 <div
                   key={item.id}
                   className={cn(
-                    "tv-slab flex-1 rounded-2xl border border-border border-l-[6px] px-5 py-3.5",
+                    "tv-announcement tv-slab flex-1 rounded-2xl border border-border border-l-[6px] px-5 py-3.5",
                     item.notification?.priority === "high"
                       ? "border-l-destructive"
                       : "border-l-primary",
@@ -173,7 +181,7 @@ function TvMode() {
           </div>
         </main>
 
-        <TvStatusBar
+        <Footer
           inShop={counts.inShop}
           upcoming={counts.upcoming}
           done={counts.done}

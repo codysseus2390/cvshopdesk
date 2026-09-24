@@ -1,0 +1,567 @@
+@font-face {
+  font-family: "TV Anton";
+  src: url("/fonts/anton.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Reference: 1024 × 570. These styles apply only to the numbers rotation. */
+.tv-numbers-mode {
+  --tv-green: #94ff30;
+  --tv-orange: #ff9500;
+  --tv-silver: #eef5f7;
+  --tv-display: "TV Anton", "Oswald", sans-serif;
+  background: #050b0c url("/tv-numbers-background.png") center / cover;
+  padding: 0 2.8vw 1.56vw 1.86vw;
+}
+.tv-numbers-mode > .tv-metal {
+  display: none;
+}
+.tv-numbers-mode .tv-bar {
+  height: 9.77vw;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  align-items: center;
+}
+.tv-numbers-mode header > div:first-child {
+  padding: 0 2.64vw 0 0.2vw;
+}
+.tv-numbers-mode header img {
+  width: 27.35vw;
+  height: auto;
+}
+.tv-numbers-mode header > div:nth-child(2) {
+  border-left: 1px solid #657171;
+  padding: 0 0 0 2.64vw;
+  height: 5.57vw;
+  justify-content: center;
+}
+.tv-numbers-mode header > div:nth-child(2) > p:first-child {
+  font-family: var(--tv-display);
+  font-weight: 400;
+  font-size: 4.69vw;
+  line-height: 1.15;
+  letter-spacing: 0.12vw;
+  white-space: nowrap;
+  color: var(--tv-silver);
+  text-shadow:
+    0 0.2vw 0.1vw #6a777a,
+    0 0.35vw 0.45vw #000;
+}
+.tv-numbers-mode .tv-title-accent {
+  color: var(--tv-orange);
+  text-shadow:
+    0 0.2vw 0.1vw #9b4d04,
+    0 0.35vw 0.45vw #000;
+}
+.tv-numbers-mode .tv-clock-plate {
+  min-width: 0;
+  border: 0;
+  padding: 0 1.07vw 0 1vw;
+  background: transparent;
+  box-shadow: none;
+}
+.tv-numbers-mode .tv-clock-plate > p:first-child {
+  font-family: var(--tv-display);
+  font-size: 5.47vw;
+  font-weight: 400;
+  line-height: 1.03;
+  gap: 0.8vw;
+  text-shadow:
+    0 0.2vw 0.1vw #67777b,
+    0 0.3vw 0.45vw #000;
+}
+.tv-numbers-mode .tv-clock-plate > p:first-child span {
+  font-family: var(--tv-display);
+  font-size: 1.95vw;
+  color: #ffb33b;
+  font-weight: 400;
+}
+.tv-numbers-mode .tv-clock-plate > p:last-child {
+  font-family: var(--tv-display);
+  font-size: 1.47vw;
+  color: #ffb33b;
+  letter-spacing: 0.2vw;
+  margin-top: 0.4vw;
+  white-space: nowrap;
+}
+.tv-numbers-mode .tv-main {
+  padding: 0 0 1.17vw;
+  gap: 1.07vw;
+}
+.tv-numbers-mode .tv-announcements {
+  gap: 1vw;
+}
+.tv-numbers-mode .tv-announcement {
+  background: #0b1316ed;
+  border: 1px solid #354449;
+  border-left: 0.49vw solid var(--tv-orange);
+  border-radius: 1.17vw;
+  padding: 0.35vw 1.56vw;
+  box-shadow: inset 0 0 1.2vw #ffffff05;
+}
+.tv-numbers-mode .tv-announcement.border-l-destructive {
+  border-left-color: #ff5656;
+}
+.tv-numbers-mode .tv-announcement p:first-child {
+  font-family: "Source Sans 3", sans-serif;
+  font-size: 1.56vw;
+  line-height: 1.15;
+}
+.tv-numbers-mode .tv-announcement p:last-child {
+  font-size: 1.17vw;
+  line-height: 1.25;
+  color: #aab1b4;
+  margin-top: 0.1vw;
+}
+.tv-numbers-grid {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  grid-template: repeat(2, minmax(0, 1fr)) / repeat(2, minmax(0, 1fr));
+  gap: 1.07vw;
+}
+.tv-number-card {
+  --tv-accent: var(--tv-green);
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0.85vw 1.56vw 1.07vw;
+  border: 1px solid var(--tv-accent);
+  border-radius: 1.27vw;
+  background: #04110eeb;
+  box-shadow:
+    inset 0 0 1.5vw #72fa2030,
+    0 0 0.65vw #72fa202d;
+}
+.tv-number-card--primary {
+  --tv-accent: var(--tv-orange);
+  background: #10100dec;
+  box-shadow:
+    inset 0 0 1.5vw #ff940030,
+    0 0 0.65vw #ff940030;
+}
+.tv-number-card-heading {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1.56vw;
+  min-height: 4.59vw;
+  padding-bottom: 0.59vw;
+  border-bottom: 1px solid #75847b80;
+}
+.tv-number-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 4.49vw;
+  height: 4.49vw;
+  border: 0.29vw solid var(--tv-accent);
+  border-radius: 50%;
+  color: var(--tv-accent);
+  box-shadow:
+    0 0 1.2vw color-mix(in srgb, var(--tv-accent) 28%, transparent),
+    inset 0 0 0.8vw color-mix(in srgb, var(--tv-accent) 18%, transparent);
+}
+.tv-number-icon svg {
+  width: 2.54vw;
+  height: 2.54vw;
+  stroke-width: 2.3;
+}
+.tv-number-card-heading h2 {
+  color: var(--tv-silver);
+  font: 400 2.44vw/1.1 var(--tv-display);
+  text-transform: uppercase;
+  letter-spacing: 0.035vw;
+  text-shadow: 0 0.12vw 0.1vw #667274;
+}
+.tv-number-watermark {
+  position: absolute;
+  right: 1.27vw;
+  width: 5.86vw;
+  height: 5.86vw;
+  color: var(--tv-accent);
+  opacity: 0.15;
+}
+.tv-number-periods {
+  display: grid;
+  grid-template-columns: 1.08fr 1fr 0.92fr;
+  margin-top: 0.88vw;
+  flex: 1;
+  align-items: center;
+}
+.tv-number-period {
+  min-width: 0;
+  padding-left: 2.05vw;
+  border-left: 1px solid #64757190;
+}
+.tv-number-period:first-child {
+  border: 0;
+  padding-left: 0;
+}
+.tv-number-period-label {
+  min-height: 1.35vw;
+  color: #b6babc;
+  font:
+    700 1.17vw/1.15 "Source Sans 3",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.1vw;
+}
+.tv-number-value {
+  font: 400 5.08vw/1.06 var(--tv-display);
+  letter-spacing: 0.01vw;
+  color: var(--tv-accent);
+  margin-top: 0.35vw;
+  text-shadow: 0 0 0.35vw color-mix(in srgb, var(--tv-accent) 30%, transparent);
+}
+.tv-number-value--currency {
+  font-size: 4.1vw;
+  letter-spacing: -0.04vw;
+}
+.tv-number-value--empty {
+  color: #a9b4b0;
+  text-shadow: none;
+}
+.tv-productivity {
+  padding-top: 0.68vw;
+  padding-bottom: 0.65vw;
+}
+.tv-productivity .tv-number-card-heading {
+  min-height: 4.2vw;
+  padding: 0;
+  border: 0;
+  gap: 1.85vw;
+}
+.tv-productivity .tv-number-icon {
+  width: 4.1vw;
+  height: 4.1vw;
+}
+.tv-productivity .tv-number-card-heading h2 {
+  font-size: 2.2vw;
+  white-space: nowrap;
+}
+.tv-productivity-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin-top: 0.4vw;
+  scrollbar-width: thin;
+}
+.tv-productivity table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.tv-productivity thead {
+  color: #b8bfc0;
+  font:
+    700 1vw/1.3 "Source Sans 3",
+    sans-serif;
+  letter-spacing: 0.07vw;
+  text-transform: uppercase;
+}
+.tv-productivity thead th {
+  padding-bottom: 0.25vw;
+  text-align: center;
+}
+.tv-productivity thead th:first-child {
+  width: 23%;
+  text-align: left;
+}
+.tv-productivity thead th:nth-child(2),
+.tv-productivity thead th:nth-child(3) {
+  width: 21%;
+}
+.tv-productivity thead th:last-child {
+  text-align: left;
+  padding-left: 4.4%;
+}
+.tv-productivity tbody tr {
+  border-top: 1px solid #60746d65;
+  height: 2.25vw;
+}
+.tv-productivity tbody td {
+  color: #eef2f2;
+  text-align: center;
+  font:
+    600 1.56vw/1 "Oswald",
+    sans-serif;
+}
+.tv-productivity tbody th {
+  color: #eef2f2;
+  font:
+    700 1.47vw/1 "Source Sans 3",
+    sans-serif;
+  text-align: left;
+}
+.tv-mechanic-name {
+  display: flex;
+  gap: 1.27vw;
+  align-items: center;
+}
+.tv-mechanic-name > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tv-mechanic-initial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.85vw;
+  height: 1.85vw;
+  color: var(--tv-green);
+  border: 1px solid #5aab26;
+  border-radius: 50%;
+  font:
+    500 1.27vw/1 "Oswald",
+    sans-serif;
+  box-shadow: inset 0 0 0.6vw #89ff3030;
+}
+.tv-mechanic-orange .tv-mechanic-initial {
+  color: var(--tv-orange);
+  border-color: var(--tv-orange);
+}
+.tv-productivity-track {
+  display: block;
+  height: 0.59vw;
+  border-radius: 1vw;
+  background: #273831;
+  overflow: hidden;
+}
+.tv-productivity-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #74d523;
+  box-shadow: 0 0 0.5vw #87ff27;
+}
+.tv-mechanic-orange .tv-productivity-track > span {
+  background: var(--tv-orange);
+}
+.tv-productivity tbody td.tv-productivity-empty {
+  padding: 1vw 0;
+  text-align: left;
+  color: #aab6b0;
+  font-size: 1.4vw;
+}
+.tv-numbers-footer {
+  display: grid;
+  grid-template-columns: 3.16fr 1fr;
+  gap: 1.56vw;
+  flex-shrink: 0;
+  height: 6.93vw;
+}
+.tv-numbers-status {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid #425257;
+  border-radius: 1.17vw;
+  background: #0a1214ed;
+  padding: 0.49vw 0;
+}
+.tv-numbers-status-item {
+  display: flex;
+  align-items: center;
+  gap: 1.37vw;
+  padding: 0 1.37vw;
+  min-width: 0;
+}
+.tv-numbers-status-item + .tv-numbers-status-item {
+  border-left: 1px solid #3c4e51;
+}
+.tv-status-orange {
+  --tv-accent: var(--tv-orange);
+}
+.tv-status-blue {
+  --tv-accent: #bde4f4;
+}
+.tv-status-green {
+  --tv-accent: var(--tv-green);
+}
+.tv-numbers-status-item strong {
+  font: 400 4.79vw/1 var(--tv-display);
+  color: var(--tv-silver);
+  text-shadow: 0 0.18vw 0.1vw #607379;
+}
+.tv-numbers-status-item .tv-number-icon {
+  width: 4.69vw;
+  height: 4.69vw;
+}
+.tv-status-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6vw;
+  min-width: 0;
+}
+.tv-status-copy b {
+  color: var(--tv-accent);
+  text-transform: uppercase;
+  font: 400 1.56vw/1 var(--tv-display);
+  white-space: nowrap;
+}
+.tv-status-copy > span {
+  color: #a4acae;
+  font:
+    400 1.12vw/1 "Source Sans 3",
+    sans-serif;
+  white-space: nowrap;
+  letter-spacing: -0.025vw;
+}
+.tv-numbers-signoff {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: #a5b1b9;
+  font-size: 0.78vw;
+  letter-spacing: 0.25vw;
+  text-align: center;
+  text-transform: uppercase;
+}
+.tv-numbers-signoff p:first-child {
+  padding-bottom: 1.17vw;
+  border-bottom: 1px solid #354346;
+  white-space: nowrap;
+  letter-spacing: 0.16vw;
+}
+.tv-numbers-signoff p:last-child {
+  padding-top: 1.07vw;
+  letter-spacing: 0.39vw;
+}
+@media (max-aspect-ratio: 4/3) {
+  .tv-numbers-mode {
+    overflow-y: auto;
+    min-height: 100svh;
+    height: auto;
+  }
+  .tv-numbers-mode > .relative {
+    min-height: 100svh;
+  }
+  .tv-numbers-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, minmax(22vw, auto));
+  }
+  .tv-number-card-heading h2 {
+    font-size: 3vw;
+  }
+  .tv-number-period-label {
+    font-size: 1.8vw;
+  }
+  .tv-number-value {
+    font-size: 6vw;
+  }
+  .tv-productivity tbody tr {
+    height: 4vw;
+  }
+  .tv-productivity tbody td,
+  .tv-productivity tbody th {
+    font-size: 2vw;
+  }
+}
+
+/* Optical width and metallic highlights measured against the supplied frame. */
+.tv-numbers-mode header img {
+  transform: translateY(0.4vw);
+}
+.tv-numbers-mode header > div:nth-child(2) > p:first-child {
+  transform: translateY(0.7vw) scaleX(1.2);
+  transform-origin: left center;
+}
+.tv-numbers-mode .tv-clock-plate {
+  transform: translateY(0.7vw);
+}
+.tv-numbers-mode .tv-clock-plate > p:first-child {
+  transform: scaleX(1.16);
+  transform-origin: right;
+}
+.tv-number-card-heading h2 {
+  transform: scaleX(1.16);
+  transform-origin: left center;
+}
+.tv-number-value {
+  transform: scaleX(1.12);
+  transform-origin: left;
+}
+.tv-numbers-status-item strong {
+  transform: scaleX(1.12);
+}
+.tv-status-copy b {
+  transform: scaleX(1.14);
+  transform-origin: left;
+}
+.tv-numbers-mode header > div:nth-child(2) > p:first-child,
+.tv-numbers-mode .tv-clock-plate > p:first-child,
+.tv-numbers-status-item strong {
+  background: linear-gradient(#fff 12%, #eaf2f5 43%, #8c9aa1 54%, #f4fbff 73%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 0.2vw 0.1vw #536167);
+}
+.tv-numbers-mode .tv-title-accent {
+  background: linear-gradient(#ffc861 8%, #ff9500 44%, #af5000 56%, #ffa91e 75%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+}
+.tv-numbers-mode .tv-clock-plate > p:first-child span {
+  -webkit-text-fill-color: #ffb33b;
+}
+.tv-number-value:not(.tv-number-value--empty) {
+  background: linear-gradient(#b7ff75, #8ef632 68%, #74df17);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.tv-number-card--primary .tv-number-value:not(.tv-number-value--empty) {
+  background-image: linear-gradient(#ffc04c, #ff9900 65%, #f18600);
+}
+
+.tv-number-value:not(.tv-number-value--currency) {
+  transform: scaleX(1.25);
+}
+.tv-productivity .tv-number-card-heading h2 {
+  transform: scaleX(1.3);
+}
+.tv-productivity tbody tr {
+  height: 2.4vw;
+}
+.tv-productivity {
+  padding-bottom: 0.3vw;
+}
+.tv-numbers-mode .tv-clock-plate > p:last-child {
+  font-family: "Oswald", sans-serif;
+  font-weight: 700;
+}
+.tv-status-copy {
+  padding-left: 0.4vw;
+}
+
+/* Keep the deployed board's rotation and controls available on both screens. */
+.tv-numbers-mode .tv-controls {
+  z-index: 10;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tv-numbers-mode *,
+  .tv-numbers-mode *::before,
+  .tv-numbers-mode *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.tv-numbers-mode .tv-controls {
+  right: 2.8vw;
+  bottom: 0.2vw;
+  opacity: 0;
+}
+.tv-numbers-mode .tv-controls:hover,
+.tv-numbers-mode .tv-controls:focus-within {
+  opacity: 1;
+}
