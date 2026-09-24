@@ -158,7 +158,6 @@ export function VoiceMode(props: Props) {
         setPhase("ready");
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [transcribe],
   );
 

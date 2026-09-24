@@ -34,6 +34,8 @@ export function useHankSpeech() {
   const stop = useCallback(() => {
     requestRef.current += 1;
     if (audioRef.current) {
+      audioRef.current.onended = null;
+      audioRef.current.onerror = null;
       audioRef.current.pause();
       audioRef.current.src = "";
       audioRef.current = null;
@@ -42,7 +44,17 @@ export function useHankSpeech() {
     setLoadingId(null);
   }, []);
 
-  useEffect(() => stop, [stop]);
+  useEffect(
+    () => () => {
+      stop();
+      void ctxRef.current?.close().catch(() => {});
+      ctxRef.current = null;
+      analyserRef.current = null;
+      gainRef.current = null;
+      samplesRef.current = null;
+    },
+    [stop],
+  );
 
   /** Plays a chunk of Hank's text. `id` identifies which message is speaking. */
   const play = useCallback(
