@@ -11,6 +11,8 @@ import {
   type TvNextUpItem,
   type TvScheduleRow,
 } from "@/components/tv/tv-shop-screen";
+import "@/components/tv/tv-numbers.css";
+import { TvNumbersFooter } from "@/components/tv/tv-numbers-footer";
 import { TvStatusBar } from "@/components/tv/tv-status-bar";
 import { cn } from "@/lib/utils";
 import { isValidTimeZone } from "@/lib/timezone";
@@ -182,7 +184,12 @@ function TvMode() {
       : null;
 
   return (
-    <div className="dark relative flex h-screen flex-col overflow-hidden bg-background text-foreground">
+    <div
+      className={cn(
+        "dark relative flex h-screen flex-col overflow-hidden bg-background text-foreground",
+        screen === "numbers" && "tv-numbers-mode",
+      )}
+    >
       <TvBackground />
 
       <div className="relative z-10 flex h-full min-h-0 flex-col">
@@ -192,14 +199,14 @@ function TvMode() {
           alert={alert}
         />
 
-        <main className="flex min-h-0 flex-1 flex-col gap-4 p-4">
+        <main className="tv-main flex min-h-0 flex-1 flex-col gap-4 p-4">
           {(announcements.data?.length ?? 0) > 0 && (
-            <div className="flex shrink-0 gap-4">
+            <div className="tv-announcements flex shrink-0 gap-4">
               {(announcements.data ?? []).slice(0, 2).map((item) => (
                 <div
                   key={item.id}
                   className={cn(
-                    "tv-slab flex-1 rounded-2xl border border-border border-l-[6px] px-5 py-3.5",
+                    "tv-announcement tv-slab flex-1 rounded-2xl border border-border border-l-[6px] px-5 py-3.5",
                     item.notification?.priority === "high"
                       ? "border-l-destructive"
                       : "border-l-primary",
@@ -225,12 +232,16 @@ function TvMode() {
           </div>
         </main>
 
-        <TvStatusBar
-          inShop={counts.inShop}
-          upcoming={counts.upcoming}
-          done={counts.done}
-          nextAppointment={nextAppointment}
-        />
+        {screen === "numbers" ? (
+          <TvNumbersFooter {...counts} nextAppointment={nextAppointment} />
+        ) : (
+          <TvStatusBar
+            inShop={counts.inShop}
+            upcoming={counts.upcoming}
+            done={counts.done}
+            nextAppointment={nextAppointment}
+          />
+        )}
       </div>
     </div>
   );

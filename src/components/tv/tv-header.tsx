@@ -22,7 +22,13 @@ export function TvHeader({
       </div>
       <div className="flex flex-1 flex-col justify-center border-l border-border px-7 py-4">
         <p className="font-display text-3xl font-bold uppercase leading-none tracking-[0.18em] text-primary">
-          {title}
+          {title === "Shop numbers" ? (
+            <>
+              Shop <span className="tv-title-accent">numbers</span>
+            </>
+          ) : (
+            title
+          )}
         </p>
         {alert && <p className="mt-1.5 text-sm font-bold text-destructive">{alert}</p>}
       </div>
