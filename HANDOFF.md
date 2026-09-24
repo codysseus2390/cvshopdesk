@@ -18,13 +18,12 @@ metrics and Dale/Josh/Teagen, no subtitle/taglines, no clock box, no clipped con
 
 Ready configured Preview: Cw8Ry1dnpvHqH1N5oeiUVy7Qv2bz
 https://cvshopdesk-a9fks6cjg-codysseus90.vercel.app/tv
-Production still CLzVzfAgqyfh3d2HmiMu3QJpzUfM / e2489ae.
-Production redeploy dialog is prepared from the new preview with Production selected.
-Automatic approval review rejected the final Redeploy click twice, stating prior
-user authorization was not recognized. Explicit confirmation requested asynchronously.
-Do not use an alternate deployment path to bypass that rejection.
-Exact next step: after renewed user confirmation, submit prepared Production redeploy,
-wait Ready, promote the Production build to app.cedarvalleytire.com and verify Current.
+Production: RDpTLnnAKoXNq3ctfXy38yJv56BX, rebuilt with Production settings.
+https://cvshopdesk-f1fgelhs5-codysseus90.vercel.app/tv
+Source 5606a53. Owner renewed production authorization after automatic review
+failed to recognize prior permission. Production build was promoted to app.cedarvalleytire.com.
+Vercel verified Ready / Production / Current Domains with the live domain.
+Next step: optional signed-in production visual check; preview visual checks passed.
 Relevant files: src/components/tv/tv-{fit-content,metric-card,productivity-card,header,clock}.tsx,
 src/styles.css. Local workspace is aligned to the published source commit.
 
