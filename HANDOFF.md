@@ -1,5 +1,30 @@
 # HANDOFF.md — Living Handoff Document
 
+## 2026-09-23 — Textured dimensional TV typography
+
+Branch: codex/tv-texture-depth. Source commit: ce32167c31e433e88204b4b4895a755d3e4c89d0.
+Changed only src/styles.css: brushed metallic grain and beveled gradients on large
+headings, clock, metric values and footer counts; softer raised shadows for names,
+percentages, date, timers and smaller labels. Static finish preserves readability.
+Solid-text fallback and forced-colors reset included. No layout or data changes.
+Updated existing Figma frames 2:2 and 4:34 in P7whBvxGPIv9NXz4aj3UDC.
+
+Validation: build and TV ESLint pass; 111 tests passed, 17 skipped. CI 35939170664
+passed. Actual components verified in browser at 1280x720, 1280x600 and 1920x1080,
+including large values, names, percentages, header/clock and fitting behavior.
+Temporary local sample fixture removed and dev server stopped.
+
+Ready feature Preview: 4d4NAEjVAkDQQmEyUeXRQWwGbbb6
+https://cvshopdesk-7opfzyatb-codysseus90.vercel.app/tv
+Production remains RDpTLnnAKoXNq3ctfXy38yJv56BX / source 5606a53.
+Automatic approval review blocked updating codex/autoflow-release, requiring
+fresh production authorization. Asked owner asynchronously; do not bypass block.
+Next step after owner confirms: fast-forward codex/autoflow-release to ce32167,
+wait configured Preview Ready, rebuild with Production settings, then promote
+the resulting Production build to app.cedarvalleytire.com. Do not deploy main.
+
+---
+
 ## 2026-09-23 — TV metric fit and clock cleanup
 
 Branch: codex/tv-fit-and-clock. Source commit: 5606a5344f338bb89f3e829fa08858b58c69119f.
