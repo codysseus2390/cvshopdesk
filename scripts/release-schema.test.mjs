@@ -114,15 +114,16 @@ test("journal comparisons explicitly report LF or CRLF without rewriting", () =>
   assert.throws(() => migrationHashes("select\r1;"));
 });
 
-test("the repository journal is complete through permission and calendar migrations", () => {
+test("the repository journal includes the TV notification migration", () => {
   const migrations = readExpectedMigrations(root);
-  assert.equal(migrations.length, 25);
+  assert.equal(migrations.length, 26);
   assert.deepEqual(
-    migrations.slice(-3).map(({ tag }) => tag),
+    migrations.slice(-4).map(({ tag }) => tag),
     [
       "0022_enforce_edit_records_on_customers",
       "0023_effective_permissions",
       "0024_business_calendar",
+      "0025_manage_tv_notifications",
     ],
   );
   assert.ok(migrations.every(({ hashes }) => /^[a-f0-9]{64}$/.test(hashes.lf)));
