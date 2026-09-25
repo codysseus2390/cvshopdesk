@@ -134,3 +134,15 @@ not stranded locally if the session ends unexpectedly.
 > throughout every session (commit + push after each meaningful chunk). If the user says
 > usage is low, or explicitly requests a handoff at any time, immediately enter handoff
 > mode — do not wait for an internal threshold to be reached.
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as GitHub Issues in this repo, managed via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context layout: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
