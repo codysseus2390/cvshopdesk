@@ -17,6 +17,13 @@ Read this file before making substantial changes. Supplement with `PROJECT_CONTE
 - Do not merge to `main` unless explicitly instructed by the project owner.
 - Before picking up a task, check `HANDOFF.md` for in-progress work and known issues.
 
+## Deployment Workflow
+
+- Feature branches and pull requests deploy to Vercel Preview for review.
+- Pushing or merging to `main` must not automatically deploy to Production.
+- Deploy Production manually from the current `main` only when the project owner explicitly asks to go live.
+- Preview uses the staging Supabase environment. Do not promote a Preview deployment to Production; build a separate Production deployment with Production environment variables.
+
 ---
 
 ## Before Starting Substantial Work
