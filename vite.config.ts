@@ -6,12 +6,6 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import { nitro } from "nitro/vite";
 
 export default defineConfig({
-  define: {
-    // Vercel sets VERCEL_ENV ("production" | "preview" | "development") at build
-    // time but doesn't expose it to client code on its own — bake it in here so
-    // routes can tell a real Production deploy apart from a PR Preview build.
-    "import.meta.env.VITE_DEPLOY_ENV": JSON.stringify(process.env["VERCEL_ENV"] ?? "development"),
-  },
   plugins: [
     tsconfigPaths(),
     tailwindcss(),
