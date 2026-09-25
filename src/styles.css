@@ -794,6 +794,9 @@
 .tv-customer-card:nth-child(2n) .tv-customer-rail {
   animation-delay: -1s;
 }
+.tv-customer-card[data-note-edge="true"] {
+  padding-top: clamp(24px, 1.9vw, 32px);
+}
 .tv-customer-heading {
   display: flex;
   align-items: flex-start;
@@ -907,12 +910,17 @@
   flex-shrink: 0;
 }
 .tv-appointment {
+  position: relative;
   padding: 14px 8px;
   border-bottom: 1px solid #ffffff20;
   border-top: 2px solid var(--tv-service-accent, transparent);
   color: #c4ccd1;
   font-size: clamp(12px, 0.9vw, 17px);
   overflow-wrap: anywhere;
+}
+.tv-appointment[data-note-edge="true"] {
+  padding-top: clamp(26px, 2vw, 34px);
+  border-top-color: transparent;
 }
 .tv-appointment-heading {
   display: flex;
@@ -954,6 +962,64 @@
   border-radius: inherit;
   border: 1px solid #ffffff30;
   pointer-events: none;
+}
+/* Note-code labels (WAITING / DROP OFF / TIRE ONLY), set inside the card's top
+   edge line rather than as a badge — see TvNoteEdge. */
+.tv-note-edge {
+  position: absolute;
+  top: 4px;
+  left: 12px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 2;
+}
+.tv-note-edge-line {
+  flex: 1 1 auto;
+  min-width: 6px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--tv-note-color, #ffffff30);
+  box-shadow: 0 0 7px 1px var(--tv-note-color, transparent);
+}
+.tv-note-label {
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(8px, 0.6vw, 11px);
+  letter-spacing: 0.14em;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--tv-note-color);
+  text-shadow:
+    0 0 5px var(--tv-note-color),
+    0 0 11px var(--tv-note-color);
+}
+.tv-note-label--waiting,
+.tv-note-edge-line[data-color="waiting"] {
+  --tv-note-color: #ff3b45;
+}
+.tv-note-label--drop-off,
+.tv-note-edge-line[data-color="drop-off"] {
+  --tv-note-color: #ffd83d;
+}
+.tv-note-label--tire-only,
+.tv-note-edge-line[data-color="tire-only"] {
+  --tv-note-color: #b67bff;
+}
+.tv-note-label--waiting,
+.tv-note-edge-line[data-color="waiting"] {
+  animation: tv-note-waiting-breathe 1.8s ease-in-out infinite;
+}
+@keyframes tv-note-waiting-breathe {
+  0%,
+  100% {
+    opacity: 0.68;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 .tv-footer {
   display: flex;
@@ -1023,6 +1089,44 @@
   right: var(--tv-gutter);
   bottom: 13px;
   z-index: 5;
+}
+/* /tv-demo only: an unmissable "this isn't real" marker, never present on /tv. */
+.tv-demo-banner {
+  position: relative;
+  z-index: 20;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 16px;
+  background: #ff2ec4;
+  border-top: 4px solid;
+  border-bottom: 4px solid;
+  border-image: repeating-linear-gradient(135deg, #17181c, #17181c 10px, #ff2ec4 10px, #ff2ec4 20px)
+    4;
+  color: #17181c;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(10px, 0.85vw, 14px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  text-shadow: none;
+}
+.tv-demo-banner-dot {
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ff2ec4;
+  box-shadow: 0 0 8px 2px #ff2ec4cc;
+  animation: tv-demo-banner-blink 1s steps(2, jump-none) infinite;
+}
+@keyframes tv-demo-banner-blink {
+  50% {
+    opacity: 0.2;
+  }
 }
 .tv-numbers-grid {
   gap: var(--tv-gap);

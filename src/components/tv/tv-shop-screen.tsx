@@ -3,7 +3,9 @@ import { CalendarDays, CircleCheck, Clock, Wrench } from "lucide-react";
 import { TV_STATUS_LABEL, type TvStatus } from "./tv-status";
 import { checkinElapsed, tvTime, workflowStatus, type TvBoardJob } from "@/lib/tv-board";
 import { serviceAccentColor } from "@/lib/service-accent";
+import { parseNoteLabels } from "@/lib/note-codes";
 import { TvInShopBadge } from "./tv-in-shop-badge";
+import { TvNoteEdge } from "./tv-note-edge";
 
 /** Preserve the position across rotations and pause at either end before reversing. */
 function ScrollingList({
@@ -75,13 +77,16 @@ function CustomerCard({
   timezone: string;
 }) {
   const accent = serviceAccentColor(job.requested_service);
+  const noteLabels = parseNoteLabels(job.requested_service);
   return (
     <article
       className="tv-customer-card"
       data-status={status}
+      data-note-edge={noteLabels.length > 0}
       style={accent ? ({ "--tv-service-accent": accent } as CSSProperties) : undefined}
     >
       <span className="tv-customer-rail" aria-hidden="true" />
+      <TvNoteEdge labels={noteLabels} />
       <div className="tv-customer-heading">
         <h3>{job.customer_name ?? "Customer not recorded"}</h3>
         <span className="tv-customer-badge">{TV_STATUS_LABEL[status]}</span>
@@ -204,13 +209,16 @@ export function TvShopScreen({
           )}
           {rows.map((job) => {
             const accent = serviceAccentColor(job.requested_service);
+            const noteLabels = parseNoteLabels(job.requested_service);
             return (
               <div
                 key={job.id}
                 className="tv-appointment"
                 data-in-shop={job.arrival_at !== null}
+                data-note-edge={noteLabels.length > 0}
                 style={accent ? ({ "--tv-service-accent": accent } as CSSProperties) : undefined}
               >
+                <TvNoteEdge labels={noteLabels} />
                 <div className="tv-appointment-heading">
                   <p className="tv-appointment-time">{tvTime(job.appointment_at, timezone)}</p>
                   {job.arrival_at !== null && <TvInShopBadge />}
