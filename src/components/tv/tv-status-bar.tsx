@@ -1,19 +1,15 @@
 import { CircleCheck, Clock, Wrench } from "lucide-react";
-import type { TvBoardJob } from "@/lib/tv-board";
-import { TvNextAppointment } from "./tv-next-appointment";
 
 export function TvStatusBar({
   inShop,
   upcoming,
   done,
   nextAppointment,
-  timezone,
 }: {
   inShop: number;
   upcoming: number;
   done: number;
-  nextAppointment: TvBoardJob | null;
-  timezone: string;
+  nextAppointment: string | null;
 }) {
   return (
     <footer className="tv-footer">
@@ -53,7 +49,14 @@ export function TvStatusBar({
           </div>
         ))}
       </div>
-      <TvNextAppointment appointment={nextAppointment} timezone={timezone} />
+      <div className="tv-footer-signature">
+        <p>
+          {nextAppointment
+            ? `Next appointment · ${nextAppointment}`
+            : "Tires · Brakes · Oil changes · Repairs"}
+        </p>
+        <span>Drive confidence</span>
+      </div>
     </footer>
   );
 }

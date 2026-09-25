@@ -1,3 +1,4 @@
+import { CedarLogo } from "@/components/cedar-logo";
 import { TvClock } from "./tv-clock";
 
 /**
@@ -17,11 +18,7 @@ export function TvHeader({
   return (
     <header className="tv-header" data-screen={title === "Shop numbers" ? "numbers" : "shop"}>
       <div className="tv-brand">
-        <img
-          src="/cedar-valley-logo-tv.png"
-          alt="Cedar Valley Tire & Auto Service"
-          className="tv-brand-logo"
-        />
+        <CedarLogo className="tv-brand-logo" />
         {title !== "Shop numbers" && <p>Trusted care keeps you rolling</p>}
       </div>
       <div className="tv-heading">

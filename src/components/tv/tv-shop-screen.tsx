@@ -87,10 +87,7 @@ function CustomerCard({
         <span className="tv-customer-badge">{TV_STATUS_LABEL[status]}</span>
       </div>
       <p className="tv-customer-vehicle">{job.vehicle_label ?? "Vehicle not recorded"}</p>
-      <p className="tv-customer-service">
-        {job.requested_service ?? "Service not recorded"}
-        {accent && <span className="tv-service-dot" aria-hidden="true" />}
-      </p>
+      <p className="tv-customer-service">{job.requested_service ?? "Service not recorded"}</p>
       {status !== "done" && (
         <p className="tv-customer-timer">
           <Clock aria-hidden="true" />

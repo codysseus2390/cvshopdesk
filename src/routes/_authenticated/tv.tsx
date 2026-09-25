@@ -11,7 +11,7 @@ import { TvStatusBar } from "@/components/tv/tv-status-bar";
 import { TvAnnouncementCard } from "@/components/tv/tv-announcement-card";
 import { useDashboard } from "./hub";
 import { useBoard } from "./board";
-import { buildTvBoard } from "@/lib/tv-board";
+import { buildTvBoard, tvTime } from "@/lib/tv-board";
 import { listDisplayNotifications } from "@/lib/notifications.functions";
 import { getAdminConfig } from "@/lib/admin.functions";
 import { TV_ROTATION_SECONDS_DEFAULT } from "@/lib/tv-settings";
@@ -177,8 +177,14 @@ function TvMode() {
           inShop={counts.inShop}
           upcoming={counts.upcoming}
           done={counts.done}
-          nextAppointment={tvBoard?.nextAppointment ?? null}
-          timezone={board.data?.timezone ?? "America/Chicago"}
+          nextAppointment={
+            tvBoard?.nextAppointment
+              ? tvTime(
+                  tvBoard.nextAppointment.appointment_at,
+                  board.data?.timezone ?? "America/Chicago",
+                )
+              : null
+          }
         />
       </div>
     </div>
