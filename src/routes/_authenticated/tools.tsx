@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { shopToday } from "@/lib/metrics-math";
 import { NotificationComposer } from "@/components/notification-composer";
+import { TvModeSettings } from "@/components/tv-mode-settings";
 import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/tools")({
@@ -614,6 +615,12 @@ function ToolsPage() {
             ))}
           </CardContent>
         </Card>
+        <TvModeSettings
+          canEdit={
+            shopContext.data?.membership?.role === "owner" ||
+            shopContext.data?.membership?.role === "manager"
+          }
+        />
         <NotificationComposer
           canSend={
             shopContext.data?.membership?.role === "owner" ||

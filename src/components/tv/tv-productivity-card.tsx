@@ -96,10 +96,6 @@ function MechanicRow({
   week: number | null | undefined;
   month: number | null | undefined;
 }) {
-  // Clamped only for the bar's width — the printed value stays as reported.
-  const bar =
-    typeof month === "number" && Number.isFinite(month) ? Math.max(0, Math.min(100, month)) : null;
-
   return (
     <tr className="border-t border-border">
       <th className="py-2 text-left align-middle">
@@ -121,17 +117,6 @@ function MechanicRow({
         <span className="block font-display text-[1.7rem] font-bold leading-none tabular-nums text-[#fffdf8]">
           {formatProductivity(month ?? null)}
         </span>
-        {bar !== null && (
-          <span className="gauge-fill ml-auto mt-1.5 block h-1.5 w-full max-w-24 overflow-hidden rounded-full bg-white/10">
-            <span
-              className={cn(
-                "block h-full rounded-full",
-                accent === "primary" ? "bg-primary" : "bg-secondary",
-              )}
-              style={{ width: `${bar}%` }}
-            />
-          </span>
-        )}
       </td>
     </tr>
   );

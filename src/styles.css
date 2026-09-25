@@ -336,21 +336,6 @@
   animation: pulse-dot 2.2s ease-in-out infinite;
 }
 
-/* Gauge fill animation for progress bars */
-@keyframes gauge-fill {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
-.gauge-fill {
-  transform-origin: left center;
-  animation: gauge-fill 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
 /* Page entrance — lighter than dashboard for content pages */
 @keyframes page-enter {
   from {
@@ -787,6 +772,7 @@
   overflow: hidden;
   margin-bottom: 8px;
   border: 1px solid #ffffff14;
+  border-top: 2px solid var(--tv-service-accent, #ffffff14);
   border-radius: 11px;
   padding: clamp(10px, 0.8vw, 16px) 12px clamp(10px, 0.8vw, 16px) clamp(16px, 1.4vw, 26px);
   background: linear-gradient(
@@ -924,15 +910,61 @@
 .tv-appointment {
   padding: 14px 8px;
   border-bottom: 1px solid #ffffff20;
+  border-top: 2px solid var(--tv-service-accent, transparent);
   color: #c4ccd1;
   font-size: clamp(12px, 0.9vw, 17px);
   overflow-wrap: anywhere;
+}
+.tv-appointment-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
 }
 .tv-appointment-time {
   font-family: var(--font-display);
   color: var(--tv-orange);
   font-size: clamp(18px, 1.5vw, 28px);
   margin-bottom: 6px;
+}
+.tv-in-shop-badge {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(36px, 3.2vw, 52px);
+  height: clamp(36px, 3.2vw, 52px);
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: clamp(8px, 0.58vw, 10px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-align: center;
+  color: #fff4e6;
+  background: radial-gradient(circle at 32% 26%, #ffb156, var(--tv-orange) 55%, #a34e05 100%);
+  box-shadow:
+    inset 0 1px 1px #ffffff80,
+    inset 0 -3px 4px #00000055,
+    0 3px 6px #00000070;
+}
+.tv-in-shop-badge-ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 1px solid #ffffff30;
+  pointer-events: none;
+}
+.tv-service-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 7px;
+  border-radius: 50%;
+  background: var(--tv-service-accent);
+  box-shadow: 0 0 5px 1px color-mix(in srgb, var(--tv-service-accent) 55%, transparent);
+  vertical-align: middle;
 }
 .tv-footer {
   display: flex;
@@ -981,21 +1013,48 @@
   color: #abb4ba;
   margin-top: 3px;
 }
-.tv-footer-signature {
+.tv-next-appointment {
+  --tv-next-accent: var(--tv-service-accent, var(--tv-orange));
   flex: 1;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.3em;
-  color: #bec6cc;
-  font-size: clamp(8px, 0.65vw, 12px);
-  padding-bottom: 16px;
+  min-width: 0;
+  text-align: right;
+  padding: 4px 4px 4px 22px;
+  border-left: 1px solid #ffffff24;
 }
-.tv-footer-signature span {
-  display: block;
-  border-top: 1px solid #ffffff26;
-  margin-top: 13px;
-  padding-top: 13px;
-  letter-spacing: 0.5em;
+.tv-next-appointment-label {
+  font-family: var(--font-display);
+  font-size: clamp(10px, 0.72vw, 13px);
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--tv-next-accent);
+}
+.tv-next-appointment-time {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 2.1vw, 38px);
+  font-weight: 700;
+  line-height: 1.12;
+  margin-top: 2px;
+}
+.tv-next-appointment-customer {
+  font-family: var(--font-display);
+  font-size: clamp(13px, 1.05vw, 19px);
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+.tv-next-appointment-detail {
+  color: #c4ccd1;
+  font-size: clamp(11px, 0.82vw, 14px);
+  margin-top: 1px;
+  overflow-wrap: anywhere;
+}
+.tv-next-appointment-empty {
+  color: #9aa3a8;
+  font-size: clamp(13px, 1vw, 18px);
+  margin-top: 8px;
+  font-style: italic;
 }
 .tv-controls {
   position: absolute;
@@ -1280,7 +1339,7 @@
   .tv-footer-totals {
     width: 100%;
   }
-  .tv-footer-signature,
+  .tv-next-appointment,
   .tv-footer-stat .tv-ring-icon,
   .tv-footer-stat span:not(.tv-ring-icon) {
     display: none;

@@ -3,7 +3,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { normalizeRows, splitBoard } from "./import-records";
 import { shopToday } from "./metrics-math";
-import { workflowStatus } from "./tv-board";
+import { buildTodaySchedule, workflowStatus, type TvBoardJob } from "./tv-board";
+import type { WorkflowRow } from "./autoflow-workflow";
 
 export const listInventory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -77,6 +78,7 @@ export const listBoard = createServerFn({ method: "GET" })
     let workflowError: string | null = null;
     let workflowSource = "imports";
     let workflowIds = new Set<string>();
+    let workflowRowsAll: WorkflowRow[] = [];
     try {
       const seeds = rows
         .filter((row) => row.identity_key?.startsWith("autoflow:"))
@@ -94,6 +96,7 @@ export const listBoard = createServerFn({ method: "GET" })
       if (workflow !== null) {
         workflowSource = "Autoflow";
         workflowIds = new Set(workflow.map((row) => row.id));
+        workflowRowsAll = workflow;
         const unfinished = workflow.filter((row) => workflowStatus(row) !== "done");
         split.jobs = [
           ...split.jobs.filter((row) => !row.identity_key?.startsWith("autoflow:")),
@@ -122,9 +125,13 @@ export const listBoard = createServerFn({ method: "GET" })
     const { loadAutoflowAppointments } = await import("./autoflow-appointments.server");
     let appointmentSource = "imports";
     let appointmentError: string | null = null;
+    let liveAppointmentsAll: TvBoardJob[] = [];
+    let liveAppointmentsLoaded = false;
     try {
       const appointments = await loadAutoflowAppointments(member.shop_id, timezone, today);
       if (appointments !== null) {
+        liveAppointmentsAll = appointments;
+        liveAppointmentsLoaded = true;
         const live = splitBoard(
           appointments.filter((row) => !workflowIds.has(row.id)),
           Date.now(),
@@ -141,8 +148,19 @@ export const listBoard = createServerFn({ method: "GET" })
       appointmentSource = "Autoflow";
       appointmentError = "Autoflow appointments could not be refreshed. Retrying automatically.";
     }
+
+    // TV Mode's Today's Schedule. Falls back to imported appointment rows when Autoflow
+    // appointments aren't loaded, since those have no workflow ticket id to merge on.
+    const scheduleToday = buildTodaySchedule(
+      liveAppointmentsLoaded ? liveAppointmentsAll : split.appointments,
+      workflowRowsAll,
+      timezone,
+      today,
+    );
+
     return {
       ...split,
+      scheduleToday,
       appointmentSource,
       appointmentError,
       workflowSource,

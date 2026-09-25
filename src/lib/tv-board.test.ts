@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildTodaySchedule,
   buildTvBoard,
   checkinElapsed,
   tvTime,
   withinNextTwelveHours,
   workflowStatus,
   type TvBoardJob,
+  type TvWorkflowLike,
 } from "./tv-board";
 const now = Date.parse("2026-09-23T21:00:00Z");
 const row = (id: string, extras: Partial<TvBoardJob> = {}): TvBoardJob => ({
@@ -62,5 +64,85 @@ describe("TV workflow", () => {
     expect(checkinElapsed(null, now)).toBe("Not checked in");
     expect(checkinElapsed("bad", now)).toBe("Check-in time unavailable");
     expect(checkinElapsed("2026-09-23T19:58:57Z", now)).toBe("1:01:03");
+  });
+});
+
+describe("Today's Schedule", () => {
+  const workflow = (id: string, extras: Partial<TvWorkflowLike> = {}): TvWorkflowLike => ({
+    id,
+    customer_name: null,
+    vehicle_label: null,
+    requested_service: null,
+    arrival_at: null,
+    job_status: null,
+    local_status: null,
+    ...extras,
+  });
+
+  it("keeps an appointment for the whole shop day, even after its time passes", () => {
+    // Shop day 2026-09-23 in America/Chicago runs 2026-09-23T05:00Z .. 2026-09-24T05:00Z.
+    const result = buildTodaySchedule(
+      [
+        row("morning", { appointment_at: "2026-09-23T14:00:00Z" }), // 9am shop time, already past
+        row("evening", { appointment_at: "2026-09-24T00:00:00Z" }), // 7pm shop time, still today
+        row("tomorrow", { appointment_at: "2026-09-24T14:00:00Z" }), // 9am shop time, next shop day
+      ],
+      [],
+      "America/Chicago",
+      "2026-09-23",
+    );
+    expect(result.map((r) => r.id)).toEqual(["morning", "evening"]);
+  });
+
+  it("merges by the real Autoflow ticket id, preferring the appointment's own service text", () => {
+    const result = buildTodaySchedule(
+      [
+        row("autoflow:1", {
+          customer_name: "Jane Doe",
+          vehicle_label: "2020 Ford Explorer",
+          requested_service: "Brake service",
+          appointment_at: "2026-09-23T14:00:00Z",
+        }),
+      ],
+      [
+        workflow("autoflow:1", {
+          arrival_at: "2026-09-23T14:05:00Z",
+          job_status: "Servicing",
+          requested_service: null,
+        }),
+      ],
+      "America/Chicago",
+      "2026-09-23",
+    );
+    expect(result).toEqual([
+      {
+        id: "autoflow:1",
+        customer_name: "Jane Doe",
+        vehicle_label: "2020 Ford Explorer",
+        requested_service: "Brake service",
+        appointment_at: "2026-09-23T14:00:00Z",
+        arrival_at: "2026-09-23T14:05:00Z",
+        job_status: "Servicing",
+        local_status: null,
+      },
+    ]);
+  });
+
+  it("keeps 'Ready for pickup' visible — it is not genuinely closed — and drops truly closed visits", () => {
+    const result = buildTodaySchedule(
+      [
+        row("ready", { appointment_at: "2026-09-23T14:00:00Z" }),
+        row("closed", { appointment_at: "2026-09-23T14:00:00Z" }),
+        row("open", { appointment_at: "2026-09-23T14:00:00Z" }),
+      ],
+      [
+        workflow("ready", { arrival_at: "2026-09-23T14:05:00Z", job_status: "Ready" }),
+        workflow("closed", { arrival_at: "2026-09-23T14:05:00Z", job_status: "Picked Up" }),
+        workflow("open", { arrival_at: "2026-09-23T14:05:00Z", job_status: "Servicing" }),
+      ],
+      "America/Chicago",
+      "2026-09-23",
+    );
+    expect(result.map((r) => r.id).sort()).toEqual(["open", "ready"]);
   });
 });
