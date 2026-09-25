@@ -8,7 +8,7 @@ import { TvHeader } from "@/components/tv/tv-header";
 import { TvNumbersScreen } from "@/components/tv/tv-numbers-screen";
 import { TvShopScreen } from "@/components/tv/tv-shop-screen";
 import { TvStatusBar } from "@/components/tv/tv-status-bar";
-import { cn } from "@/lib/utils";
+import { TvAnnouncementCard } from "@/components/tv/tv-announcement-card";
 import { useDashboard } from "./hub";
 import { useBoard } from "./board";
 import { buildTvBoard } from "@/lib/tv-board";
@@ -115,24 +115,9 @@ function TvMode() {
 
         <main className="tv-main flex min-h-0 flex-1 flex-col gap-4">
           {(announcements.data?.length ?? 0) > 0 && (
-            <div className="flex shrink-0 gap-4">
+            <div className="tv-announcements flex shrink-0 gap-4">
               {(announcements.data ?? []).slice(0, 2).map((item) => (
-                <div
-                  key={item.id}
-                  className={cn(
-                    "tv-slab flex-1 rounded-2xl border border-border border-l-[6px] px-5 py-3.5",
-                    item.notification?.priority === "high"
-                      ? "border-l-destructive"
-                      : "border-l-primary",
-                  )}
-                >
-                  <p className="font-display text-xl font-bold text-[#fffdf8]">
-                    {item.notification?.title}
-                  </p>
-                  <p className="mt-0.5 text-base text-muted-foreground">
-                    {item.notification?.message}
-                  </p>
-                </div>
+                <TvAnnouncementCard key={item.id} item={item} />
               ))}
             </div>
           )}

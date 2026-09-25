@@ -443,7 +443,7 @@
 /* TV display — Figma: P7whBvxGPIv9NXz4aj3UDC. Keep effects behind live text. */
 .tv-display {
   --tv-orange: #ff790c;
-  --tv-green: #77f32d;
+  --tv-green: #4caf50;
   --tv-silver: #c7d6e0;
   --tv-accent: var(--tv-orange);
   --tv-gutter: clamp(16px, 2.4vw, 44px);
@@ -477,49 +477,8 @@
   position: absolute;
   inset: -15%;
   background:
-    radial-gradient(ellipse at 90% 5%, #ff790c22, transparent 40%),
-    radial-gradient(ellipse at 10% 95%, #ff790c20, transparent 38%);
-  animation: tv-ambient-drift 24s ease-in-out infinite alternate;
-}
-.tv-light-trail {
-  position: absolute;
-  width: 135vw;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #ff790c, #ffcf80, #ff790c, transparent);
-  box-shadow:
-    0 0 14px 2px #ff790c99,
-    0 0 45px 12px #ff790c22;
-  rotate: 32deg;
-  animation: tv-trail-drift 4s ease-in-out infinite alternate;
-}
-.tv-light-trail-one {
-  left: 60%;
-  top: 3%;
-}
-.tv-light-trail-two {
-  left: -65%;
-  top: 48%;
-  animation-delay: -1s;
-}
-.tv-light-trail-three {
-  left: 40%;
-  top: 83%;
-  animation-delay: -2s;
-}
-.tv-light-trail-four {
-  left: -72%;
-  top: 95%;
-  animation-delay: -3s;
-}
-@keyframes tv-trail-drift {
-  to {
-    transform: translateY(28px);
-  }
-}
-@keyframes tv-ambient-drift {
-  to {
-    transform: translate3d(-3%, 3%, 0) scale(1.06);
-  }
+    radial-gradient(ellipse at 90% 5%, #ff790c0f, transparent 42%),
+    radial-gradient(ellipse at 10% 95%, #ff790c0d, transparent 40%);
 }
 .tv-header {
   display: grid;
@@ -535,8 +494,11 @@
 }
 .tv-brand-logo {
   width: 100%;
-  max-height: 78px;
+  max-height: 112px;
   object-fit: contain;
+  filter:
+    drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 0 20px rgba(255, 121, 12, 0.14));
 }
 .tv-brand p {
   margin-top: 10px;
@@ -680,16 +642,17 @@
 .tv-lit-panel {
   position: relative;
   isolation: isolate;
-  border: 1px solid color-mix(in srgb, var(--tv-accent) 58%, #343b3f);
+  border: 1px solid color-mix(in srgb, var(--tv-accent) 38%, #343b3f);
   border-radius: clamp(12px, 1.2vw, 22px);
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--tv-accent) 7%, #111619),
-    #0b1012ed 52%,
-    #131718ee
+    color-mix(in srgb, var(--tv-accent) 6%, #14191b),
+    #0f1315ed 52%,
+    #16191aee
   );
   box-shadow:
     inset 0 1px 0 #ffffff14,
+    inset 0 -12px 20px -14px #000c,
     0 12px 28px #0006;
 }
 .tv-lit-panel::before {
@@ -697,22 +660,10 @@
   pointer-events: none;
   position: absolute;
   inset: -1px;
-  border: 1px solid var(--tv-accent);
+  border: 1px solid color-mix(in srgb, var(--tv-accent) 65%, transparent);
   border-radius: inherit;
-  box-shadow:
-    inset 0 0 18px color-mix(in srgb, var(--tv-accent) 16%, transparent),
-    0 0 13px color-mix(in srgb, var(--tv-accent) 28%, transparent);
-  opacity: 0.5;
-  animation: tv-light-breathe 4s ease-in-out infinite;
-}
-@keyframes tv-light-breathe {
-  0%,
-  100% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 1;
-  }
+  box-shadow: inset 0 0 14px color-mix(in srgb, var(--tv-accent) 10%, transparent);
+  opacity: 0.6;
 }
 .tv-workflow-column,
 .tv-schedule-panel {
@@ -789,11 +740,7 @@
   left: 0;
   width: clamp(4px, 0.4vw, 7px);
   background: var(--tv-accent);
-  box-shadow: 0 0 14px 3px color-mix(in srgb, var(--tv-accent) 65%, transparent);
-  animation: tv-light-breathe 4s ease-in-out infinite;
-}
-.tv-customer-card:nth-child(2n) .tv-customer-rail {
-  animation-delay: -1s;
+  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--tv-accent) 45%, transparent);
 }
 .tv-customer-heading {
   display: flex;
@@ -1152,9 +1099,67 @@
 .tv-productivity-table tbody th {
   white-space: normal;
 }
-.tv-slab {
-  background: #101416ed;
-  box-shadow: 0 10px 24px #0005;
+.tv-announcement {
+  --tv-announce-accent: var(--tv-orange);
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 20px 14px 18px;
+  border-radius: 16px;
+  border: 1px solid #ffffff1c;
+  border-left: 4px solid var(--tv-announce-accent);
+  background: linear-gradient(155deg, #1a1e20, #101315 60%, #0c0e0f);
+  box-shadow:
+    inset 0 1px 0 #ffffff16,
+    0 10px 22px #0007;
+  animation: tv-announcement-in 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.tv-announcement[data-priority="high"] {
+  --tv-announce-accent: var(--color-destructive, #ef4444);
+}
+.tv-announcement-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: var(--tv-announce-accent);
+  background: color-mix(in srgb, var(--tv-announce-accent) 14%, #14191b);
+  border: 1px solid color-mix(in srgb, var(--tv-announce-accent) 40%, transparent);
+}
+.tv-announcement-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.tv-announcement-body {
+  min-width: 0;
+}
+.tv-announcement-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(16px, 1.3vw, 22px);
+  letter-spacing: 0.02em;
+  color: #fffdf8;
+}
+.tv-announcement-message {
+  margin-top: 2px;
+  font-size: clamp(12px, 1vw, 17px);
+  color: #b6bec4;
+  overflow-wrap: anywhere;
+}
+@keyframes tv-announcement-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 /* Raised metal faces: fine brushed grain over a bright, beveled reflection.
    Keep the finish static so live values and names stay easy to read on a TV. */
