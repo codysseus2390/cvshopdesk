@@ -795,7 +795,8 @@
   animation-delay: -1s;
 }
 .tv-customer-card[data-note-edge="true"] {
-  padding-top: clamp(24px, 1.9vw, 32px);
+  overflow: visible;
+  padding-top: clamp(18px, 1.4vw, 24px);
 }
 .tv-customer-heading {
   display: flex;
@@ -919,7 +920,7 @@
   overflow-wrap: anywhere;
 }
 .tv-appointment[data-note-edge="true"] {
-  padding-top: clamp(26px, 2vw, 34px);
+  padding-top: clamp(18px, 1.4vw, 24px);
   border-top-color: transparent;
 }
 .tv-appointment-heading {
@@ -963,28 +964,44 @@
   border: 1px solid #ffffff30;
   pointer-events: none;
 }
-/* Note-code labels (WAITING / DROP OFF / TIRE ONLY), set inside the card's top
-   edge line rather than as a badge — see TvNoteEdge. */
+/* Note-code labels (WAITING / DROP OFF / TIRE ONLY): the card's own top edge
+   glows in the code's color, the word sitting flush in the middle of that
+   glow — no badge, no pill, no separate lines. See TvNoteEdge. */
 .tv-note-edge {
   position: absolute;
   top: 0;
-  left: 12px;
+  left: 10px;
   right: 10px;
+  height: 20px;
+  transform: translateY(-50%);
   display: flex;
-  align-items: center;
-  gap: 6px;
   z-index: 2;
 }
-.tv-note-edge-line {
-  flex: 1 1 auto;
-  min-width: 6px;
-  height: 2px;
-  border-radius: 1px;
-  background: var(--tv-note-color, #ffffff30);
-  box-shadow: 0 0 7px 1px var(--tv-note-color, transparent);
+.tv-note-edge-segment {
+  position: relative;
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tv-note-edge-segment::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  right: 2px;
+  height: 3px;
+  border-radius: 2px;
+  transform: translateY(-50%);
+  background: var(--tv-note-color);
+  box-shadow:
+    0 0 8px 2px var(--tv-note-color),
+    0 0 18px 5px color-mix(in srgb, var(--tv-note-color) 55%, transparent);
+  z-index: -1;
 }
 .tv-note-label {
-  flex: 0 0 auto;
+  position: relative;
+  padding: 0 5px;
   font-family: var(--font-display);
   font-weight: 800;
   font-size: clamp(8px, 0.6vw, 11px);
@@ -996,20 +1013,17 @@
     0 0 5px var(--tv-note-color),
     0 0 11px var(--tv-note-color);
 }
-.tv-note-label--waiting,
-.tv-note-edge-line[data-color="waiting"] {
+.tv-note-edge-segment--waiting {
   --tv-note-color: #ff3b45;
 }
-.tv-note-label--drop-off,
-.tv-note-edge-line[data-color="drop-off"] {
+.tv-note-edge-segment--drop-off {
   --tv-note-color: #ffd83d;
 }
-.tv-note-label--tire-only,
-.tv-note-edge-line[data-color="tire-only"] {
+.tv-note-edge-segment--tire-only {
   --tv-note-color: #b67bff;
 }
-.tv-note-label--waiting,
-.tv-note-edge-line[data-color="waiting"] {
+.tv-note-edge-segment--waiting::before,
+.tv-note-edge-segment--waiting .tv-note-label {
   animation: tv-note-waiting-breathe 1.8s ease-in-out infinite;
 }
 @keyframes tv-note-waiting-breathe {
