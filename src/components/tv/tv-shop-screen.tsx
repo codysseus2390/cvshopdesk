@@ -1,7 +1,9 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { CalendarDays, CircleCheck, Clock, Wrench } from "lucide-react";
 import { TV_STATUS_LABEL, type TvStatus } from "./tv-status";
 import { checkinElapsed, tvTime, workflowStatus, type TvBoardJob } from "@/lib/tv-board";
+import { serviceAccentColor } from "@/lib/service-accent";
+import { TvInShopBadge } from "./tv-in-shop-badge";
 
 /** Preserve the position across rotations and pause at either end before reversing. */
 function ScrollingList({
@@ -72,8 +74,13 @@ function CustomerCard({
   now: number;
   timezone: string;
 }) {
+  const accent = serviceAccentColor(job.requested_service);
   return (
-    <article className="tv-customer-card" data-status={status}>
+    <article
+      className="tv-customer-card"
+      data-status={status}
+      style={accent ? ({ "--tv-service-accent": accent } as CSSProperties) : undefined}
+    >
       <span className="tv-customer-rail" aria-hidden="true" />
       <div className="tv-customer-heading">
         <h3>{job.customer_name ?? "Customer not recorded"}</h3>
@@ -181,7 +188,7 @@ export function TvShopScreen({
           <CalendarDays className="tv-schedule-icon" aria-hidden="true" />
           <div>
             <h2>Today's schedule</h2>
-            <p>Next 12 hours · Shop time</p>
+            <p>Today · Shop time</p>
           </div>
         </div>
         <ScrollingList paused={paused} label="Appointment schedule">
@@ -191,18 +198,29 @@ export function TvShopScreen({
               <p>
                 No appointments
                 <br />
-                in the next 12 hours.
+                scheduled today.
               </p>
             </div>
           )}
-          {rows.map((job) => (
-            <div key={job.id} className="tv-appointment">
-              <p className="tv-appointment-time">{tvTime(job.appointment_at, timezone)}</p>
-              <h3>{job.customer_name ?? "Customer not recorded"}</h3>
-              <p>{job.vehicle_label ?? "Vehicle not recorded"}</p>
-              <p>{job.requested_service ?? "Service not recorded"}</p>
-            </div>
-          ))}
+          {rows.map((job) => {
+            const accent = serviceAccentColor(job.requested_service);
+            return (
+              <div
+                key={job.id}
+                className="tv-appointment"
+                data-in-shop={job.arrival_at !== null}
+                style={accent ? ({ "--tv-service-accent": accent } as CSSProperties) : undefined}
+              >
+                <div className="tv-appointment-heading">
+                  <p className="tv-appointment-time">{tvTime(job.appointment_at, timezone)}</p>
+                  {job.arrival_at !== null && <TvInShopBadge />}
+                </div>
+                <h3>{job.customer_name ?? "Customer not recorded"}</h3>
+                <p>{job.vehicle_label ?? "Vehicle not recorded"}</p>
+                <p>{job.requested_service ?? "Service not recorded"}</p>
+              </div>
+            );
+          })}
         </ScrollingList>
         <p className="tv-schedule-signature">
           Quality service today.

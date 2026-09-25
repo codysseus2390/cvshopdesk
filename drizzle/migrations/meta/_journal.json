@@ -176,6 +176,13 @@
       "when": 1790258400000,
       "tag": "0027_archive_announcements",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1790344800000,
+      "tag": "0028_tv_mode_rotation_setting",
+      "breakpoints": true
     }
   ]
 }

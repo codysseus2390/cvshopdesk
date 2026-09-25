@@ -336,21 +336,6 @@
   animation: pulse-dot 2.2s ease-in-out infinite;
 }
 
-/* Gauge fill animation for progress bars */
-@keyframes gauge-fill {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
-.gauge-fill {
-  transform-origin: left center;
-  animation: gauge-fill 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
 /* Page entrance — lighter than dashboard for content pages */
 @keyframes page-enter {
   from {
@@ -538,24 +523,24 @@
 }
 .tv-header {
   display: grid;
-  grid-template-columns: minmax(210px, 28%) 1fr minmax(210px, 22%);
+  grid-template-columns: minmax(180px, 26%) 1fr minmax(180px, 20%);
   align-items: center;
   flex-shrink: 0;
-  min-height: clamp(100px, 16vh, 172px);
-  padding: 12px var(--tv-gutter);
-  gap: clamp(18px, 2.6vw, 48px);
+  min-height: clamp(64px, 9vh, 108px);
+  padding: 8px var(--tv-gutter);
+  gap: clamp(14px, 2vw, 36px);
 }
 .tv-brand {
   min-width: 0;
 }
 .tv-brand-logo {
   width: 100%;
-  max-height: 78px;
+  max-height: 56px;
   object-fit: contain;
 }
 .tv-brand p {
-  margin-top: 10px;
-  font-size: clamp(8px, 0.7vw, 13px);
+  margin-top: 3px;
+  font-size: clamp(7px, 0.6vw, 11px);
   text-transform: uppercase;
   letter-spacing: 0.36em;
   text-align: center;
@@ -563,14 +548,14 @@
 }
 .tv-heading {
   border-left: 1px solid #ffffff44;
-  padding-left: clamp(20px, 2.6vw, 48px);
+  padding-left: clamp(14px, 1.8vw, 32px);
   min-width: 0;
 }
 .tv-heading h1 {
   font-family: var(--font-display);
-  font-size: clamp(32px, 3.8vw, 72px);
+  font-size: clamp(22px, 2.6vw, 48px);
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.1;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   white-space: nowrap;
@@ -580,10 +565,10 @@
   text-shadow: 0 0 24px #ff790c24;
 }
 .tv-tagline {
-  margin-top: 12px;
+  margin-top: 4px;
   text-transform: uppercase;
   letter-spacing: 0.28em;
-  font-size: clamp(8px, 0.8vw, 15px);
+  font-size: clamp(7px, 0.65vw, 12px);
   color: #c1c9cf;
 }
 .tv-clock {
@@ -593,15 +578,15 @@
   justify-content: center;
   min-width: 0;
   background: transparent;
-  padding: 6px 0;
+  padding: 2px 0;
 }
 .tv-clock-time {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: 8px;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: clamp(44px, 5.4vw, 96px);
+  font-size: clamp(26px, 3vw, 52px);
   font-variant-numeric: tabular-nums;
   line-height: 1;
   color: #fffdf8;
@@ -617,11 +602,11 @@
 }
 .tv-clock-date {
   font-family: var(--font-display);
-  font-size: clamp(15px, 1.4vw, 26px);
+  font-size: clamp(11px, 1vw, 18px);
   font-weight: 600;
   letter-spacing: 0.18em;
   line-height: 1.2;
-  margin-top: 10px;
+  margin-top: 3px;
   color: #ffb264;
   text-shadow: 0 2px 8px #000b;
 }
@@ -802,8 +787,8 @@
   bottom: 0;
   left: 0;
   width: clamp(4px, 0.4vw, 7px);
-  background: var(--tv-accent);
-  box-shadow: 0 0 14px 3px color-mix(in srgb, var(--tv-accent) 65%, transparent);
+  background: var(--tv-service-accent, var(--tv-accent));
+  box-shadow: 0 0 14px 3px color-mix(in srgb, var(--tv-service-accent, var(--tv-accent)) 65%, transparent);
   animation: tv-light-breathe 4s ease-in-out infinite;
 }
 .tv-customer-card:nth-child(2n) .tv-customer-rail {
@@ -924,9 +909,16 @@
 .tv-appointment {
   padding: 14px 8px;
   border-bottom: 1px solid #ffffff20;
+  border-top: 2px solid var(--tv-service-accent, transparent);
   color: #c4ccd1;
   font-size: clamp(12px, 0.9vw, 17px);
   overflow-wrap: anywhere;
+}
+.tv-appointment-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
 }
 .tv-appointment-time {
   font-family: var(--font-display);
@@ -934,52 +926,81 @@
   font-size: clamp(18px, 1.5vw, 28px);
   margin-bottom: 6px;
 }
+.tv-in-shop-badge {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(36px, 3.2vw, 52px);
+  height: clamp(36px, 3.2vw, 52px);
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: clamp(8px, 0.58vw, 10px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-align: center;
+  color: #fff4e6;
+  background: radial-gradient(circle at 32% 26%, #ffb156, var(--tv-orange) 55%, #a34e05 100%);
+  box-shadow:
+    inset 0 1px 1px #ffffff80,
+    inset 0 -3px 4px #00000055,
+    0 3px 6px #00000070;
+}
+.tv-in-shop-badge-ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 1px solid #ffffff30;
+  pointer-events: none;
+}
 .tv-footer {
   display: flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 24px;
-  padding: 0 var(--tv-gutter) 16px;
+  gap: 18px;
+  padding: 0 var(--tv-gutter) 10px;
 }
 .tv-footer-totals {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   width: 65%;
   border: 1px solid #ffffff24;
-  border-radius: 18px;
+  border-radius: 16px;
   background: linear-gradient(135deg, #181e20f5, #0b0e10f5);
 }
 .tv-footer-stat {
   display: flex;
   align-items: center;
-  gap: clamp(10px, 1.3vw, 24px);
-  padding: clamp(9px, 0.85vw, 16px) clamp(12px, 1.4vw, 26px);
+  gap: clamp(8px, 1vw, 20px);
+  padding: clamp(6px, 0.55vw, 11px) clamp(10px, 1.2vw, 22px);
   min-width: 0;
 }
 .tv-footer-stat + .tv-footer-stat {
   border-left: 1px solid #ffffff28;
 }
 .tv-footer-stat .tv-ring-icon {
-  width: clamp(34px, 3.7vw, 68px);
-  height: clamp(34px, 3.7vw, 68px);
+  width: clamp(26px, 2.8vw, 50px);
+  height: clamp(26px, 2.8vw, 50px);
 }
 .tv-footer-stat strong {
   font-family: var(--font-display);
-  font-size: clamp(30px, 3.6vw, 64px);
+  font-size: clamp(22px, 2.6vw, 46px);
   line-height: 1;
 }
 .tv-footer-stat p {
   font-family: var(--font-display);
-  font-size: clamp(13px, 1.15vw, 22px);
+  font-size: clamp(11px, 0.95vw, 17px);
   color: var(--tv-accent);
   font-weight: 700;
   text-transform: uppercase;
 }
 .tv-footer-stat span:not(.tv-ring-icon) {
   display: block;
-  font-size: clamp(9px, 0.7vw, 13px);
+  font-size: clamp(8px, 0.6vw, 11px);
   color: #abb4ba;
-  margin-top: 3px;
+  margin-top: 2px;
 }
 .tv-footer-signature {
   flex: 1;
@@ -988,13 +1009,13 @@
   letter-spacing: 0.3em;
   color: #bec6cc;
   font-size: clamp(8px, 0.65vw, 12px);
-  padding-bottom: 16px;
+  padding-bottom: 10px;
 }
 .tv-footer-signature span {
   display: block;
   border-top: 1px solid #ffffff26;
-  margin-top: 13px;
-  padding-top: 13px;
+  margin-top: 8px;
+  padding-top: 8px;
   letter-spacing: 0.5em;
 }
 .tv-controls {
@@ -1093,9 +1114,68 @@
 .tv-productivity-table tbody th {
   white-space: normal;
 }
-.tv-slab {
-  background: #101416ed;
-  box-shadow: 0 10px 24px #0005;
+.tv-announcement {
+  --tv-announce-accent: var(--tv-orange);
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 14px 8px 12px;
+  border-radius: 13px;
+  border: 1px solid #ffffff1c;
+  border-left: 4px solid var(--tv-announce-accent);
+  background: linear-gradient(155deg, #1a1e20, #101315 60%, #0c0e0f);
+  box-shadow:
+    inset 0 1px 0 #ffffff16,
+    0 8px 16px #0007,
+    0 0 16px 1px color-mix(in srgb, var(--tv-announce-accent) 35%, transparent);
+  animation: tv-announcement-in 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.tv-announcement[data-priority="high"] {
+  --tv-announce-accent: var(--color-destructive, #ef4444);
+}
+.tv-announcement-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--tv-announce-accent);
+  background: color-mix(in srgb, var(--tv-announce-accent) 14%, #14191b);
+  border: 1px solid color-mix(in srgb, var(--tv-announce-accent) 40%, transparent);
+}
+.tv-announcement-icon svg {
+  width: 14px;
+  height: 14px;
+}
+.tv-announcement-body {
+  min-width: 0;
+}
+.tv-announcement-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(13px, 1.05vw, 18px);
+  letter-spacing: 0.02em;
+  color: #fffdf8;
+}
+.tv-announcement-message {
+  margin-top: 1px;
+  font-size: clamp(11px, 0.85vw, 14px);
+  color: #b6bec4;
+  overflow-wrap: anywhere;
+}
+@keyframes tv-announcement-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 /* Raised metal faces: fine brushed grain over a bright, beveled reflection.
    Keep the finish static so live values and names stay easy to read on a TV. */
@@ -1240,7 +1320,7 @@
     font-size: 22px;
   }
   .tv-brand p {
-    margin-top: 5px;
+    margin-top: 2px;
   }
   .tv-schedule-signature {
     padding-block: 12px;

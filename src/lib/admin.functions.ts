@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { APP_ROLES, PERMISSIONS } from "@/lib/permissions";
 import type { GoalRules } from "@/lib/numbers-math";
+import { TV_ROTATION_SECONDS_MAX, TV_ROTATION_SECONDS_MIN } from "@/lib/tv-settings";
 
 const permissionKeys = PERMISSIONS.map((p) => p.key) as [string, ...string[]];
 const assignableRoles = ["manager", "staff", "display"] as const;
@@ -63,6 +64,7 @@ export const getAdminConfig = createServerFn({ method: "GET" })
         goal_rules: (settings?.goal_rules ?? {}) as GoalRules,
         technician_goals: (settings?.technician_goals ??
           []) as ShopSettingsPayload["technician_goals"],
+        tv_rotation_seconds: (settings?.tv_rotation_seconds ?? null) as number | null,
         updated_at: (settings?.updated_at ?? null) as string | null,
       },
     };
@@ -150,6 +152,46 @@ export const saveShopSettings = createServerFn({ method: "POST" })
       p_action: "dashboard_settings_saved",
       p_target: "shop_settings",
       p_detail: { hidden: data.hidden_widgets.length, goals: data.technician_goals.length },
+    });
+    return { ok: true };
+  });
+
+/** How long each TV Mode screen stays up before rotating to the next. Owner and admins only. */
+export const saveTvRotationSeconds = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        tv_rotation_seconds: z
+          .number()
+          .int()
+          .min(TV_ROTATION_SECONDS_MIN)
+          .max(TV_ROTATION_SECONDS_MAX),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as unknown as Supa;
+    const membership = await currentMembership(context.supabase, context.userId);
+    if (membership.role !== "owner" && membership.role !== "manager") {
+      throw new Error("Only the owner and admins can change TV Mode settings.");
+    }
+
+    const { error } = await sb.from("shop_settings").upsert(
+      {
+        shop_id: membership.shop_id,
+        tv_rotation_seconds: data.tv_rotation_seconds,
+        updated_by: context.userId,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "shop_id" },
+    );
+    if (error) throw new Error(error.message);
+
+    await sb.rpc("log_audit_event", {
+      p_action: "tv_settings_saved",
+      p_target: "shop_settings.tv_rotation_seconds",
+      p_detail: { tv_rotation_seconds: data.tv_rotation_seconds },
     });
     return { ok: true };
   });

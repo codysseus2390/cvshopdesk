@@ -8,18 +8,23 @@ import { TvHeader } from "@/components/tv/tv-header";
 import { TvNumbersScreen } from "@/components/tv/tv-numbers-screen";
 import { TvShopScreen } from "@/components/tv/tv-shop-screen";
 import { TvStatusBar } from "@/components/tv/tv-status-bar";
-import { cn } from "@/lib/utils";
+import { TvAnnouncementCard } from "@/components/tv/tv-announcement-card";
 import { useDashboard } from "./hub";
 import { useBoard } from "./board";
-import { buildTvBoard } from "@/lib/tv-board";
+import { buildTvBoard, tvTime } from "@/lib/tv-board";
 import { listDisplayNotifications } from "@/lib/notifications.functions";
+import { getAdminConfig } from "@/lib/admin.functions";
+import { TV_ROTATION_SECONDS_DEFAULT } from "@/lib/tv-settings";
 
-/** Each screen's time on air before rotating to the next. */
-export const SCREEN_SECONDS = 18;
+/** Fallback screen duration, used until a shop saves its own (Tools -> TV Mode). */
+export const SCREEN_SECONDS = TV_ROTATION_SECONDS_DEFAULT;
 
 /** Which screen is showing after `elapsed` seconds: numbers, then shop, repeating. */
-export function screenAt(elapsedSeconds: number): "numbers" | "shop" {
-  return Math.floor(elapsedSeconds / SCREEN_SECONDS) % 2 === 0 ? "numbers" : "shop";
+export function screenAt(
+  elapsedSeconds: number,
+  durationSeconds: number = SCREEN_SECONDS,
+): "numbers" | "shop" {
+  return Math.floor(elapsedSeconds / durationSeconds) % 2 === 0 ? "numbers" : "shop";
 }
 
 export const Route = createFileRoute("/_authenticated/tv")({
@@ -52,6 +57,16 @@ function TvMode() {
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: "always",
   });
+  const fetchAdminConfig = useServerFn(getAdminConfig);
+  const adminConfig = useQuery({
+    queryKey: ["admin-config"],
+    queryFn: () => fetchAdminConfig(),
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: true,
+  });
+  const screenSeconds =
+    adminConfig.data?.settings.tv_rotation_seconds ?? TV_ROTATION_SECONDS_DEFAULT;
+
   const [elapsed, setElapsed] = useState(0);
   const [paused, setPaused] = useState(false);
   const [now, setNow] = useState(Date.now);
@@ -64,7 +79,7 @@ function TvMode() {
     return () => clearInterval(timer);
   }, [paused]);
 
-  const screen = screenAt(elapsed);
+  const screen = screenAt(elapsed, screenSeconds);
 
   const tvBoard = board.data ? buildTvBoard(board.data, now) : null;
   const counts = tvBoard?.counts ?? { inShop: 0, upcoming: 0, done: 0 };
@@ -100,24 +115,9 @@ function TvMode() {
 
         <main className="tv-main flex min-h-0 flex-1 flex-col gap-4">
           {(announcements.data?.length ?? 0) > 0 && (
-            <div className="flex shrink-0 gap-4">
+            <div className="tv-announcements flex shrink-0 gap-4">
               {(announcements.data ?? []).slice(0, 2).map((item) => (
-                <div
-                  key={item.id}
-                  className={cn(
-                    "tv-slab flex-1 rounded-2xl border border-border border-l-[6px] px-5 py-3.5",
-                    item.notification?.priority === "high"
-                      ? "border-l-destructive"
-                      : "border-l-primary",
-                  )}
-                >
-                  <p className="font-display text-xl font-bold text-[#fffdf8]">
-                    {item.notification?.title}
-                  </p>
-                  <p className="mt-0.5 text-base text-muted-foreground">
-                    {item.notification?.message}
-                  </p>
-                </div>
+                <TvAnnouncementCard key={item.id} item={item} />
               ))}
             </div>
           )}
@@ -138,7 +138,7 @@ function TvMode() {
               inert={screen !== "shop"}
             >
               <TvShopScreen
-                rows={tvBoard?.schedule ?? []}
+                rows={tvBoard?.todaySchedule ?? []}
                 nextUp={tvBoard?.nextUp ?? []}
                 done={board.data?.done ?? []}
                 timezone={board.data?.timezone ?? "America/Chicago"}
@@ -165,7 +165,7 @@ function TvMode() {
               className="rounded px-2 py-1 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary"
               aria-label="Next TV screen"
               onClick={() =>
-                setElapsed((value) => (Math.floor(value / SCREEN_SECONDS) + 1) * SCREEN_SECONDS)
+                setElapsed((value) => (Math.floor(value / screenSeconds) + 1) * screenSeconds)
               }
             >
               Next screen ›
@@ -177,7 +177,14 @@ function TvMode() {
           inShop={counts.inShop}
           upcoming={counts.upcoming}
           done={counts.done}
-          nextAppointment={tvBoard?.nextAppointment ?? null}
+          nextAppointment={
+            tvBoard?.nextAppointment
+              ? tvTime(
+                  tvBoard.nextAppointment.appointment_at,
+                  board.data?.timezone ?? "America/Chicago",
+                )
+              : null
+          }
         />
       </div>
     </div>
