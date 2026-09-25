@@ -967,7 +967,7 @@
    edge line rather than as a badge — see TvNoteEdge. */
 .tv-note-edge {
   position: absolute;
-  top: 4px;
+  top: 0;
   left: 12px;
   right: 10px;
   display: flex;
